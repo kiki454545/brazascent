@@ -17,6 +17,7 @@ import {
   Eye
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { ConfirmModal } from '@/components/ConfirmModal'
 
 interface Subscriber {
   id: string
@@ -52,6 +53,14 @@ export default function AdminNewsletterPage() {
   // Preview modal
   const [previewEmail, setPreviewEmail] = useState<SentEmail | null>(null)
 
+  // Confirm modals state
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; subscriberId: string | null; email: string }>({
+    isOpen: false,
+    subscriberId: null,
+    email: ''
+  })
+  const [sendModal, setSendModal] = useState(false)
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -79,20 +88,26 @@ export default function AdminNewsletterPage() {
     }
   }
 
-  const handleDeleteSubscriber = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet abonné ?')) return
+  const openDeleteModal = (id: string, email: string) => {
+    setDeleteModal({ isOpen: true, subscriberId: id, email })
+  }
+
+  const handleDeleteSubscriber = async () => {
+    if (!deleteModal.subscriberId) return
 
     try {
       const { error } = await supabase
         .from('newsletter_subscribers')
         .delete()
-        .eq('id', id)
+        .eq('id', deleteModal.subscriberId)
 
       if (!error) {
-        setSubscribers(subscribers.filter(s => s.id !== id))
+        setSubscribers(subscribers.filter(s => s.id !== deleteModal.subscriberId))
       }
     } catch (error) {
       console.error('Error deleting subscriber:', error)
+    } finally {
+      setDeleteModal({ isOpen: false, subscriberId: null, email: '' })
     }
   }
 
@@ -116,7 +131,7 @@ export default function AdminNewsletterPage() {
     }
   }
 
-  const handleSendNewsletter = async () => {
+  const openSendModal = () => {
     if (!subject.trim() || !content.trim()) {
       setSendStatus('error')
       setSendMessage('Veuillez remplir le sujet et le contenu')
@@ -130,8 +145,11 @@ export default function AdminNewsletterPage() {
       return
     }
 
-    if (!confirm(`Envoyer cet email à ${activeSubscribers.length} abonnés ?`)) return
+    setSendModal(true)
+  }
 
+  const handleSendNewsletter = async () => {
+    setSendModal(false)
     setSending(true)
     setSendStatus('idle')
 
@@ -382,7 +400,7 @@ export default function AdminNewsletterPage() {
                         </td>
                         <td className="py-3 px-4 text-right">
                           <button
-                            onClick={() => handleDeleteSubscriber(subscriber.id)}
+                            onClick={() => openDeleteModal(subscriber.id, subscriber.email)}
                             className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -457,7 +475,7 @@ Vous pouvez utiliser du HTML basique pour la mise en forme."
               )}
 
               <button
-                onClick={handleSendNewsletter}
+                onClick={openSendModal}
                 disabled={sending || !subject.trim() || !content.trim()}
                 className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#C9A962] text-white rounded-lg hover:bg-[#B8994D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -551,6 +569,30 @@ Vous pouvez utiliser du HTML basique pour la mise en forme."
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, subscriberId: null, email: '' })}
+        onConfirm={handleDeleteSubscriber}
+        title="Supprimer l'abonné"
+        message={`Êtes-vous sûr de vouloir supprimer l'abonné "${deleteModal.email}" ? Cette action est irréversible.`}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        variant="danger"
+      />
+
+      {/* Send Confirmation Modal */}
+      <ConfirmModal
+        isOpen={sendModal}
+        onClose={() => setSendModal(false)}
+        onConfirm={handleSendNewsletter}
+        title="Envoyer la newsletter"
+        message={`Vous êtes sur le point d'envoyer cet email à ${activeCount} abonnés actifs. Voulez-vous continuer ?`}
+        confirmText="Envoyer"
+        cancelText="Annuler"
+        variant="default"
+      />
     </div>
   )
 }
