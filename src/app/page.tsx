@@ -278,7 +278,7 @@ export default function HomePage() {
               },
               {
                 title: 'Échantillons',
-                description: 'Trois échantillons offerts pour chaque commande.',
+                description: 'Un échantillon aléatoire offert dès 120€ d\'achat.',
               },
               {
                 title: 'Service Client',
