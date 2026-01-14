@@ -153,6 +153,8 @@ export default function AdminNewsletterPage() {
     setSending(true)
     setSendStatus('idle')
 
+    const activeSubscribers = subscribers.filter(s => s.is_active)
+
     try {
       // Appeler l'API pour envoyer les emails
       const response = await fetch('/api/newsletter/send', {
