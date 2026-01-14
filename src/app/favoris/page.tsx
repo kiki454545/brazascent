@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -7,22 +8,81 @@ import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react'
 import { useWishlistStore } from '@/store/wishlist'
 import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
-import { products } from '@/data/products'
+import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 
 export default function FavorisPage() {
   const { items: wishlistIds, removeItem, clearWishlist } = useWishlistStore()
   const { addItem, openCart } = useCartStore()
   const { user } = useAuthStore()
+  const [wishlistProducts, setWishlistProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Récupérer les produits complets à partir des IDs
-  const wishlistProducts = wishlistIds
-    .map((id) => products.find((p) => p.id === id))
-    .filter((p): p is Product => p !== undefined)
+  // Charger les produits depuis Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      if (wishlistIds.length === 0) {
+        setWishlistProducts([])
+        setLoading(false)
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .in('id', wishlistIds)
+
+        if (error) {
+          console.error('Error fetching wishlist products:', error)
+          setWishlistProducts([])
+        } else if (data) {
+          const mappedProducts: Product[] = data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            description: p.description || '',
+            shortDescription: p.short_description || '',
+            price: p.price,
+            originalPrice: p.original_price,
+            images: p.images || [],
+            size: p.sizes || [],
+            category: p.category || 'unisexe',
+            collection: p.collection,
+            brand: p.brand || 'BrazaScent',
+            notes: {
+              top: p.notes_top || [],
+              heart: p.notes_heart || [],
+              base: p.notes_base || []
+            },
+            inStock: (p.stock || 0) > 0,
+            new: p.is_new,
+            bestseller: p.is_bestseller,
+            featured: p.is_bestseller
+          }))
+          setWishlistProducts(mappedProducts)
+        }
+      } catch (err) {
+        console.error('Error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [wishlistIds])
 
   const handleAddToCart = (product: Product) => {
     addItem(product, product.size[0])
     openCart()
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-32 pb-24 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
   }
 
   if (wishlistProducts.length === 0) {

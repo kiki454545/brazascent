@@ -1,31 +1,81 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
-import { getProductsByCategory } from '@/data/products'
 import { ProductCard } from '@/components/ProductCard'
+import { supabase } from '@/lib/supabase'
+import { Product } from '@/types'
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'name'
 
 export default function HommePage() {
   const [sortBy, setSortBy] = useState<SortOption>('featured')
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
-  let products = getProductsByCategory('homme')
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('category', 'homme')
+          .order('created_at', { ascending: false })
 
-  // Sort products
-  switch (sortBy) {
-    case 'price-asc':
-      products.sort((a, b) => a.price - b.price)
-      break
-    case 'price-desc':
-      products.sort((a, b) => b.price - a.price)
-      break
-    case 'name':
-      products.sort((a, b) => a.name.localeCompare(b.name))
-      break
-  }
+        if (error) {
+          console.error('Error fetching products:', error)
+        } else if (data) {
+          const mappedProducts: Product[] = data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            description: p.description || '',
+            shortDescription: p.short_description || '',
+            price: p.price,
+            originalPrice: p.original_price,
+            images: p.images || [],
+            size: p.sizes || [],
+            category: p.category || 'homme',
+            collection: p.collection,
+            notes: {
+              top: p.notes_top || [],
+              heart: p.notes_heart || [],
+              base: p.notes_base || []
+            },
+            inStock: (p.stock || 0) > 0,
+            new: p.is_new,
+            bestseller: p.is_bestseller,
+            featured: p.is_bestseller
+          }))
+          setProducts(mappedProducts)
+        }
+      } catch (err) {
+        console.error('Error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
+
+  const sortedProducts = useMemo(() => {
+    const sorted = [...products]
+    switch (sortBy) {
+      case 'price-asc':
+        sorted.sort((a, b) => a.price - b.price)
+        break
+      case 'price-desc':
+        sorted.sort((a, b) => b.price - a.price)
+        break
+      case 'name':
+        sorted.sort((a, b) => a.name.localeCompare(b.name))
+        break
+    }
+    return sorted
+  }, [products, sortBy])
 
   return (
     <div className="min-h-screen pt-28">
@@ -64,7 +114,7 @@ export default function HommePage() {
           {/* Filter bar */}
           <div className="flex items-center justify-between mb-12 pb-6 border-b">
             <span className="text-sm text-gray-500">
-              {products.length} parfum{products.length > 1 ? 's' : ''}
+              {sortedProducts.length} parfum{sortedProducts.length > 1 ? 's' : ''}
             </span>
 
             <div className="relative">
@@ -83,11 +133,21 @@ export default function HommePage() {
           </div>
 
           {/* Products grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
-            {products.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : sortedProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+              {sortedProducts.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <p className="text-gray-500">Aucun parfum disponible dans cette catégorie</p>
+            </div>
+          )}
         </div>
       </section>
     </div>

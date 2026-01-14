@@ -1,17 +1,69 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, useScroll, useTransform, useInView } from 'framer-motion'
 import { ArrowRight, Play } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
-import { getFeaturedProducts, collections } from '@/data/products'
+import { collections } from '@/data/products'
+import { supabase } from '@/lib/supabase'
+import { Product } from '@/types'
 
 export default function HomePage() {
   const heroRef = useRef(null)
   const featuredRef = useRef(null)
   const isFeatureInView = useInView(featuredRef, { once: true })
+
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+
+  // Charger les produits depuis Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('is_bestseller', true)
+          .limit(4)
+
+        if (error) {
+          console.error('Error fetching products:', error)
+          return
+        }
+
+        if (data) {
+          const mappedProducts: Product[] = data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            description: p.description || '',
+            shortDescription: p.short_description || '',
+            price: p.price,
+            originalPrice: p.original_price,
+            images: p.images || [],
+            size: p.sizes || [],
+            category: p.category || 'unisexe',
+            collection: p.collection,
+            notes: {
+              top: p.notes_top || [],
+              heart: p.notes_heart || [],
+              base: p.notes_base || []
+            },
+            inStock: (p.stock || 0) > 0,
+            new: p.is_new,
+            bestseller: p.is_bestseller,
+            featured: p.is_bestseller
+          }))
+          setFeaturedProducts(mappedProducts)
+        }
+      } catch (err) {
+        console.error('Error:', err)
+      }
+    }
+
+    fetchProducts()
+  }, [])
 
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -21,8 +73,6 @@ export default function HomePage() {
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0])
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.1])
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 100])
-
-  const featuredProducts = getFeaturedProducts()
 
   return (
     <div className="min-h-screen">

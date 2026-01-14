@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Filter, X, ChevronDown } from 'lucide-react'
-import { products, collections } from '@/data/products'
+import { Filter, ChevronDown } from 'lucide-react'
+import { collections } from '@/data/products'
 import { ProductCard } from '@/components/ProductCard'
+import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'name'
@@ -16,33 +17,82 @@ export default function CollectionsPage() {
   const [sortBy, setSortBy] = useState<SortOption>('featured')
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [showFilters, setShowFilters] = useState(false)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Filter products
-  let filteredProducts = [...products]
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false })
 
-  if (categoryFilter !== 'all') {
-    filteredProducts = filteredProducts.filter(p => p.category === categoryFilter)
-  }
+        if (error) {
+          console.error('Error fetching products:', error)
+        } else if (data) {
+          const mappedProducts: Product[] = data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            description: p.description || '',
+            shortDescription: p.short_description || '',
+            price: p.price,
+            originalPrice: p.original_price,
+            images: p.images || [],
+            size: p.sizes || [],
+            category: p.category || 'unisexe',
+            collection: p.collection,
+            notes: {
+              top: p.notes_top || [],
+              heart: p.notes_heart || [],
+              base: p.notes_base || []
+            },
+            inStock: (p.stock || 0) > 0,
+            new: p.is_new,
+            bestseller: p.is_bestseller,
+            featured: p.is_bestseller
+          }))
+          setProducts(mappedProducts)
+        }
+      } catch (err) {
+        console.error('Error:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  // Sort products
-  switch (sortBy) {
-    case 'price-asc':
-      filteredProducts.sort((a, b) => a.price - b.price)
-      break
-    case 'price-desc':
-      filteredProducts.sort((a, b) => b.price - a.price)
-      break
-    case 'name':
-      filteredProducts.sort((a, b) => a.name.localeCompare(b.name))
-      break
-    case 'featured':
-    default:
-      filteredProducts.sort((a, b) => {
-        if (a.featured && !b.featured) return -1
-        if (!a.featured && b.featured) return 1
-        return 0
-      })
-  }
+    fetchProducts()
+  }, [])
+
+  const filteredProducts = useMemo(() => {
+    let result = [...products]
+
+    if (categoryFilter !== 'all') {
+      result = result.filter(p => p.category === categoryFilter)
+    }
+
+    switch (sortBy) {
+      case 'price-asc':
+        result.sort((a, b) => a.price - b.price)
+        break
+      case 'price-desc':
+        result.sort((a, b) => b.price - a.price)
+        break
+      case 'name':
+        result.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      case 'featured':
+      default:
+        result.sort((a, b) => {
+          if (a.featured && !b.featured) return -1
+          if (!a.featured && b.featured) return 1
+          return 0
+        })
+    }
+
+    return result
+  }, [products, categoryFilter, sortBy])
 
   return (
     <div className="min-h-screen pt-28">
@@ -168,13 +218,17 @@ export default function CollectionsPage() {
           )}
 
           {/* Products grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-            {filteredProducts.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
-            ))}
-          </div>
-
-          {filteredProducts.length === 0 && (
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+              {filteredProducts.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
+              ))}
+            </div>
+          ) : (
             <div className="text-center py-16">
               <p className="text-gray-500 mb-4">Aucun produit trouvé</p>
               <button
