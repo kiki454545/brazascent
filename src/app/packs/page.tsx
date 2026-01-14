@@ -77,14 +77,22 @@ export default function PacksPage() {
   }
 
   const handleAddToCart = (pack: Pack) => {
-    addItem({
+    // Créer un objet Product compatible pour le panier
+    const packAsProduct = {
       id: pack.id,
       name: pack.name,
+      slug: pack.slug,
+      description: pack.description,
+      shortDescription: pack.description.substring(0, 100),
       price: pack.price,
-      image: pack.image,
-      size: 'Pack',
-      quantity: 1
-    })
+      originalPrice: pack.original_price || undefined,
+      images: [pack.image],
+      category: 'collection' as const,
+      notes: { top: [], heart: [], base: [] },
+      size: ['Pack'],
+      inStock: true,
+    }
+    addItem(packAsProduct, 'Pack', 1)
   }
 
   if (loading) {
