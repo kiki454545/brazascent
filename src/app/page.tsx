@@ -7,12 +7,14 @@ import { motion, useScroll, useTransform, useInView } from 'framer-motion'
 import { ArrowRight, Play } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { supabase } from '@/lib/supabase'
+import { useSettingsStore } from '@/store/settings'
 import { Product } from '@/types'
 
 export default function HomePage() {
   const heroRef = useRef(null)
   const featuredRef = useRef(null)
   const isFeatureInView = useInView(featuredRef, { once: true })
+  const { settings } = useSettingsStore()
 
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
 
@@ -272,7 +274,7 @@ export default function HomePage() {
             {[
               {
                 title: 'Livraison Premium',
-                description: 'Livraison offerte dès 150€. Écrin luxueux et personnalisé.',
+                description: `Livraison offerte dès ${settings.freeShippingThreshold}€. Écrin luxueux et personnalisé.`,
               },
               {
                 title: 'Échantillons',
