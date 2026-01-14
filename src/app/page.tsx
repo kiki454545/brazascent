@@ -304,41 +304,54 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Instagram Section */}
+      {/* Social Section */}
       <section className="py-24 lg:py-32 bg-[#F9F6F1]">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="text-center mb-16">
             <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
-              @brazascent
+              @braza.scent
             </span>
             <h2 className="text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase">
               Suivez-nous
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="relative aspect-square overflow-hidden img-hover-zoom cursor-pointer"
-              >
-                <Image
-                  src={`https://images.unsplash.com/photo-${
-                    i === 1 ? '1541643600914-78b084683601' :
-                    i === 2 ? '1592945403244-b3fbafd7f539' :
-                    i === 3 ? '1587017539504-67cfbddac569' :
-                    '1588405748880-12d1d2a59f75'
-                  }?w=400`}
-                  alt={`Instagram ${i}`}
-                  fill
-                  className="object-cover"
-                />
-              </motion.div>
-            ))}
+          <div className="flex justify-center gap-8 lg:gap-16">
+            <motion.a
+              href="https://snapchat.com/t/eOoOvNcf"
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="flex flex-col items-center gap-4 group"
+            >
+              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-[#FFFC00] flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg className="w-10 h-10 lg:w-12 lg:h-12 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 4.791 4.014.255.044.435.27.42.509 0 .075-.015.149-.045.225-.24.569-1.273.988-3.146 1.271-.059.091-.12.375-.164.57-.029.179-.074.36-.134.553-.076.271-.27.405-.555.405h-.03c-.135 0-.313-.031-.538-.074-.36-.075-.765-.135-1.273-.135-.3 0-.599.015-.913.074-.6.104-1.123.464-1.723.884-.853.599-1.826 1.288-3.294 1.288-.06 0-.119-.015-.18-.015h-.149c-1.468 0-2.427-.675-3.279-1.288-.599-.42-1.107-.779-1.707-.884-.314-.045-.629-.074-.928-.074-.54 0-.958.089-1.272.149-.211.043-.391.074-.54.074-.374 0-.523-.224-.583-.42-.061-.192-.09-.389-.135-.567-.046-.181-.105-.494-.166-.57-1.918-.222-2.95-.642-3.189-1.226-.031-.063-.052-.15-.055-.225-.015-.243.165-.465.42-.509 3.264-.54 4.73-3.879 4.791-4.02l.016-.029c.18-.345.224-.645.119-.869-.195-.434-.884-.658-1.332-.809-.121-.029-.24-.074-.346-.119-1.107-.435-1.257-.93-1.197-1.273.09-.479.674-.793 1.168-.793.146 0 .27.029.383.074.42.194.789.3 1.104.3.234 0 .384-.06.465-.105l-.046-.569c-.098-1.626-.225-3.651.307-4.837C7.392 1.077 10.739.807 11.727.807l.419-.015h.06z"/>
+                </svg>
+              </div>
+              <span className="text-sm tracking-[0.15em] uppercase text-gray-600 group-hover:text-[#C9A962] transition-colors">Snapchat</span>
+            </motion.a>
+
+            <motion.a
+              href="https://www.tiktok.com/@braza.scent"
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col items-center gap-4 group"
+            >
+              <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-black flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg className="w-10 h-10 lg:w-12 lg:h-12 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                </svg>
+              </div>
+              <span className="text-sm tracking-[0.15em] uppercase text-gray-600 group-hover:text-[#C9A962] transition-colors">TikTok</span>
+            </motion.a>
           </div>
         </div>
       </section>
