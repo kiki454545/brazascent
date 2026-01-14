@@ -46,19 +46,17 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fetchSettings])
 
-  // Ne pas afficher le contenu tant que les settings ne sont pas chargés
-  // Mais limiter le temps d'attente à 3 secondes pour éviter le chargement infini
+  // Afficher le spinner seulement pendant un court instant (500ms max)
+  // pour éviter le flash de contenu, puis afficher le site
   const [forceShow, setForceShow] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!isLoaded) {
-        setForceShow(true)
-      }
-    }, 3000)
+      setForceShow(true)
+    }, 500)
 
     return () => clearTimeout(timer)
-  }, [isLoaded])
+  }, [])
 
   if (!mounted || (!isLoaded && !forceShow)) {
     return (
