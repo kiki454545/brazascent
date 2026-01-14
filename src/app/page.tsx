@@ -17,6 +17,15 @@ export default function HomePage() {
 
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
 
+  // Helper pour ignorer les AbortError
+  const isAbortError = (error: any): boolean => {
+    if (!error) return false
+    const message = error.message || ''
+    return error.name === 'AbortError' ||
+           message.includes('AbortError') ||
+           message.includes('signal is aborted')
+  }
+
   // Charger les produits depuis Supabase
   useEffect(() => {
     let isMounted = true
@@ -32,6 +41,8 @@ export default function HomePage() {
         if (!isMounted) return
 
         if (error) {
+          // Ignorer les erreurs d'annulation
+          if (isAbortError(error)) return
           console.error('Error fetching products:', error)
           return
         }
@@ -62,7 +73,8 @@ export default function HomePage() {
           setFeaturedProducts(mappedProducts)
         }
       } catch (err: any) {
-        if (err?.name === 'AbortError' || !isMounted) return
+        // Ignorer les erreurs d'annulation
+        if (isAbortError(err) || !isMounted) return
         console.error('Error:', err)
       }
     }

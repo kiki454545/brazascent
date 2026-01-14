@@ -39,6 +39,15 @@ const defaultSettings: Settings = {
   notificationEmails: []
 }
 
+// Helper pour ignorer les AbortError
+const isAbortError = (error: any): boolean => {
+  if (!error) return false
+  const message = error.message || ''
+  return error.name === 'AbortError' ||
+         message.includes('AbortError') ||
+         message.includes('signal is aborted')
+}
+
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
   settings: defaultSettings,
   isLoaded: false,
@@ -54,7 +63,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
       if (error) {
         // Ignorer les erreurs d'annulation
-        if (error.message?.includes('AbortError')) return
+        if (isAbortError(error)) {
+          set({ isLoaded: true })
+          return
+        }
         console.error('Error fetching settings:', error)
         set({ isLoaded: true })
         return
@@ -92,7 +104,12 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       } else {
         set({ isLoaded: true })
       }
-    } catch (err) {
+    } catch (err: any) {
+      // Ignorer les erreurs d'annulation
+      if (isAbortError(err)) {
+        set({ isLoaded: true })
+        return
+      }
       console.error('Error:', err)
       set({ isLoaded: true })
     }

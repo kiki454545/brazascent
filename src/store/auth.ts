@@ -25,6 +25,14 @@ interface AuthStore {
   fetchProfile: () => Promise<void>
 }
 
+// Helper pour ignorer les AbortError
+const isAbortError = (error: any): boolean => {
+  if (!error) return false
+  return error.name === 'AbortError' ||
+         error.message?.includes('AbortError') ||
+         error.message?.includes('signal is aborted')
+}
+
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   profile: null,
@@ -32,8 +40,17 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   isInitialized: false,
 
   initialize: async () => {
+    // Si déjà initialisé, ne rien faire
+    if (get().isInitialized) return
+
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      // Ignorer les erreurs d'annulation
+      if (sessionError && isAbortError(sessionError)) {
+        set({ isInitialized: true })
+        return
+      }
 
       if (session?.user) {
         set({ user: session.user })
@@ -53,7 +70,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isInitialized: true })
     } catch (error: any) {
       // Ignorer les erreurs d'annulation
-      if (error?.name === 'AbortError' || error?.message?.includes('AbortError')) {
+      if (isAbortError(error)) {
         set({ isInitialized: true })
         return
       }

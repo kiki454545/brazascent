@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { useSettingsStore } from '@/store/settings'
 import { useAuthStore } from '@/store/auth'
@@ -34,14 +34,33 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const { fetchSettings, isLoaded, settings } = useSettingsStore()
   const { profile, isInitialized } = useAuthStore()
   const [mounted, setMounted] = useState(false)
+  const fetchedRef = useRef(false)
 
   useEffect(() => {
     setMounted(true)
-    fetchSettings()
+
+    // Éviter les double-appels en React 18 Strict Mode
+    if (!fetchedRef.current) {
+      fetchedRef.current = true
+      fetchSettings()
+    }
   }, [fetchSettings])
 
   // Ne pas afficher le contenu tant que les settings ne sont pas chargés
-  if (!mounted || !isLoaded) {
+  // Mais limiter le temps d'attente à 3 secondes pour éviter le chargement infini
+  const [forceShow, setForceShow] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isLoaded) {
+        setForceShow(true)
+      }
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [isLoaded])
+
+  if (!mounted || (!isLoaded && !forceShow)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
