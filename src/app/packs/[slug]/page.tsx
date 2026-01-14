@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { ChevronRight, Truck, Gift, Loader2, Package } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cart'
+import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
 
@@ -52,6 +53,7 @@ export default function PackDetailPage() {
   const [loading, setLoading] = useState(true)
 
   const { addItem, openCart } = useCartStore()
+  const { settings } = useSettingsStore()
 
   useEffect(() => {
     const fetchPack = async () => {
@@ -297,7 +299,7 @@ export default function PackDetailPage() {
             <div className="border-t border-b py-6 space-y-4">
               <div className="flex items-center gap-4">
                 <Truck className="w-5 h-5 text-[#C9A962]" />
-                <span className="text-sm">Livraison offerte dès 150€</span>
+                <span className="text-sm">Livraison offerte dès {settings.freeShippingThreshold}€</span>
               </div>
               <div className="flex items-center gap-4">
                 <Gift className="w-5 h-5 text-[#C9A962]" />

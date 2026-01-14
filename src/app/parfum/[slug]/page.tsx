@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
+import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
 
 export default function ProductPage() {
@@ -27,6 +28,7 @@ export default function ProductPage() {
 
   const { addItem, openCart } = useCartStore()
   const { toggleItem, isInWishlist } = useWishlistStore()
+  const { settings } = useSettingsStore()
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -352,7 +354,7 @@ export default function ProductPage() {
             <div className="border-t border-b py-6 space-y-4">
               <div className="flex items-center gap-4">
                 <Truck className="w-5 h-5 text-[#C9A962]" />
-                <span className="text-sm">Livraison offerte dès 150€</span>
+                <span className="text-sm">Livraison offerte dès {settings.freeShippingThreshold}€</span>
               </div>
               <div className="flex items-center gap-4">
                 <RotateCcw className="w-5 h-5 text-[#C9A962]" />
