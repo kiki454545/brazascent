@@ -51,7 +51,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       })
 
       set({ isInitialized: true })
-    } catch (error) {
+    } catch (error: any) {
+      // Ignorer les erreurs d'annulation
+      if (error?.name === 'AbortError' || error?.message?.includes('AbortError')) {
+        set({ isInitialized: true })
+        return
+      }
       console.error('Auth initialization error:', error)
       set({ isInitialized: true })
     }

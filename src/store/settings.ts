@@ -53,6 +53,8 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         .select('key, value')
 
       if (error) {
+        // Ignorer les erreurs d'annulation
+        if (error.message?.includes('AbortError')) return
         console.error('Error fetching settings:', error)
         set({ isLoaded: true })
         return

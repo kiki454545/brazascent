@@ -19,6 +19,8 @@ export default function HomePage() {
 
   // Charger les produits depuis Supabase
   useEffect(() => {
+    let isMounted = true
+
     const fetchProducts = async () => {
       try {
         const { data, error } = await supabase
@@ -26,6 +28,8 @@ export default function HomePage() {
           .select('*')
           .eq('is_bestseller', true)
           .limit(4)
+
+        if (!isMounted) return
 
         if (error) {
           console.error('Error fetching products:', error)
@@ -57,12 +61,17 @@ export default function HomePage() {
           }))
           setFeaturedProducts(mappedProducts)
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.name === 'AbortError' || !isMounted) return
         console.error('Error:', err)
       }
     }
 
     fetchProducts()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const { scrollYProgress } = useScroll({
@@ -133,7 +142,7 @@ export default function HomePage() {
               Découvrir
             </Link>
             <Link
-              href="/maison"
+              href="/collections"
               className="px-10 py-4 border border-white text-sm tracking-[0.2em] uppercase font-medium hover:bg-white hover:text-[#19110B] transition-colors"
             >
               Notre Maison
@@ -256,7 +265,7 @@ export default function HomePage() {
                 Maîtres Parfumeurs.
               </p>
               <Link
-                href="/maison"
+                href="/collections"
                 className="inline-flex items-center gap-3 text-sm tracking-[0.2em] uppercase text-[#C9A962] hover:text-white transition-colors group"
               >
                 Découvrir notre maison
