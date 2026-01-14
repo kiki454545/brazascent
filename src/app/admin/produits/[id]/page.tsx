@@ -25,11 +25,11 @@ interface ProductForm {
   description: string
   price: number
   original_price: number | null
-  collection: string
   category: string
   gender: string
   sizes: string[]
   stock_by_size: Record<string, number>
+  price_by_size: Record<string, number>
   notes_top: string[]
   notes_heart: string[]
   notes_base: string[]
@@ -59,11 +59,11 @@ export default function EditProductPage() {
     description: '',
     price: 0,
     original_price: null,
-    collection: 'Signature',
     category: 'Eau de Parfum',
     gender: 'Unisexe',
     sizes: ['2ml', '5ml', '10ml'],
     stock_by_size: { '2ml': 50, '5ml': 50, '10ml': 50 },
+    price_by_size: { '2ml': 10, '5ml': 20, '10ml': 35 },
     notes_top: [],
     notes_heart: [],
     notes_base: [],
@@ -99,6 +99,10 @@ export default function EditProductPage() {
           acc[size] = Math.floor((data.stock || 0) / sizes.length)
           return acc
         }, {})
+        const priceBySize = data.price_by_size || sizes.reduce((acc: Record<string, number>, size: string) => {
+          acc[size] = data.price || 0
+          return acc
+        }, {})
         setForm({
           name: data.name || '',
           slug: data.slug || '',
@@ -107,11 +111,11 @@ export default function EditProductPage() {
           description: data.description || '',
           price: data.price || 0,
           original_price: data.original_price || null,
-          collection: data.collection || 'Signature',
           category: data.category || 'Eau de Parfum',
           gender: data.gender || 'Unisexe',
           sizes: sizes,
           stock_by_size: stockBySize,
+          price_by_size: priceBySize,
           notes_top: data.notes_top || [],
           notes_heart: data.notes_heart || [],
           notes_base: data.notes_base || [],
@@ -139,8 +143,12 @@ export default function EditProductPage() {
       if (!form.name.trim()) {
         throw new Error('Le nom du produit est requis')
       }
-      if (form.price <= 0) {
-        throw new Error('Le prix doit être supérieur à 0')
+      if (form.sizes.length === 0) {
+        throw new Error('Ajoutez au moins une taille')
+      }
+      const hasValidPrice = Object.values(form.price_by_size).some(price => price > 0)
+      if (!hasValidPrice) {
+        throw new Error('Au moins une taille doit avoir un prix supérieur à 0')
       }
       if (form.images.length === 0) {
         throw new Error('Ajoutez au moins une image')
@@ -154,11 +162,11 @@ export default function EditProductPage() {
         description: form.description,
         price: form.price,
         original_price: form.original_price,
-        collection: form.collection,
         category: form.category,
         gender: form.gender,
         sizes: form.sizes,
         stock_by_size: form.stock_by_size,
+        price_by_size: form.price_by_size,
         notes_top: form.notes_top,
         notes_heart: form.notes_heart,
         notes_base: form.notes_base,
@@ -287,11 +295,13 @@ export default function EditProductPage() {
     const size = newSize.trim()
     if (size && !form.sizes.includes(size)) {
       const newStockBySize = { ...form.stock_by_size, [size]: 50 }
+      const newPriceBySize = { ...form.price_by_size, [size]: 0 }
       const totalStock = Object.values(newStockBySize).reduce((a, b) => a + b, 0)
       setForm({
         ...form,
         sizes: [...form.sizes, size],
         stock_by_size: newStockBySize,
+        price_by_size: newPriceBySize,
         stock: totalStock
       })
       setNewSize('')
@@ -301,13 +311,23 @@ export default function EditProductPage() {
   const removeSize = (index: number) => {
     const sizeToRemove = form.sizes[index]
     const newStockBySize = { ...form.stock_by_size }
+    const newPriceBySize = { ...form.price_by_size }
     delete newStockBySize[sizeToRemove]
+    delete newPriceBySize[sizeToRemove]
     const totalStock = Object.values(newStockBySize).reduce((a, b) => a + b, 0)
     setForm({
       ...form,
       sizes: form.sizes.filter((_, i) => i !== index),
       stock_by_size: newStockBySize,
+      price_by_size: newPriceBySize,
       stock: totalStock
+    })
+  }
+
+  const updatePriceForSize = (size: string, price: number) => {
+    setForm({
+      ...form,
+      price_by_size: { ...form.price_by_size, [size]: price }
     })
   }
 
@@ -443,21 +463,6 @@ export default function EditProductPage() {
                     onChange={(e) => setForm({ ...form, brand: e.target.value })}
                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Collection
-                  </label>
-                  <select
-                    value={form.collection}
-                    onChange={(e) => setForm({ ...form, collection: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
-                  >
-                    <option value="Signature">Signature</option>
-                    <option value="Les Absolus">Les Absolus</option>
-                    <option value="Lumière">Lumière</option>
-                  </select>
                 </div>
 
                 <div>
@@ -717,70 +722,52 @@ export default function EditProductPage() {
             className="space-y-6"
           >
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-lg font-medium mb-4">Prix</h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prix *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      step="0.01"
-                      value={form.price || ''}
-                      onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-4 py-2 pr-8 border rounded-lg focus:outline-none focus:border-[#C9A962]"
-                      placeholder="0.00"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prix barré (optionnel)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={form.original_price || ''}
-                      onChange={(e) => setForm({ ...form, original_price: parseFloat(e.target.value) || null })}
-                      className="w-full px-4 py-2 pr-8 border rounded-lg focus:outline-none focus:border-[#C9A962]"
-                      placeholder="0.00"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Stock par taille</h2>
+                <h2 className="text-lg font-medium">Prix et stock par taille</h2>
                 <div className="text-sm text-gray-500">
                   Stock total : <span className="font-medium text-gray-900">{form.stock}</span> unités
                 </div>
               </div>
 
               {form.sizes.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-4">
                   {form.sizes.map((size) => (
                     <div key={size} className="p-4 bg-gray-50 rounded-lg">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {size}
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={form.stock_by_size[size] ?? 0}
-                        onChange={(e) => updateStockForSize(size, parseInt(e.target.value) || 0)}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
-                      />
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="font-medium text-gray-900">{size}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
+                            Prix
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={form.price_by_size[size] ?? 0}
+                              onChange={(e) => updatePriceForSize(size, parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 pr-8 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                              placeholder="0.00"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-500 mb-1">
+                            Stock
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={form.stock_by_size[size] ?? 0}
+                            onChange={(e) => updateStockForSize(size, parseInt(e.target.value) || 0)}
+                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>

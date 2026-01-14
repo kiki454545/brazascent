@@ -19,6 +19,7 @@ export default function ProductPage() {
   const [product, setProduct] = useState<Product | null>(null)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [stockBySize, setStockBySize] = useState<Record<string, number>>({})
+  const [priceBySize, setPriceBySize] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedSize, setSelectedSize] = useState('')
@@ -69,6 +70,7 @@ export default function ProductPage() {
 
         setProduct(mappedProduct)
         setStockBySize(data.stock_by_size || {})
+        setPriceBySize(data.price_by_size || {})
         setSelectedSize(mappedProduct.size[1] || mappedProduct.size[0] || '')
 
         // Récupérer les produits similaires
@@ -144,12 +146,14 @@ export default function ProductPage() {
     openCart()
   }
 
-  // Price based on size (simplified pricing)
+  // Price based on size from database
   const getSizePrice = (size: string) => {
-    const basePrice = product.price
-    if (size === '30ml') return Math.round(basePrice * 0.6)
-    if (size === '50ml') return Math.round(basePrice * 0.8)
-    return basePrice // 100ml
+    // Utiliser le prix par taille s'il existe
+    if (priceBySize[size] !== undefined && priceBySize[size] > 0) {
+      return priceBySize[size]
+    }
+    // Fallback sur le prix de base si pas de prix par taille
+    return product.price
   }
 
   const currentPrice = getSizePrice(selectedSize)

@@ -80,6 +80,7 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [statusDropdown, setStatusDropdown] = useState<string | null>(null)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -95,6 +96,17 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     fetchOrders()
   }, [])
+
+  // Fermer le dropdown quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (statusDropdown) {
+        setStatusDropdown(null)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [statusDropdown])
 
   useEffect(() => {
     if (selectedOrder) {
@@ -130,6 +142,9 @@ export default function AdminOrdersPage() {
   const completedOrders = orders.filter(o => ['completed', 'cancelled'].includes(o.status))
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    setUpdatingStatus(orderId)
+    setStatusDropdown(null)
+
     try {
       const updateData: any = { status: newStatus }
 
@@ -149,11 +164,14 @@ export default function AdminOrdersPage() {
         setOrders(orders.map(order =>
           order.id === orderId ? { ...order, ...updateData } : order
         ))
+      } else {
+        console.error('Error updating order:', error)
       }
     } catch (error) {
       console.error('Error updating order:', error)
+    } finally {
+      setUpdatingStatus(null)
     }
-    setStatusDropdown(null)
   }
 
   const saveOrderDetails = async () => {
@@ -455,21 +473,42 @@ export default function AdminOrdersPage() {
                         <span className="font-semibold text-lg">#{order.order_number}</span>
                         <div className="relative">
                           <button
-                            onClick={() => setStatusDropdown(statusDropdown === order.id ? null : order.id)}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full ${statusConfig.color}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (updatingStatus !== order.id) {
+                                setStatusDropdown(statusDropdown === order.id ? null : order.id)
+                              }
+                            }}
+                            disabled={updatingStatus === order.id}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full ${statusConfig.color} ${updatingStatus === order.id ? 'opacity-70' : ''}`}
                           >
-                            {statusConfig.label}
-                            <ChevronDown className="w-3 h-3" />
+                            {updatingStatus === order.id ? (
+                              <>
+                                <div className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                                Mise à jour...
+                              </>
+                            ) : (
+                              <>
+                                {statusConfig.label}
+                                <ChevronDown className="w-3 h-3" />
+                              </>
+                            )}
                           </button>
 
                           {statusDropdown === order.id && (
-                            <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border z-20">
+                            <div
+                              className="absolute bottom-full left-0 mb-1 w-48 bg-white rounded-lg shadow-lg border z-50"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {statusOptions.map((status) => (
                                 <button
                                   key={status.value}
-                                  onClick={() => updateOrderStatus(order.id, status.value)}
-                                  className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 ${
-                                    order.status === status.value ? 'bg-gray-50' : ''
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    updateOrderStatus(order.id, status.value)
+                                  }}
+                                  className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
+                                    order.status === status.value ? 'bg-gray-100 font-medium' : ''
                                   }`}
                                 >
                                   <status.icon className="w-4 h-4" />
