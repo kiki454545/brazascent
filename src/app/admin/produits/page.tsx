@@ -37,6 +37,8 @@ export default function AdminProductsPage() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [deleteModal, setDeleteModal] = useState<string | null>(null)
   const [isFromSupabase, setIsFromSupabase] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchProducts()
@@ -67,6 +69,9 @@ export default function AdminProductsPage() {
   }
 
   const handleDelete = async (productId: string) => {
+    setDeleting(true)
+    setDeleteError(null)
+
     try {
       // Supprimer le produit dans Supabase
       const { error } = await supabase
@@ -76,14 +81,18 @@ export default function AdminProductsPage() {
 
       if (error) {
         console.error('Error deleting product:', error)
+        setDeleteError(`Erreur lors de la suppression: ${error.message}. Vérifiez les politiques RLS dans Supabase.`)
+        return
       }
 
-      // Mettre à jour l'état local
+      // Mettre à jour l'état local seulement si la suppression a réussi
       setProducts(products.filter(p => p.id !== productId))
+      setDeleteModal(null)
     } catch (err) {
       console.error('Error:', err)
+      setDeleteError('Une erreur inattendue est survenue')
     } finally {
-      setDeleteModal(null)
+      setDeleting(false)
     }
   }
 
@@ -345,21 +354,38 @@ export default function AdminProductsPage() {
             className="bg-white rounded-xl p-6 max-w-md w-full mx-4"
           >
             <h3 className="text-lg font-medium mb-2">Supprimer ce produit ?</h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-gray-500 mb-4">
               Cette action est irréversible. Le produit sera définitivement supprimé.
             </p>
+            {deleteError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+                {deleteError}
+              </div>
+            )}
             <div className="flex gap-4">
               <button
-                onClick={() => setDeleteModal(null)}
-                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  setDeleteModal(null)
+                  setDeleteError(null)
+                }}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Annuler
               </button>
               <button
                 onClick={() => handleDelete(deleteModal)}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                disabled={deleting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Supprimer
+                {deleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Suppression...
+                  </>
+                ) : (
+                  'Supprimer'
+                )}
               </button>
             </div>
           </motion.div>
