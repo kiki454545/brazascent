@@ -82,9 +82,6 @@ export async function POST(request: NextRequest) {
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout`,
       customer_email: shippingAddress.email,
-      shipping_address_collection: {
-        allowed_countries: ['FR', 'BE', 'CH', 'LU'],
-      },
       metadata: {
         userId: userId || '',
         shippingMethod,
