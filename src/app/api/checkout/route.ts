@@ -41,8 +41,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculer les frais de livraison
+    // Express est toujours payant (14.90€), standard est gratuit au-dessus de 150€
     const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
-    const shippingCost = subtotal >= 150 ? 0 : shippingMethod === 'express' ? 14.90 : 9.90
+    const shippingCost = shippingMethod === 'express' ? 14.90 : (subtotal >= 150 ? 0 : 9.90)
 
     // Créer les line items pour Stripe
     const lineItems = items.map((item) => ({

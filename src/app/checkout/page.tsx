@@ -46,7 +46,7 @@ export default function CheckoutPage() {
   const [acceptTerms, setAcceptTerms] = useState(false)
 
   const subtotal = getTotal()
-  const shippingCost = subtotal >= 150 ? 0 : shippingMethod === 'express' ? 14.90 : 9.90
+  const shippingCost = shippingMethod === 'express' ? 14.90 : (subtotal >= 150 ? 0 : 9.90)
   const total = subtotal + shippingCost
 
   // Pré-remplir avec les infos du profil
