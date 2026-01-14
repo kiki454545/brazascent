@@ -14,7 +14,6 @@ import {
   Eye
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { products as localProducts } from '@/data/products'
 
 interface Product {
   id: string
@@ -53,30 +52,12 @@ export default function AdminProductsPage() {
 
       if (error) {
         console.error('Error fetching products from Supabase:', error)
-        // Fallback vers les produits locaux si la table n'existe pas encore
-        const productsWithStock = localProducts.map(p => ({
-          ...p,
-          stock: Math.floor(Math.random() * 50) + 10,
-          collection: p.collection || 'Signature',
-          is_new: p.new,
-          is_bestseller: p.bestseller,
-          brand: p.brand || ''
-        }))
-        setProducts(productsWithStock)
-      } else if (data && data.length > 0) {
+        setProducts([])
+      } else if (data) {
         setProducts(data)
         setIsFromSupabase(true)
       } else {
-        // Si la table existe mais est vide, utiliser les produits locaux
-        const productsWithStock = localProducts.map(p => ({
-          ...p,
-          stock: Math.floor(Math.random() * 50) + 10,
-          collection: p.collection || 'Signature',
-          is_new: p.new,
-          is_bestseller: p.bestseller,
-          brand: p.brand || ''
-        }))
-        setProducts(productsWithStock)
+        setProducts([])
       }
     } catch (error) {
       console.error('Error fetching products:', error)
