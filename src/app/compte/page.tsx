@@ -64,9 +64,8 @@ export default function ComptePage() {
     const result = await signUp(email, password, firstName, lastName)
     if (result.error) {
       setError(result.error)
-    } else {
-      setSuccess('Compte créé avec succès ! Vérifiez votre email pour confirmer votre inscription.')
     }
+    // L'utilisateur est automatiquement connecté après l'inscription via le store
   }
 
   const handleUpdateProfile = async (e: React.FormEvent) => {

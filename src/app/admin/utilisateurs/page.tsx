@@ -77,18 +77,24 @@ export default function AdminUsersPage() {
 
   const toggleAdmin = async (userId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_profiles')
         .update({ is_admin: !currentStatus })
         .eq('id', userId)
+        .select()
 
-      if (!error) {
+      if (error) {
+        console.error('Error updating user:', error)
+        alert(`Erreur: ${error.message}`)
+      } else {
+        console.log('Update successful:', data)
         setUsers(users.map(user =>
           user.id === userId ? { ...user, is_admin: !currentStatus } : user
         ))
       }
     } catch (error) {
       console.error('Error updating user:', error)
+      alert('Erreur lors de la mise à jour')
     }
     setActionMenu(null)
   }
