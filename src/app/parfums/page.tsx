@@ -86,7 +86,7 @@ export default function ParfumsPage() {
         case 'name':
           return a.name.localeCompare(b.name)
         default:
-          return b.isNew ? 1 : -1
+          return b.new ? 1 : -1
       }
     })
 
