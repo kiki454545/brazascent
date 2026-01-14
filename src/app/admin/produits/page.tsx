@@ -59,7 +59,8 @@ export default function AdminProductsPage() {
           stock: Math.floor(Math.random() * 50) + 10,
           collection: p.collection || 'Signature',
           is_new: p.new,
-          is_bestseller: p.bestseller
+          is_bestseller: p.bestseller,
+          brand: p.brand || ''
         }))
         setProducts(productsWithStock)
       } else if (data && data.length > 0) {
@@ -72,7 +73,8 @@ export default function AdminProductsPage() {
           stock: Math.floor(Math.random() * 50) + 10,
           collection: p.collection || 'Signature',
           is_new: p.new,
-          is_bestseller: p.bestseller
+          is_bestseller: p.bestseller,
+          brand: p.brand || ''
         }))
         setProducts(productsWithStock)
       }
