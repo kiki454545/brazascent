@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { motion, useScroll, useTransform, useInView } from 'framer-motion'
 import { ArrowRight, Play } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
-import { collections } from '@/data/products'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 
@@ -148,16 +147,16 @@ export default function HomePage() {
             className="flex flex-col sm:flex-row gap-4"
           >
             <Link
-              href="/collections"
+              href="/parfums"
               className="btn-luxury px-10 py-4 bg-white text-[#19110B] text-sm tracking-[0.2em] uppercase font-medium hover:bg-[#C9A962] hover:text-white transition-colors"
             >
               Découvrir
             </Link>
             <Link
-              href="/collections"
+              href="/marques"
               className="px-10 py-4 border border-white text-sm tracking-[0.2em] uppercase font-medium hover:bg-white hover:text-[#19110B] transition-colors"
             >
-              Notre Maison
+              Nos Marques
             </Link>
           </motion.div>
         </motion.div>
@@ -195,58 +194,13 @@ export default function HomePage() {
             className="text-center mt-16"
           >
             <Link
-              href="/collections"
+              href="/parfums"
               className="inline-flex items-center gap-3 text-sm tracking-[0.2em] uppercase hover:text-[#C9A962] transition-colors group"
             >
-              Voir toutes les créations
+              Voir tous les parfums
               <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
             </Link>
           </motion.div>
-        </div>
-      </section>
-
-      {/* Collections Section */}
-      <section className="py-24 lg:py-32 bg-[#F9F6F1]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="text-center mb-16">
-            <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
-              Univers
-            </span>
-            <h2 className="text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase mb-6">
-              Collections
-            </h2>
-            <div className="w-24 h-px bg-[#C9A962] mx-auto" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {collections.map((collection, index) => (
-              <motion.div
-                key={collection.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.2 }}
-              >
-                <Link href={`/collections/${collection.slug}`} className="group block">
-                  <div className="relative aspect-[4/5] overflow-hidden mb-6 img-hover-zoom">
-                    <Image
-                      src={collection.image}
-                      alt={collection.name}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <h3 className="text-white text-2xl lg:text-3xl font-light tracking-[0.2em] uppercase">
-                        {collection.name}
-                      </h3>
-                    </div>
-                  </div>
-                  <p className="text-center text-gray-600">{collection.description}</p>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -277,10 +231,10 @@ export default function HomePage() {
                 Maîtres Parfumeurs.
               </p>
               <Link
-                href="/collections"
+                href="/parfums"
                 className="inline-flex items-center gap-3 text-sm tracking-[0.2em] uppercase text-[#C9A962] hover:text-white transition-colors group"
               >
-                Découvrir notre maison
+                Découvrir nos parfums
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
               </Link>
             </motion.div>

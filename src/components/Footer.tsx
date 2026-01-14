@@ -7,10 +7,9 @@ import { supabase } from '@/lib/supabase'
 
 const footerLinks = {
   boutique: [
-    { name: 'Parfums', href: '/collections' },
-    { name: 'Collections', href: '/collections' },
-    { name: 'Coffrets', href: '/coffrets' },
-    { name: 'Nouveautés', href: '/nouveautes' },
+    { name: 'Parfums', href: '/parfums' },
+    { name: 'Marques', href: '/marques' },
+    { name: 'Packs', href: '/packs' },
   ],
   maison: [
     { name: 'Notre Histoire', href: '/maison' },

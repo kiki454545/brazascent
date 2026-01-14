@@ -349,17 +349,21 @@ export function Header() {
 
               <div className="mt-12">
                 <p className="text-sm tracking-[0.2em] uppercase text-gray-500 mb-6">
-                  Collections
+                  Catégories
                 </p>
                 <div className="grid grid-cols-2 gap-4">
-                  {['Signature', 'Les Absolus', 'Lumière'].map((collection) => (
+                  {[
+                    { name: 'Parfums', href: '/parfums' },
+                    { name: 'Marques', href: '/marques' },
+                    { name: 'Packs', href: '/packs' },
+                  ].map((item) => (
                     <Link
-                      key={collection}
-                      href={`/collections/${collection.toLowerCase().replace(' ', '-')}`}
+                      key={item.name}
+                      href={item.href}
                       onClick={() => setIsSearchOpen(false)}
                       className="py-3 text-lg hover:text-[#C9A962] transition-colors"
                     >
-                      {collection}
+                      {item.name}
                     </Link>
                   ))}
                 </div>
