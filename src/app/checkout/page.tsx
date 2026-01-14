@@ -8,7 +8,6 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, CreditCard, Truck, Shield, Check, ChevronDown } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
-import { supabase } from '@/lib/supabase'
 
 type Step = 'information' | 'shipping' | 'payment'
 
@@ -44,7 +43,6 @@ export default function CheckoutPage() {
   })
 
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express'>('standard')
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card')
   const [acceptTerms, setAcceptTerms] = useState(false)
 
   const subtotal = getTotal()
@@ -93,56 +91,33 @@ export default function CheckoutPage() {
     setIsLoading(true)
 
     try {
-      // Créer la commande dans Supabase
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user?.id || null,
-          status: 'pending',
-          subtotal: subtotal,
-          shipping: shippingCost,
-          total: total,
-          shipping_address: {
-            firstName: shippingAddress.firstName,
-            lastName: shippingAddress.lastName,
-            email: shippingAddress.email,
-            phone: shippingAddress.phone,
-            street: shippingAddress.street,
-            city: shippingAddress.city,
-            postalCode: shippingAddress.postalCode,
-            country: shippingAddress.country,
-          },
-          payment_method: paymentMethod,
-          payment_status: 'completed', // Simulé pour le dev
-        })
-        .select()
-        .single()
+      // Créer une session Stripe Checkout
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items,
+          shippingAddress,
+          shippingMethod,
+          userId: user?.id,
+        }),
+      })
 
-      if (orderError) throw orderError
+      const data = await response.json()
 
-      // Ajouter les articles de la commande
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.product.id,
-        product_name: item.product.name,
-        product_image: item.product.images[0],
-        size: item.selectedSize,
-        quantity: item.quantity,
-        price: item.product.price * item.quantity,
-      }))
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors du paiement')
+      }
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems)
-
-      if (itemsError) throw itemsError
-
-      // Vider le panier et rediriger
-      clearCart()
-      router.push(`/checkout/confirmation?order=${order.order_number}`)
+      // Rediriger vers Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url
+      }
     } catch (err) {
-      console.error('Order error:', err)
-      setError('Une erreur est survenue lors de la création de votre commande')
+      console.error('Payment error:', err)
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du paiement')
     } finally {
       setIsLoading(false)
     }
@@ -462,93 +437,42 @@ export default function CheckoutPage() {
                 <h2 className="text-xl tracking-[0.1em] uppercase mb-6">Paiement</h2>
 
                 <form onSubmit={handlePaymentSubmit} className="space-y-6">
-                  <div className="space-y-4">
-                    <label
-                      className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
-                        paymentMethod === 'card'
-                          ? 'border-[#C9A962] bg-[#F9F6F1]'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="radio"
-                          name="payment"
-                          value="card"
-                          checked={paymentMethod === 'card'}
-                          onChange={() => setPaymentMethod('card')}
-                          className="w-5 h-5 accent-[#C9A962]"
-                        />
-                        <div className="flex items-center gap-3">
-                          <CreditCard className="w-6 h-6 text-gray-400" />
-                          <span className="font-medium">Carte bancaire</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <div className="w-10 h-6 bg-gray-200 rounded flex items-center justify-center text-xs font-bold">
-                          VISA
-                        </div>
-                        <div className="w-10 h-6 bg-gray-200 rounded flex items-center justify-center text-xs font-bold">
-                          MC
-                        </div>
-                      </div>
-                    </label>
-
-                    <label
-                      className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
-                        paymentMethod === 'paypal'
-                          ? 'border-[#C9A962] bg-[#F9F6F1]'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="radio"
-                          name="payment"
-                          value="paypal"
-                          checked={paymentMethod === 'paypal'}
-                          onChange={() => setPaymentMethod('paypal')}
-                          className="w-5 h-5 accent-[#C9A962]"
-                        />
-                        <span className="font-medium text-[#003087]">PayPal</span>
-                      </div>
-                    </label>
+                  {/* Stripe info */}
+                  <div className="p-4 bg-[#F9F6F1] border border-[#C9A962]/30 rounded-lg">
+                    <div className="flex items-center gap-3 mb-2">
+                      <CreditCard className="w-5 h-5 text-[#C9A962]" />
+                      <span className="font-medium">Paiement sécurisé par Stripe</span>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Vous serez redirigé vers la page de paiement sécurisée Stripe pour finaliser votre commande.
+                    </p>
+                    <div className="flex gap-2 mt-3">
+                      <div className="px-2 py-1 bg-white rounded text-xs font-bold text-gray-600">VISA</div>
+                      <div className="px-2 py-1 bg-white rounded text-xs font-bold text-gray-600">Mastercard</div>
+                      <div className="px-2 py-1 bg-white rounded text-xs font-bold text-gray-600">CB</div>
+                    </div>
                   </div>
 
-                  {/* Card form (simulé) */}
-                  {paymentMethod === 'card' && (
-                    <div className="space-y-4 p-4 border border-dashed border-gray-300 bg-gray-50">
-                      <p className="text-sm text-gray-500 text-center">
-                        Mode démo - Aucun paiement réel ne sera effectué
-                      </p>
-                      <div>
-                        <label className="block text-sm text-gray-600 mb-2">Numéro de carte</label>
-                        <input
-                          type="text"
-                          placeholder="4242 4242 4242 4242"
-                          className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm text-gray-600 mb-2">Expiration</label>
-                          <input
-                            type="text"
-                            placeholder="MM/AA"
-                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-600 mb-2">CVC</label>
-                          <input
-                            type="text"
-                            placeholder="123"
-                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
-                          />
-                        </div>
-                      </div>
+                  {/* Récap adresse */}
+                  <div className="p-4 bg-gray-50 border">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-500">Adresse de livraison</span>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep('information')}
+                        className="text-sm text-[#C9A962] hover:underline"
+                      >
+                        Modifier
+                      </button>
                     </div>
-                  )}
+                    <p className="text-sm">
+                      {shippingAddress.firstName} {shippingAddress.lastName}
+                    </p>
+                    <p className="text-sm">{shippingAddress.street}</p>
+                    <p className="text-sm">
+                      {shippingAddress.postalCode} {shippingAddress.city}, {shippingAddress.country}
+                    </p>
+                  </div>
 
                   {/* Terms */}
                   <label className="flex items-start gap-3 cursor-pointer">
@@ -583,7 +507,7 @@ export default function CheckoutPage() {
                       disabled={isLoading}
                       className="flex-1 py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors disabled:opacity-50"
                     >
-                      {isLoading ? 'Traitement...' : `Payer ${total.toLocaleString('fr-FR')} €`}
+                      {isLoading ? 'Redirection vers Stripe...' : `Payer ${total.toLocaleString('fr-FR')} €`}
                     </button>
                   </div>
                 </form>
