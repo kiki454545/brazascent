@@ -13,13 +13,15 @@ import {
   Menu,
   X,
   Building2,
-  Mail
+  Mail,
+  Gift
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 
 const adminNav = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Produits', href: '/admin/produits', icon: Package },
+  { name: 'Packs', href: '/admin/packs', icon: Gift },
   { name: 'Marques', href: '/admin/marques', icon: Building2 },
   { name: 'Commandes', href: '/admin/commandes', icon: ShoppingCart },
   { name: 'Newsletter', href: '/admin/newsletter', icon: Mail },

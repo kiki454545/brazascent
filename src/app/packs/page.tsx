@@ -1,80 +1,100 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Gift, Truck, Star } from 'lucide-react'
+import { Gift, Truck, Star, Loader2 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { useCartStore } from '@/store/cart'
 
-const packs = [
-  {
-    id: '1',
-    name: 'Coffret Découverte',
-    slug: 'coffret-decouverte',
-    description: 'Une sélection de 5 miniatures pour découvrir l\'univers Braza Scent. Idéal pour trouver votre signature olfactive.',
-    price: 89,
-    originalPrice: 120,
-    image: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=800',
-    products: ['Oud Royal', 'Rose Éternelle', 'Noir Absolu', 'Lumière d\'Or', 'Bois Précieux'],
-    tag: 'Bestseller',
-  },
-  {
-    id: '2',
-    name: 'Coffret Prestige',
-    slug: 'coffret-prestige',
-    description: 'Notre coffret signature avec 2 parfums full-size et un vaporisateur de voyage. L\'élégance à portée de main.',
-    price: 249,
-    originalPrice: 310,
-    image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800',
-    products: ['Oud Royal 100ml', 'Rose Éternelle 100ml', 'Vaporisateur 10ml'],
-    tag: 'Exclusif',
-  },
-  {
-    id: '3',
-    name: 'Coffret Homme',
-    slug: 'coffret-homme',
-    description: 'Une sélection masculine raffinée avec 3 fragrances boisées et épicées pour l\'homme moderne.',
-    price: 179,
-    originalPrice: 220,
-    image: 'https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=800',
-    products: ['Noir Absolu 50ml', 'Bois Précieux 50ml', 'Cuir Intense 50ml'],
-    tag: 'Nouveau',
-  },
-  {
-    id: '4',
-    name: 'Coffret Femme',
-    slug: 'coffret-femme',
-    description: 'L\'essence de la féminité avec 3 créations florales et orientales d\'une élégance absolue.',
-    price: 179,
-    originalPrice: 220,
-    image: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?w=800',
-    products: ['Rose Éternelle 50ml', 'Jasmin Nuit 50ml', 'Fleur de Soie 50ml'],
-    tag: null,
-  },
-  {
-    id: '5',
-    name: 'Coffret Collection Signature',
-    slug: 'coffret-collection-signature',
-    description: 'L\'intégralité de notre collection Signature en format voyage. 8 créations uniques à découvrir.',
-    price: 149,
-    originalPrice: 200,
-    image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=800',
-    products: ['8 miniatures 10ml de la Collection Signature'],
-    tag: 'Édition limitée',
-  },
-  {
-    id: '6',
-    name: 'Coffret Cadeau Luxe',
-    slug: 'coffret-cadeau-luxe',
-    description: 'Le cadeau parfait : un parfum full-size, une bougie parfumée et un savon artisanal dans un écrin luxueux.',
-    price: 299,
-    originalPrice: 380,
-    image: 'https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?w=800',
-    products: ['Parfum 100ml au choix', 'Bougie 200g', 'Savon 100g'],
-    tag: 'Idée cadeau',
-  },
-]
+interface Pack {
+  id: string
+  name: string
+  slug: string
+  description: string
+  price: number
+  original_price: number | null
+  image: string
+  product_ids: string[]
+  tag: string | null
+  is_active: boolean
+}
+
+interface Product {
+  id: string
+  name: string
+}
 
 export default function PacksPage() {
+  const [packs, setPacks] = useState<Pack[]>([])
+  const [products, setProducts] = useState<Record<string, Product>>({})
+  const [loading, setLoading] = useState(true)
+  const { addItem } = useCartStore()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch packs
+        const { data: packsData, error: packsError } = await supabase
+          .from('packs')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+
+        if (packsError) throw packsError
+
+        // Fetch products for names
+        const { data: productsData, error: productsError } = await supabase
+          .from('products')
+          .select('id, name')
+
+        if (productsError) throw productsError
+
+        // Create products lookup
+        const productsLookup: Record<string, Product> = {}
+        productsData?.forEach(p => {
+          productsLookup[p.id] = p
+        })
+
+        setPacks(packsData || [])
+        setProducts(productsLookup)
+      } catch (error) {
+        console.error('Error fetching packs:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const getProductNames = (productIds: string[]) => {
+    return productIds
+      .map(id => products[id]?.name)
+      .filter(Boolean)
+      .join(', ')
+  }
+
+  const handleAddToCart = (pack: Pack) => {
+    addItem({
+      id: pack.id,
+      name: pack.name,
+      price: pack.price,
+      image: pack.image,
+      size: 'Pack',
+      quantity: 1
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#C9A962]" />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -137,62 +157,74 @@ export default function PacksPage() {
       {/* Packs Grid */}
       <section className="py-16 lg:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-            {packs.map((pack, index) => (
-              <motion.div
-                key={pack.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="group"
-              >
-                <Link href={`/packs/${pack.slug}`} className="block">
-                  <div className="relative aspect-square overflow-hidden mb-6 bg-[#F9F6F1]">
-                    <Image
-                      src={pack.image}
-                      alt={pack.name}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    {pack.tag && (
-                      <span className="absolute top-4 left-4 px-3 py-1 bg-[#C9A962] text-white text-xs tracking-wider uppercase">
-                        {pack.tag}
-                      </span>
+          {packs.length === 0 ? (
+            <div className="text-center py-16">
+              <Gift className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">Aucun pack disponible pour le moment</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+              {packs.map((pack, index) => (
+                <motion.div
+                  key={pack.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group"
+                >
+                  <Link href={`/packs/${pack.slug}`} className="block">
+                    <div className="relative aspect-square overflow-hidden mb-6 bg-[#F9F6F1]">
+                      <Image
+                        src={pack.image}
+                        alt={pack.name}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      {pack.tag && (
+                        <span className="absolute top-4 left-4 px-3 py-1 bg-[#C9A962] text-white text-xs tracking-wider uppercase">
+                          {pack.tag}
+                        </span>
+                      )}
+                    </div>
+
+                    <h2 className="text-xl font-light tracking-[0.1em] uppercase mb-2 group-hover:text-[#C9A962] transition-colors">
+                      {pack.name}
+                    </h2>
+
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {pack.description}
+                    </p>
+
+                    {pack.product_ids?.length > 0 && (
+                      <div className="text-xs text-gray-500 mb-4">
+                        <p className="line-clamp-1">Contient : {getProductNames(pack.product_ids)}</p>
+                      </div>
                     )}
-                  </div>
 
-                  <h2 className="text-xl font-light tracking-[0.1em] uppercase mb-2 group-hover:text-[#C9A962] transition-colors">
-                    {pack.name}
-                  </h2>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl font-medium">{pack.price} €</span>
+                      {pack.original_price && (
+                        <span className="text-gray-400 line-through">{pack.original_price} €</span>
+                      )}
+                      {pack.original_price && (
+                        <span className="text-xs text-[#C9A962] font-medium">
+                          -{Math.round((1 - pack.price / pack.original_price) * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  </Link>
 
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {pack.description}
-                  </p>
-
-                  <div className="text-xs text-gray-500 mb-4">
-                    <p className="line-clamp-1">Contient : {pack.products.join(', ')}</p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl font-medium">{pack.price} €</span>
-                    {pack.originalPrice && (
-                      <span className="text-gray-400 line-through">{pack.originalPrice} €</span>
-                    )}
-                    {pack.originalPrice && (
-                      <span className="text-xs text-[#C9A962] font-medium">
-                        -{Math.round((1 - pack.price / pack.originalPrice) * 100)}%
-                      </span>
-                    )}
-                  </div>
-                </Link>
-
-                <button className="w-full mt-4 py-3 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors">
-                  Ajouter au panier
-                </button>
-              </motion.div>
-            ))}
-          </div>
+                  <button
+                    onClick={() => handleAddToCart(pack)}
+                    className="w-full mt-4 py-3 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                  >
+                    Ajouter au panier
+                  </button>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
