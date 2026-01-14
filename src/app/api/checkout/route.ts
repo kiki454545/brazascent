@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { stripe, formatAmountForStripe } from '@/lib/stripe'
+
+// Client Supabase côté serveur
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 interface CartItem {
   product: {
@@ -28,6 +35,42 @@ interface CheckoutBody {
   userId?: string
 }
 
+interface ShippingSettings {
+  freeShippingThreshold: number
+  standardShippingPrice: number
+  expressShippingPrice: number
+}
+
+// Récupérer les paramètres de livraison depuis Supabase
+async function getShippingSettings(): Promise<ShippingSettings> {
+  const defaultSettings: ShippingSettings = {
+    freeShippingThreshold: 150,
+    standardShippingPrice: 9.90,
+    expressShippingPrice: 14.90,
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'shipping')
+      .single()
+
+    if (error || !data) {
+      return defaultSettings
+    }
+
+    const shippingValue = data.value as ShippingSettings
+    return {
+      freeShippingThreshold: shippingValue.freeShippingThreshold ?? defaultSettings.freeShippingThreshold,
+      standardShippingPrice: shippingValue.standardShippingPrice ?? defaultSettings.standardShippingPrice,
+      expressShippingPrice: shippingValue.expressShippingPrice ?? defaultSettings.expressShippingPrice,
+    }
+  } catch {
+    return defaultSettings
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: CheckoutBody = await request.json()
@@ -40,10 +83,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculer les frais de livraison
-    // Express est toujours payant (14.90€), standard est gratuit au-dessus de 150€
+    // Récupérer les paramètres de livraison depuis l'admin
+    const shippingSettings = await getShippingSettings()
+
+    // Calculer les frais de livraison avec les paramètres admin
     const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
-    const shippingCost = shippingMethod === 'express' ? 14.90 : (subtotal >= 150 ? 0 : 9.90)
+    const shippingCost = shippingMethod === 'express'
+      ? shippingSettings.expressShippingPrice
+      : (subtotal >= shippingSettings.freeShippingThreshold ? 0 : shippingSettings.standardShippingPrice)
 
     // Créer les line items pour Stripe
     const lineItems = items.map((item) => ({

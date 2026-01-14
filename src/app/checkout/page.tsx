@@ -22,6 +22,12 @@ interface ShippingAddress {
   country: string
 }
 
+interface ShippingSettings {
+  freeShippingThreshold: number
+  standardShippingPrice: number
+  expressShippingPrice: number
+}
+
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, getTotal, clearCart } = useCartStore()
@@ -45,8 +51,33 @@ export default function CheckoutPage() {
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express'>('standard')
   const [acceptTerms, setAcceptTerms] = useState(false)
 
+  // Paramètres de livraison depuis l'admin
+  const [shippingSettings, setShippingSettings] = useState<ShippingSettings>({
+    freeShippingThreshold: 150,
+    standardShippingPrice: 9.90,
+    expressShippingPrice: 14.90,
+  })
+
+  // Charger les paramètres de livraison
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/settings')
+        const data = await response.json()
+        if (data.shipping) {
+          setShippingSettings(data.shipping)
+        }
+      } catch (err) {
+        console.error('Error fetching shipping settings:', err)
+      }
+    }
+    fetchSettings()
+  }, [])
+
   const subtotal = getTotal()
-  const shippingCost = shippingMethod === 'express' ? 14.90 : (subtotal >= 150 ? 0 : 9.90)
+  const shippingCost = shippingMethod === 'express'
+    ? shippingSettings.expressShippingPrice
+    : (subtotal >= shippingSettings.freeShippingThreshold ? 0 : shippingSettings.standardShippingPrice)
   const total = subtotal + shippingCost
 
   // Pré-remplir avec les infos du profil
@@ -354,10 +385,10 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                       <span className="font-medium">
-                        {subtotal >= 150 ? (
+                        {subtotal >= shippingSettings.freeShippingThreshold ? (
                           <span className="text-green-600">Offerte</span>
                         ) : (
-                          '9,90 €'
+                          `${shippingSettings.standardShippingPrice.toLocaleString('fr-FR')} €`
                         )}
                       </span>
                     </label>
@@ -383,7 +414,7 @@ export default function CheckoutPage() {
                           <p className="text-sm text-gray-500">1-2 jours ouvrés</p>
                         </div>
                       </div>
-                      <span className="font-medium">14,90 €</span>
+                      <span className="font-medium">{shippingSettings.expressShippingPrice.toLocaleString('fr-FR')} €</span>
                     </label>
                   </div>
 
