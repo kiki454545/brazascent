@@ -9,6 +9,7 @@ export interface Product {
   images: string[]
   category: 'homme' | 'femme' | 'unisexe' | 'collection'
   collection?: string
+  brand?: string
   notes: {
     top: string[]
     heart: string[]

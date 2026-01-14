@@ -7,7 +7,8 @@ import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react'
 import { useWishlistStore } from '@/store/wishlist'
 import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
-import { products, Product } from '@/data/products'
+import { products } from '@/data/products'
+import { Product } from '@/types'
 
 export default function FavorisPage() {
   const { items: wishlistIds, removeItem, clearWishlist } = useWishlistStore()
@@ -20,7 +21,7 @@ export default function FavorisPage() {
     .filter((p): p is Product => p !== undefined)
 
   const handleAddToCart = (product: Product) => {
-    addItem(product, product.sizes[0])
+    addItem(product, product.size[0])
     openCart()
   }
 
@@ -111,12 +112,12 @@ export default function FavorisPage() {
 
                   {/* Tags */}
                   <div className="absolute top-4 left-4 flex flex-col gap-2">
-                    {product.isNew && (
+                    {product.new && (
                       <span className="px-3 py-1 bg-[#C9A962] text-white text-xs tracking-wider uppercase">
                         Nouveau
                       </span>
                     )}
-                    {product.isBestseller && (
+                    {product.bestseller && (
                       <span className="px-3 py-1 bg-[#19110B] text-white text-xs tracking-wider uppercase">
                         Bestseller
                       </span>
