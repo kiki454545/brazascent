@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Heart, Minus, Plus, ChevronRight, Truck, RotateCcw, Gift } from 'lucide-react'
+import { Heart, Minus, Plus, ChevronRight, Truck, Gift } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 import { useCartStore } from '@/store/cart'
@@ -355,10 +355,6 @@ export default function ProductPage() {
               <div className="flex items-center gap-4">
                 <Truck className="w-5 h-5 text-[#C9A962]" />
                 <span className="text-sm">Livraison offerte dès {settings.freeShippingThreshold}€</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <RotateCcw className="w-5 h-5 text-[#C9A962]" />
-                <span className="text-sm">Retours gratuits sous 30 jours</span>
               </div>
               <div className="flex items-center gap-4">
                 <Gift className="w-5 h-5 text-[#C9A962]" />
