@@ -286,8 +286,8 @@ export function Header() {
                   <p className="text-xs tracking-[0.2em] uppercase text-gray-500 mb-3">
                     Service client
                   </p>
-                  <p className="text-sm text-gray-600 mb-1">+33 1 23 45 67 89</p>
-                  <p className="text-sm text-gray-600">contact@brazascent.com</p>
+                  <p className="text-sm text-gray-600 mb-1">{settings.storePhone}</p>
+                  <p className="text-sm text-gray-600">{settings.storeEmail}</p>
                 </div>
               </div>
             </motion.div>

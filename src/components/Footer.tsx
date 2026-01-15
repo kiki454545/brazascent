@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Instagram, Facebook, Youtube, Mail, MapPin, Phone, Loader2, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useSettingsStore } from '@/store/settings'
 
 const footerLinks = {
   boutique: [
@@ -30,6 +31,7 @@ export function Footer() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [message, setMessage] = useState('')
+  const { settings } = useSettingsStore()
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -132,15 +134,15 @@ export function Footer() {
             <div className="space-y-3 text-sm text-gray-400">
               <div className="flex items-center gap-3">
                 <MapPin className="w-4 h-4 text-[#C9A962]" />
-                <span>123 Avenue des Champs-Élysées, Paris</span>
+                <span>{settings.storeAddress}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-[#C9A962]" />
-                <span>+33 1 23 45 67 89</span>
+                <span>{settings.storePhone}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-[#C9A962]" />
-                <span>contact@brazascent.com</span>
+                <span>{settings.storeEmail}</span>
               </div>
             </div>
           </div>
