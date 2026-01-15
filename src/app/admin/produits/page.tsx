@@ -22,12 +22,32 @@ interface Product {
   brand: string
   price: number
   original_price?: number
+  price_by_size?: Record<string, number>
+  stock_by_size?: Record<string, number>
   images: string[]
   stock: number
   collection: string
   is_new?: boolean
   is_bestseller?: boolean
   is_active?: boolean
+}
+
+// Calculer la valeur totale du stock (prix × quantité pour chaque taille)
+const calculateStockValue = (product: Product): number => {
+  const priceBySize = typeof product.price_by_size === 'string'
+    ? JSON.parse(product.price_by_size)
+    : (product.price_by_size || {})
+  const stockBySize = typeof product.stock_by_size === 'string'
+    ? JSON.parse(product.stock_by_size)
+    : (product.stock_by_size || {})
+
+  let totalValue = 0
+  for (const size of Object.keys(stockBySize)) {
+    const price = priceBySize[size] || 0
+    const qty = stockBySize[size] || 0
+    totalValue += price * qty
+  }
+  return totalValue
 }
 
 export default function AdminProductsPage() {
@@ -206,7 +226,7 @@ export default function AdminProductsPage() {
                     Produit
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Prix
+                    Valeur stock
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Stock
@@ -251,10 +271,8 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div>
-                        <p className="font-medium">{product.price} €</p>
-                        {product.original_price && (
-                          <p className="text-sm text-gray-400 line-through">{product.original_price} €</p>
-                        )}
+                        <p className="font-medium">{calculateStockValue(product).toLocaleString('fr-FR')} €</p>
+                        <p className="text-xs text-gray-400">valeur totale</p>
                       </div>
                     </td>
                     <td className="px-6 py-4">

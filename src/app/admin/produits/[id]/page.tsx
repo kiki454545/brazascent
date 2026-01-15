@@ -99,7 +99,10 @@ export default function EditProductPage() {
           acc[size] = Math.floor((data.stock || 0) / sizes.length)
           return acc
         }, {})
-        const priceBySize = data.price_by_size || sizes.reduce((acc: Record<string, number>, size: string) => {
+        const rawPriceBySize = typeof data.price_by_size === 'string'
+          ? JSON.parse(data.price_by_size)
+          : data.price_by_size
+        const priceBySize = rawPriceBySize || sizes.reduce((acc: Record<string, number>, size: string) => {
           acc[size] = data.price || 0
           return acc
         }, {})

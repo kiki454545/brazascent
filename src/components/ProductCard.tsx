@@ -21,6 +21,16 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const { addItem, openCart } = useCartStore()
   const { toggleItem, isInWishlist } = useWishlistStore()
 
+  // Calculer le prix selon la taille sélectionnée
+  const getSizePrice = (size: string) => {
+    if (product.priceBySize && product.priceBySize[size] !== undefined && product.priceBySize[size] > 0) {
+      return product.priceBySize[size]
+    }
+    return product.price
+  }
+
+  const currentPrice = getSizePrice(selectedSize)
+
   // Attendre l'hydratation côté client pour éviter le mismatch
   useEffect(() => {
     setMounted(true)
@@ -90,9 +100,9 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
                 Best-seller
               </span>
             )}
-            {product.originalPrice && (
+            {product.originalPrice && currentPrice < product.originalPrice && (
               <span className="px-3 py-1 bg-red-600 text-white text-xs tracking-[0.15em] uppercase">
-                -{Math.round((1 - product.price / product.originalPrice) * 100)}%
+                -{Math.round((1 - currentPrice / product.originalPrice) * 100)}%
               </span>
             )}
           </div>
@@ -159,8 +169,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           </h3>
           <p className="text-sm text-gray-600 mb-2">{product.shortDescription}</p>
           <div className="flex items-center justify-center gap-3">
-            <span className="font-medium">{product.price.toLocaleString('fr-FR')} €</span>
-            {product.originalPrice && (
+            <span className="font-medium">{currentPrice.toLocaleString('fr-FR')} €</span>
+            {product.originalPrice && currentPrice < product.originalPrice && (
               <span className="text-sm text-gray-400 line-through">
                 {product.originalPrice.toLocaleString('fr-FR')} €
               </span>

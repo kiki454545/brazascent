@@ -6,6 +6,7 @@ export interface Product {
   shortDescription: string
   price: number
   originalPrice?: number
+  priceBySize?: Record<string, number>
   images: string[]
   category: 'homme' | 'femme' | 'unisexe' | 'collection'
   collection?: string
