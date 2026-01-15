@@ -72,7 +72,11 @@ export default function ProductPage() {
 
         setProduct(mappedProduct)
         setStockBySize(data.stock_by_size || {})
-        setPriceBySize(data.price_by_size || {})
+        const parsedPriceBySize = typeof data.price_by_size === 'string'
+          ? JSON.parse(data.price_by_size)
+          : (data.price_by_size || {})
+        console.log('price_by_size from DB:', data.price_by_size, 'parsed:', parsedPriceBySize)
+        setPriceBySize(parsedPriceBySize)
         setSelectedSize(mappedProduct.size[1] || mappedProduct.size[0] || '')
 
         // Récupérer les produits similaires

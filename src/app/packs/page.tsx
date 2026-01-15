@@ -33,6 +33,14 @@ export default function PacksPage() {
   const { addItem } = useCartStore()
 
   useEffect(() => {
+    let isMounted = true
+
+    const isAbortError = (error: unknown): boolean => {
+      if (!error) return false
+      const message = (error as { message?: string }).message || String(error)
+      return message.includes('AbortError') || message.includes('aborted')
+    }
+
     const fetchData = async () => {
       try {
         // Fetch packs
@@ -42,6 +50,7 @@ export default function PacksPage() {
           .eq('is_active', true)
           .order('created_at', { ascending: false })
 
+        if (!isMounted) return
         if (packsError) throw packsError
 
         // Fetch products for names
@@ -49,6 +58,7 @@ export default function PacksPage() {
           .from('products')
           .select('id, name')
 
+        if (!isMounted) return
         if (productsError) throw productsError
 
         // Create products lookup
@@ -60,13 +70,21 @@ export default function PacksPage() {
         setPacks(packsData || [])
         setProducts(productsLookup)
       } catch (error) {
-        console.error('Error fetching packs:', error)
+        if (!isAbortError(error)) {
+          console.error('Error fetching packs:', error)
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
 
     fetchData()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const getProductNames = (productIds: string[]) => {

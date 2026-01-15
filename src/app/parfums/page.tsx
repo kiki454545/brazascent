@@ -30,6 +30,14 @@ export default function ParfumsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
   useEffect(() => {
+    let isMounted = true
+
+    const isAbortError = (error: unknown): boolean => {
+      if (!error) return false
+      const message = (error as { message?: string }).message || String(error)
+      return message.includes('AbortError') || message.includes('aborted')
+    }
+
     const fetchProducts = async () => {
       try {
         const { data, error } = await supabase
@@ -37,8 +45,12 @@ export default function ParfumsPage() {
           .select('*')
           .order('created_at', { ascending: false })
 
+        if (!isMounted) return
+
         if (error) {
-          console.error('Error fetching products:', error)
+          if (!isAbortError(error)) {
+            console.error('Error fetching products:', error.message)
+          }
         } else if (data) {
           // Mapper les champs Supabase vers le format Product
           const mappedProducts: Product[] = data.map((p: any) => ({
@@ -66,13 +78,21 @@ export default function ParfumsPage() {
           setProducts(mappedProducts)
         }
       } catch (err) {
-        console.error('Error:', err)
+        if (!isAbortError(err)) {
+          console.error('Error:', err)
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
 
     fetchProducts()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const filteredProducts = products
