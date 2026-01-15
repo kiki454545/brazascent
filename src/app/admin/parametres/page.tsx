@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Store,
   Truck,
-  CreditCard,
   Bell,
   Save,
   Check,
@@ -29,7 +28,7 @@ interface Settings {
   freeShippingThreshold: number
   standardShippingPrice: number
   expressShippingPrice: number
-  taxRate: number
+  enableExpressShipping: boolean
   enableNotifications: boolean
   enableEmailConfirmation: boolean
   maintenanceMode: boolean
@@ -45,7 +44,7 @@ const defaultSettings: Settings = {
   freeShippingThreshold: 150,
   standardShippingPrice: 9.90,
   expressShippingPrice: 14.90,
-  taxRate: 20,
+  enableExpressShipping: true,
   enableNotifications: true,
   enableEmailConfirmation: false,
   maintenanceMode: false,
@@ -100,9 +99,7 @@ export default function AdminSettingsPage() {
             loadedSettings.freeShippingThreshold = shipping.freeShippingThreshold as number || defaultSettings.freeShippingThreshold
             loadedSettings.standardShippingPrice = shipping.standardShippingPrice as number || defaultSettings.standardShippingPrice
             loadedSettings.expressShippingPrice = shipping.expressShippingPrice as number || defaultSettings.expressShippingPrice
-          } else if (row.key === 'payment') {
-            const payment = row.value as Record<string, unknown>
-            loadedSettings.taxRate = payment.taxRate as number || defaultSettings.taxRate
+            loadedSettings.enableExpressShipping = shipping.enableExpressShipping as boolean ?? defaultSettings.enableExpressShipping
           } else if (row.key === 'notifications') {
             const notifications = row.value as Record<string, unknown>
             loadedSettings.enableNotifications = notifications.enableNotifications as boolean ?? defaultSettings.enableNotifications
@@ -181,13 +178,8 @@ export default function AdminSettingsPage() {
           value: {
             freeShippingThreshold: settings.freeShippingThreshold,
             standardShippingPrice: settings.standardShippingPrice,
-            expressShippingPrice: settings.expressShippingPrice
-          }
-        },
-        {
-          key: 'payment',
-          value: {
-            taxRate: settings.taxRate
+            expressShippingPrice: settings.expressShippingPrice,
+            enableExpressShipping: settings.enableExpressShipping
           }
         },
         {
@@ -436,57 +428,29 @@ export default function AdminSettingsPage() {
               step="0.01"
               value={settings.expressShippingPrice}
               onChange={(e) => setSettings({ ...settings, expressShippingPrice: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
-            />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Payment */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-white rounded-xl shadow-sm p-6"
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-green-50 rounded-lg">
-            <CreditCard className="w-5 h-5 text-green-500" />
-          </div>
-          <h2 className="text-lg font-medium">Paiement</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Taux de TVA (%)
-            </label>
-            <input
-              type="number"
-              value={settings.taxRate}
-              onChange={(e) => setSettings({ ...settings, taxRate: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              disabled={!settings.enableExpressShipping}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] ${!settings.enableExpressShipping ? 'bg-gray-100 text-gray-400' : ''}`}
             />
           </div>
         </div>
 
         <div className="mt-6 pt-6 border-t">
-          <p className="text-sm text-gray-500 mb-4">Méthodes de paiement acceptées :</p>
-          <div className="flex flex-wrap gap-4">
-            {['Carte bancaire', 'PayPal', 'Apple Pay', 'Google Pay'].map((method) => (
-              <label key={method} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="w-4 h-4 rounded border-gray-300 accent-[#C9A962]"
-                />
-                <span className="text-sm">{method}</span>
-              </label>
-            ))}
-          </div>
+          <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
+            <div>
+              <p className="font-medium">Livraison express</p>
+              <p className="text-sm text-gray-500">Proposer la livraison express aux clients (1-2 jours ouvrés)</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.enableExpressShipping}
+              onChange={(e) => setSettings({ ...settings, enableExpressShipping: e.target.checked })}
+              className="w-5 h-5 rounded border-gray-300 accent-[#C9A962]"
+            />
+          </label>
         </div>
       </motion.div>
 
+      
       {/* Notifications */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

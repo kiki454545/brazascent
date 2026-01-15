@@ -13,10 +13,20 @@ interface CartItem {
     id: string
     name: string
     price: number
+    priceBySize?: Record<string, number>
     images: string[]
   }
   selectedSize: string
   quantity: number
+}
+
+// Obtenir le prix d'un article selon sa taille
+const getItemPrice = (item: CartItem): number => {
+  const priceBySize = item.product.priceBySize
+  if (priceBySize && priceBySize[item.selectedSize] > 0) {
+    return priceBySize[item.selectedSize]
+  }
+  return item.product.price
 }
 
 interface CheckoutBody {
@@ -39,6 +49,7 @@ interface ShippingSettings {
   freeShippingThreshold: number
   standardShippingPrice: number
   expressShippingPrice: number
+  enableExpressShipping: boolean
 }
 
 // Récupérer les paramètres de livraison depuis Supabase
@@ -47,6 +58,7 @@ async function getShippingSettings(): Promise<ShippingSettings> {
     freeShippingThreshold: 150,
     standardShippingPrice: 9.90,
     expressShippingPrice: 14.90,
+    enableExpressShipping: true,
   }
 
   try {
@@ -65,6 +77,7 @@ async function getShippingSettings(): Promise<ShippingSettings> {
       freeShippingThreshold: shippingValue.freeShippingThreshold ?? defaultSettings.freeShippingThreshold,
       standardShippingPrice: shippingValue.standardShippingPrice ?? defaultSettings.standardShippingPrice,
       expressShippingPrice: shippingValue.expressShippingPrice ?? defaultSettings.expressShippingPrice,
+      enableExpressShipping: shippingValue.enableExpressShipping ?? defaultSettings.enableExpressShipping,
     }
   } catch {
     return defaultSettings
@@ -86,8 +99,16 @@ export async function POST(request: NextRequest) {
     // Récupérer les paramètres de livraison depuis l'admin
     const shippingSettings = await getShippingSettings()
 
+    // Vérifier si la livraison express est autorisée
+    if (shippingMethod === 'express' && !shippingSettings.enableExpressShipping) {
+      return NextResponse.json(
+        { error: 'La livraison express n\'est pas disponible' },
+        { status: 400 }
+      )
+    }
+
     // Calculer les frais de livraison avec les paramètres admin
-    const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+    const subtotal = items.reduce((sum, item) => sum + getItemPrice(item) * item.quantity, 0)
     const shippingCost = shippingMethod === 'express'
       ? shippingSettings.expressShippingPrice
       : (subtotal >= shippingSettings.freeShippingThreshold ? 0 : shippingSettings.standardShippingPrice)
@@ -101,7 +122,7 @@ export async function POST(request: NextRequest) {
           description: `Taille: ${item.selectedSize}`,
           images: item.product.images.slice(0, 1), // Stripe accepte max 8 images
         },
-        unit_amount: formatAmountForStripe(item.product.price),
+        unit_amount: formatAmountForStripe(getItemPrice(item)),
       },
       quantity: item.quantity,
     }))
@@ -139,7 +160,7 @@ export async function POST(request: NextRequest) {
           name: item.product.name,
           size: item.selectedSize,
           quantity: item.quantity,
-          price: item.product.price,
+          price: getItemPrice(item),
           image: item.product.images[0],
         }))),
       },

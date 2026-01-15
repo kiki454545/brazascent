@@ -26,7 +26,6 @@ interface ProductForm {
   price: number
   original_price: number | null
   category: string
-  gender: string
   sizes: string[]
   stock_by_size: Record<string, number>
   price_by_size: Record<string, number>
@@ -57,7 +56,6 @@ export default function NewProductPage() {
     price: 0,
     original_price: null,
     category: 'Eau de Parfum',
-    gender: 'Unisexe',
     sizes: ['2ml', '5ml', '10ml'],
     stock_by_size: { '2ml': 50, '5ml': 50, '10ml': 50 },
     price_by_size: { '2ml': 10, '5ml': 20, '10ml': 35 },
@@ -105,7 +103,6 @@ export default function NewProductPage() {
           price: form.price,
           original_price: form.original_price,
           category: form.category,
-          gender: form.gender,
           sizes: form.sizes,
           stock_by_size: form.stock_by_size,
           price_by_size: form.price_by_size,
@@ -387,21 +384,6 @@ export default function NewProductPage() {
                     <option value="Eau de Parfum">Eau de Parfum</option>
                     <option value="Eau de Toilette">Eau de Toilette</option>
                     <option value="Extrait de Parfum">Extrait de Parfum</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Genre
-                  </label>
-                  <select
-                    value={form.gender}
-                    onChange={(e) => setForm({ ...form, gender: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
-                  >
-                    <option value="Unisexe">Unisexe</option>
-                    <option value="Homme">Homme</option>
-                    <option value="Femme">Femme</option>
                   </select>
                 </div>
               </div>

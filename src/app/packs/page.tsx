@@ -30,6 +30,7 @@ export default function PacksPage() {
   const [packs, setPacks] = useState<Pack[]>([])
   const [products, setProducts] = useState<Record<string, Product>>({})
   const [loading, setLoading] = useState(true)
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(150)
   const { addItem } = useCartStore()
 
   useEffect(() => {
@@ -60,6 +61,14 @@ export default function PacksPage() {
 
         if (!isMounted) return
         if (productsError) throw productsError
+
+        // Fetch shipping settings
+        const settingsResponse = await fetch('/api/settings')
+        const settingsData = await settingsResponse.json()
+        if (!isMounted) return
+        if (settingsData?.shipping?.freeShippingThreshold) {
+          setFreeShippingThreshold(settingsData.shipping.freeShippingThreshold)
+        }
 
         // Create products lookup
         const productsLookup: Record<string, Product> = {}
@@ -158,8 +167,8 @@ export default function PacksPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               { icon: Gift, title: 'Emballage cadeau', description: 'Écrin luxueux offert' },
-              { icon: Truck, title: 'Livraison express', description: 'Offerte dès 100€' },
-              { icon: Star, title: 'Économies', description: 'Jusqu\'à -25% sur les packs' },
+              { icon: Truck, title: 'Livraison offerte', description: `Dès ${freeShippingThreshold}€ d'achat` },
+              { icon: Star, title: 'Économies', description: 'Réductions sur les packs' },
             ].map((benefit, index) => (
               <motion.div
                 key={benefit.title}

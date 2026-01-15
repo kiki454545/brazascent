@@ -5,6 +5,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+// Helper pour détecter les erreurs d'annulation (AbortError)
+// Ces erreurs sont normales en mode Strict de React et ne doivent pas être loggées
+export const isAbortError = (error: unknown): boolean => {
+  if (!error) return false
+  const message = (error as { message?: string }).message || String(error)
+  return message.includes('AbortError') || message.includes('aborted')
+}
+
 // Types pour la base de données
 export type Database = {
   public: {

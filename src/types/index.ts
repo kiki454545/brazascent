@@ -8,7 +8,7 @@ export interface Product {
   originalPrice?: number
   priceBySize?: Record<string, number>
   images: string[]
-  category: 'homme' | 'femme' | 'unisexe' | 'collection'
+  category: string
   collection?: string
   brand?: string
   notes: {

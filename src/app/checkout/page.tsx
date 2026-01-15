@@ -8,6 +8,16 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, CreditCard, Truck, Shield, Check, ChevronDown } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
+import { CartItem } from '@/types'
+
+// Obtenir le prix d'un article selon sa taille
+const getItemPrice = (item: CartItem) => {
+  const priceBySize = item.product.priceBySize
+  if (priceBySize && priceBySize[item.selectedSize] > 0) {
+    return priceBySize[item.selectedSize]
+  }
+  return item.product.price
+}
 
 type Step = 'information' | 'shipping' | 'payment'
 
@@ -26,6 +36,7 @@ interface ShippingSettings {
   freeShippingThreshold: number
   standardShippingPrice: number
   expressShippingPrice: number
+  enableExpressShipping: boolean
 }
 
 export default function CheckoutPage() {
@@ -56,6 +67,7 @@ export default function CheckoutPage() {
     freeShippingThreshold: 150,
     standardShippingPrice: 9.90,
     expressShippingPrice: 14.90,
+    enableExpressShipping: true,
   })
 
   // Charger les paramètres de livraison
@@ -65,7 +77,16 @@ export default function CheckoutPage() {
         const response = await fetch('/api/settings')
         const data = await response.json()
         if (data.shipping) {
-          setShippingSettings(data.shipping)
+          setShippingSettings({
+            freeShippingThreshold: data.shipping.freeShippingThreshold ?? 150,
+            standardShippingPrice: data.shipping.standardShippingPrice ?? 9.90,
+            expressShippingPrice: data.shipping.expressShippingPrice ?? 14.90,
+            enableExpressShipping: data.shipping.enableExpressShipping ?? true,
+          })
+          // Si express désactivé et qu'on l'avait sélectionné, revenir à standard
+          if (!data.shipping.enableExpressShipping && shippingMethod === 'express') {
+            setShippingMethod('standard')
+          }
         }
       } catch (err) {
         console.error('Error fetching shipping settings:', err)
@@ -393,29 +414,31 @@ export default function CheckoutPage() {
                       </span>
                     </label>
 
-                    <label
-                      className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
-                        shippingMethod === 'express'
-                          ? 'border-[#C9A962] bg-[#F9F6F1]'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="radio"
-                          name="shipping"
-                          value="express"
-                          checked={shippingMethod === 'express'}
-                          onChange={() => setShippingMethod('express')}
-                          className="w-5 h-5 accent-[#C9A962]"
-                        />
-                        <div>
-                          <p className="font-medium">Livraison Express</p>
-                          <p className="text-sm text-gray-500">1-2 jours ouvrés</p>
+                    {shippingSettings.enableExpressShipping && (
+                      <label
+                        className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
+                          shippingMethod === 'express'
+                            ? 'border-[#C9A962] bg-[#F9F6F1]'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="radio"
+                            name="shipping"
+                            value="express"
+                            checked={shippingMethod === 'express'}
+                            onChange={() => setShippingMethod('express')}
+                            className="w-5 h-5 accent-[#C9A962]"
+                          />
+                          <div>
+                            <p className="font-medium">Livraison Express</p>
+                            <p className="text-sm text-gray-500">1-2 jours ouvrés</p>
+                          </div>
                         </div>
-                      </div>
-                      <span className="font-medium">{shippingSettings.expressShippingPrice.toLocaleString('fr-FR')} €</span>
-                    </label>
+                        <span className="font-medium">{shippingSettings.expressShippingPrice.toLocaleString('fr-FR')} €</span>
+                      </label>
+                    )}
                   </div>
 
                   {/* Adresse récap */}
@@ -564,10 +587,10 @@ export default function CheckoutPage() {
               <h2 className="text-lg tracking-[0.15em] uppercase mb-6">Récapitulatif</h2>
 
               {/* Items */}
-              <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
+              <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pt-2 pr-2">
                 {items.map((item) => (
                   <div key={`${item.product.id}-${item.selectedSize}`} className="flex gap-4">
-                    <div className="relative w-16 h-16 bg-[#F9F6F1] flex-shrink-0">
+                    <div className="relative w-16 h-16 bg-[#F9F6F1] flex-shrink-0 overflow-visible">
                       <Image
                         src={item.product.images[0]}
                         alt={item.product.name}
@@ -575,7 +598,7 @@ export default function CheckoutPage() {
                         sizes="64px"
                         className="object-cover"
                       />
-                      <span className="absolute -top-2 -right-2 w-5 h-5 bg-[#19110B] text-white text-xs rounded-full flex items-center justify-center">
+                      <span className="absolute -top-2 -right-2 w-5 h-5 bg-[#19110B] text-white text-xs rounded-full flex items-center justify-center z-10">
                         {item.quantity}
                       </span>
                     </div>
@@ -584,7 +607,7 @@ export default function CheckoutPage() {
                       <p className="text-xs text-gray-500">{item.selectedSize}</p>
                     </div>
                     <p className="text-sm font-medium">
-                      {(item.product.price * item.quantity).toLocaleString('fr-FR')} €
+                      {(getItemPrice(item) * item.quantity).toLocaleString('fr-FR')} €
                     </p>
                   </div>
                 ))}

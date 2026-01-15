@@ -25,6 +25,7 @@ interface Pack {
   original_price: number | null
   image: string
   product_ids: string[]
+  product_selections: ProductSelection[] | null
   tag: string | null
   is_active: boolean
   created_at: string
@@ -35,6 +36,13 @@ interface Product {
   name: string
   images: string[]
   price: number
+  sizes: string[]
+  price_by_size: Record<string, number> | null
+}
+
+interface ProductSelection {
+  productId: string
+  size: string
 }
 
 interface PackForm {
@@ -45,6 +53,7 @@ interface PackForm {
   original_price: number | null
   image: string
   product_ids: string[]
+  product_selections: ProductSelection[]
   tag: string
   is_active: boolean
 }
@@ -57,6 +66,7 @@ const emptyForm: PackForm = {
   original_price: null,
   image: '',
   product_ids: [],
+  product_selections: [],
   tag: '',
   is_active: true
 }
@@ -99,7 +109,7 @@ export default function AdminPacksPage() {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, images, price')
+        .select('id, name, images, price, sizes, price_by_size')
         .order('name')
 
       if (error) throw error
@@ -156,6 +166,18 @@ export default function AdminPacksPage() {
 
   const openEditModal = (pack: Pack) => {
     setEditingPack(pack)
+    // Utiliser les sélections sauvegardées ou reconstituer avec les tailles par défaut
+    let selections: ProductSelection[]
+    if (pack.product_selections && pack.product_selections.length > 0) {
+      selections = pack.product_selections
+    } else {
+      // Fallback pour les packs existants sans product_selections
+      selections = (pack.product_ids || []).map(id => {
+        const product = products.find(p => p.id === id)
+        const defaultSize = product?.sizes?.[0] || ''
+        return { productId: id, size: defaultSize }
+      })
+    }
     setForm({
       name: pack.name,
       slug: pack.slug,
@@ -164,6 +186,7 @@ export default function AdminPacksPage() {
       original_price: pack.original_price,
       image: pack.image,
       product_ids: pack.product_ids || [],
+      product_selections: selections,
       tag: pack.tag || '',
       is_active: pack.is_active ?? true
     })
@@ -198,28 +221,36 @@ export default function AdminPacksPage() {
         original_price: form.original_price || null,
         image: form.image,
         product_ids: form.product_ids,
+        product_selections: form.product_selections,
         tag: form.tag || null,
         is_active: form.is_active
       }
 
+      console.log('Saving pack data:', packData)
+
       if (editingPack) {
-        const { error } = await supabase
+        const { error, data } = await supabase
           .from('packs')
           .update(packData)
           .eq('id', editingPack.id)
+          .select()
 
+        console.log('Update result:', { error, data })
         if (error) throw error
       } else {
-        const { error } = await supabase
+        const { error, data } = await supabase
           .from('packs')
           .insert(packData)
+          .select()
 
+        console.log('Insert result:', { error, data })
         if (error) throw error
       }
 
       setShowModal(false)
       fetchPacks()
     } catch (error: any) {
+      console.error('Save error:', error)
       setError(error.message)
     } finally {
       setSaving(false)
@@ -243,12 +274,45 @@ export default function AdminPacksPage() {
   }
 
   const toggleProductSelection = (productId: string) => {
+    const product = products.find(p => p.id === productId)
+    const defaultSize = product?.sizes?.[0] || ''
+
+    setForm(prev => {
+      const isSelected = prev.product_ids.includes(productId)
+      return {
+        ...prev,
+        product_ids: isSelected
+          ? prev.product_ids.filter(id => id !== productId)
+          : [...prev.product_ids, productId],
+        product_selections: isSelected
+          ? prev.product_selections.filter(s => s.productId !== productId)
+          : [...prev.product_selections, { productId, size: defaultSize }]
+      }
+    })
+  }
+
+  const updateProductSize = (productId: string, size: string) => {
     setForm(prev => ({
       ...prev,
-      product_ids: prev.product_ids.includes(productId)
-        ? prev.product_ids.filter(id => id !== productId)
-        : [...prev.product_ids, productId]
+      product_selections: prev.product_selections.map(s =>
+        s.productId === productId ? { ...s, size } : s
+      )
     }))
+  }
+
+  const getProductPrice = (product: Product, size: string): number => {
+    if (product.price_by_size && product.price_by_size[size] > 0) {
+      return product.price_by_size[size]
+    }
+    return product.price
+  }
+
+  const calculateTotalOriginalPrice = (): number => {
+    return form.product_selections.reduce((total, selection) => {
+      const product = products.find(p => p.id === selection.productId)
+      if (!product) return total
+      return total + getProductPrice(product, selection.size)
+    }, 0)
   }
 
   const filteredPacks = packs.filter(pack =>
@@ -525,59 +589,103 @@ export default function AdminPacksPage() {
                   Produits inclus * ({form.product_ids.length} sélectionné(s))
                 </label>
                 <div className="border border-gray-300 rounded-lg max-h-64 overflow-y-auto">
-                  {products.map((product) => (
-                    <label
-                      key={product.id}
-                      className={`flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0 ${
-                        form.product_ids.includes(product.id) ? 'bg-[#C9A962]/10' : ''
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form.product_ids.includes(product.id)}
-                        onChange={() => toggleProductSelection(product.id)}
-                        className="w-4 h-4 text-[#C9A962] rounded focus:ring-[#C9A962]"
-                      />
-                      {product.images?.[0] && (
-                        <div className="relative w-10 h-10 rounded overflow-hidden flex-shrink-0">
-                          <Image
-                            src={product.images[0]}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                          />
+                  {products.map((product) => {
+                    const prices = product.price_by_size
+                      ? Object.values(product.price_by_size).filter(p => p > 0)
+                      : []
+                    const minPrice = prices.length > 0 ? Math.min(...prices) : product.price
+                    return (
+                      <label
+                        key={product.id}
+                        className={`flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0 ${
+                          form.product_ids.includes(product.id) ? 'bg-[#C9A962]/10' : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.product_ids.includes(product.id)}
+                          onChange={() => toggleProductSelection(product.id)}
+                          className="w-4 h-4 text-[#C9A962] rounded focus:ring-[#C9A962]"
+                        />
+                        {product.images?.[0] && (
+                          <div className="relative w-10 h-10 rounded overflow-hidden flex-shrink-0">
+                            <Image
+                              src={product.images[0]}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{product.name}</p>
+                          <p className="text-sm text-gray-500">Dès {minPrice || 0} €</p>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{product.name}</p>
-                        <p className="text-sm text-gray-500">{product.price} €</p>
-                      </div>
-                    </label>
-                  ))}
+                      </label>
+                    )
+                  })}
                 </div>
               </div>
 
-              {/* Selected Products Preview */}
+              {/* Selected Products with Size Selection */}
               {form.product_ids.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium mb-2">Aperçu du contenu</label>
-                  <div className="flex flex-wrap gap-2">
-                    {getSelectedProducts().map((product) => (
-                      <span
-                        key={product.id}
-                        className="px-3 py-1 bg-gray-100 rounded-full text-sm flex items-center gap-2"
-                      >
-                        {product.name}
-                        <button
-                          type="button"
-                          onClick={() => toggleProductSelection(product.id)}
-                          className="text-gray-400 hover:text-red-500"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">Contenu du pack (avec tailles)</label>
+                    <span className="text-sm text-gray-500">
+                      Total : {calculateTotalOriginalPrice().toFixed(2)} €
+                    </span>
                   </div>
+                  <div className="border border-gray-300 rounded-lg divide-y">
+                    {getSelectedProducts().map((product) => {
+                      const selection = form.product_selections.find(s => s.productId === product.id)
+                      const selectedSize = selection?.size || product.sizes?.[0] || ''
+                      const currentPrice = getProductPrice(product, selectedSize)
+
+                      return (
+                        <div key={product.id} className="flex items-center gap-3 p-3">
+                          {product.images?.[0] && (
+                            <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0">
+                              <Image
+                                src={product.images[0]}
+                                alt={product.name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{product.name}</p>
+                          </div>
+                          <select
+                            value={selectedSize}
+                            onChange={(e) => updateProductSize(product.id, e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
+                          >
+                            {product.sizes?.map((size) => (
+                              <option key={size} value={size}>
+                                {size} - {getProductPrice(product, size)} €
+                              </option>
+                            ))}
+                          </select>
+                          <span className="font-medium text-[#C9A962] w-16 text-right">
+                            {currentPrice} €
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => toggleProductSelection(product.id)}
+                            className="p-1 text-gray-400 hover:text-red-500"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Astuce : Le prix barré peut correspondre au total des produits individuels ({calculateTotalOriginalPrice().toFixed(2)} €)
+                  </p>
                 </div>
               )}
 

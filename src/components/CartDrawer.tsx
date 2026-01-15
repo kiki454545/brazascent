@@ -6,6 +6,15 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCartStore } from '@/store/cart'
 
+// Obtenir le prix d'un article selon sa taille
+const getItemPrice = (item: { product: { price: number; priceBySize?: Record<string, number> }; selectedSize: string }) => {
+  const priceBySize = item.product.priceBySize
+  if (priceBySize && priceBySize[item.selectedSize] > 0) {
+    return priceBySize[item.selectedSize]
+  }
+  return item.product.price
+}
+
 export function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, getTotal } = useCartStore()
 
@@ -122,7 +131,7 @@ export function CartDrawer() {
 
                           {/* Price */}
                           <p className="font-medium">
-                            {(item.product.price * item.quantity).toLocaleString('fr-FR')} €
+                            {(getItemPrice(item) * item.quantity).toLocaleString('fr-FR')} €
                           </p>
                         </div>
                       </div>

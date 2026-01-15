@@ -11,12 +11,14 @@ interface ShippingSettings {
   freeShippingThreshold: number
   standardShippingPrice: number
   expressShippingPrice: number
+  enableExpressShipping: boolean
 }
 
 const defaultShippingSettings: ShippingSettings = {
   freeShippingThreshold: 150,
   standardShippingPrice: 9.90,
   expressShippingPrice: 14.90,
+  enableExpressShipping: true,
 }
 
 export async function GET() {
@@ -39,6 +41,7 @@ export async function GET() {
         freeShippingThreshold: shippingValue.freeShippingThreshold ?? defaultShippingSettings.freeShippingThreshold,
         standardShippingPrice: shippingValue.standardShippingPrice ?? defaultShippingSettings.standardShippingPrice,
         expressShippingPrice: shippingValue.expressShippingPrice ?? defaultShippingSettings.expressShippingPrice,
+        enableExpressShipping: shippingValue.enableExpressShipping ?? defaultShippingSettings.enableExpressShipping,
       }
     })
   } catch (error) {

@@ -10,9 +10,9 @@ import { Product } from '@/types'
 
 const categories = [
   { id: 'all', name: 'Tous' },
-  { id: 'femme', name: 'Femme' },
-  { id: 'homme', name: 'Homme' },
-  { id: 'mixte', name: 'Mixte' },
+  { id: 'Eau de Parfum', name: 'Eau de Parfum' },
+  { id: 'Eau de Toilette', name: 'Eau de Toilette' },
+  { id: 'Extrait de Parfum', name: 'Extrait de Parfum' },
 ]
 
 const sortOptions = [

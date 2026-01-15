@@ -5,6 +5,16 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Minus, Plus, X, ShoppingBag, ArrowRight, Truck, Gift, Shield } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
+import { CartItem } from '@/types'
+
+// Obtenir le prix d'un article selon sa taille
+const getItemPrice = (item: CartItem) => {
+  const priceBySize = item.product.priceBySize
+  if (priceBySize && priceBySize[item.selectedSize] > 0) {
+    return priceBySize[item.selectedSize]
+  }
+  return item.product.price
+}
 
 export default function PanierPage() {
   const { items, removeItem, updateQuantity, getTotal, clearCart } = useCartStore()
@@ -136,7 +146,7 @@ export default function PanierPage() {
 
                       {/* Price */}
                       <p className="text-lg font-medium">
-                        {(item.product.price * item.quantity).toLocaleString('fr-FR')} €
+                        {(getItemPrice(item) * item.quantity).toLocaleString('fr-FR')} €
                       </p>
                     </div>
                   </div>

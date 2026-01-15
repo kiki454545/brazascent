@@ -361,7 +361,7 @@ export default function ProductPage() {
               </div>
               <div className="flex items-center gap-4">
                 <Gift className="w-5 h-5 text-[#C9A962]" />
-                <span className="text-sm">Écrin luxueux offert</span>
+                <span className="text-sm">Échantillons offert dès 120€ d'achat</span>
               </div>
             </div>
 

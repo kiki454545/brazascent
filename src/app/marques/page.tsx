@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowRight, Building2 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabase, isAbortError } from '@/lib/supabase'
 
 interface Brand {
   id: string
@@ -20,6 +20,8 @@ export default function MarquesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
+
     const fetchBrands = async () => {
       try {
         const { data, error } = await supabase
@@ -27,19 +29,29 @@ export default function MarquesPage() {
           .select('*')
           .order('name', { ascending: true })
 
-        if (error) {
+        if (!isMounted) return
+
+        if (error && !isAbortError(error)) {
           console.error('Error fetching brands:', error)
         } else if (data) {
           setBrands(data)
         }
       } catch (err) {
-        console.error('Error:', err)
+        if (!isAbortError(err)) {
+          console.error('Error:', err)
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
 
     fetchBrands()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
   return (
     <div className="min-h-screen">
@@ -137,31 +149,6 @@ export default function MarquesPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 bg-[#19110B] text-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl lg:text-4xl font-light tracking-[0.15em] uppercase mb-6">
-              Vous êtes une marque ?
-            </h2>
-            <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-              Rejoignez notre sélection exclusive de maisons de parfumerie et présentez vos créations
-              à notre clientèle exigeante.
-            </p>
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-3 px-8 py-4 border border-[#C9A962] text-[#C9A962] text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] hover:text-white transition-colors"
-            >
-              Nous contacter
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </motion.div>
-        </div>
-      </section>
     </div>
   )
 }

@@ -76,10 +76,14 @@ export const useCartStore = create<CartStore>()(
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
 
       getTotal: () => {
-        return get().items.reduce(
-          (total, item) => total + item.product.price * item.quantity,
-          0
-        )
+        return get().items.reduce((total, item) => {
+          // Utiliser le prix par taille si disponible
+          const priceBySize = item.product.priceBySize
+          const sizePrice = priceBySize && priceBySize[item.selectedSize] > 0
+            ? priceBySize[item.selectedSize]
+            : item.product.price
+          return total + sizePrice * item.quantity
+        }, 0)
       },
 
       getItemCount: () => {

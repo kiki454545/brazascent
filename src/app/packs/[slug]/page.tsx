@@ -12,6 +12,11 @@ import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
 
+interface ProductSelection {
+  productId: string
+  size: string
+}
+
 interface Pack {
   id: string
   name: string
@@ -21,6 +26,7 @@ interface Pack {
   original_price: number | null
   image: string
   product_ids: string[]
+  product_selections: ProductSelection[] | null
   tag: string | null
   is_active: boolean
 }
@@ -33,6 +39,7 @@ interface ProductData {
   short_description: string
   price: number
   original_price: number | null
+  price_by_size: Record<string, number> | null
   images: string[]
   category: string
   notes_top: string[]
@@ -50,6 +57,7 @@ export default function PackDetailPage() {
 
   const [pack, setPack] = useState<Pack | null>(null)
   const [packProducts, setPackProducts] = useState<Product[]>([])
+  const [productSelections, setProductSelections] = useState<ProductSelection[]>([])
   const [loading, setLoading] = useState(true)
 
   const { addItem, openCart } = useCartStore()
@@ -74,6 +82,11 @@ export default function PackDetailPage() {
 
         setPack(packData)
 
+        // Sauvegarder les sélections de produits
+        if (packData.product_selections) {
+          setProductSelections(packData.product_selections)
+        }
+
         // Récupérer les produits du pack
         if (packData.product_ids && packData.product_ids.length > 0) {
           const { data: productsData, error: productsError } = await supabase
@@ -82,27 +95,39 @@ export default function PackDetailPage() {
             .in('id', packData.product_ids)
 
           if (!productsError && productsData) {
-            const mappedProducts: Product[] = productsData.map((p: ProductData) => ({
-              id: p.id,
-              name: p.name,
-              slug: p.slug,
-              description: p.description || '',
-              shortDescription: p.short_description || '',
-              price: p.price,
-              originalPrice: p.original_price || undefined,
-              images: p.images || [],
-              size: p.sizes || [],
-              category: (p.category as 'homme' | 'femme' | 'unisexe' | 'collection') || 'unisexe',
-              notes: {
-                top: p.notes_top || [],
-                heart: p.notes_heart || [],
-                base: p.notes_base || []
-              },
-              inStock: (p.stock || 0) > 0,
-              new: p.is_new,
-              bestseller: p.is_bestseller,
-              featured: p.is_bestseller
-            }))
+            const mappedProducts: Product[] = productsData.map((p: ProductData) => {
+              // Calculer le prix à partir de price_by_size si disponible
+              let displayPrice = p.price
+              if (p.price_by_size && Object.keys(p.price_by_size).length > 0) {
+                const prices = Object.values(p.price_by_size).filter(price => price > 0)
+                if (prices.length > 0) {
+                  displayPrice = Math.min(...prices) // Afficher le prix minimum (plus petite taille)
+                }
+              }
+
+              return {
+                id: p.id,
+                name: p.name,
+                slug: p.slug,
+                description: p.description || '',
+                shortDescription: p.short_description || '',
+                price: displayPrice,
+                priceBySize: p.price_by_size || undefined,
+                originalPrice: p.original_price || undefined,
+                images: p.images || [],
+                size: p.sizes || [],
+                category: (p.category as 'homme' | 'femme' | 'unisexe' | 'collection') || 'unisexe',
+                notes: {
+                  top: p.notes_top || [],
+                  heart: p.notes_heart || [],
+                  base: p.notes_base || []
+                },
+                inStock: (p.stock || 0) > 0,
+                new: p.is_new,
+                bestseller: p.is_bestseller,
+                featured: p.is_bestseller
+              }
+            })
             setPackProducts(mappedProducts)
           }
         }
@@ -117,6 +142,19 @@ export default function PackDetailPage() {
       fetchPack()
     }
   }, [slug])
+
+  // Obtenir la taille et le prix sélectionnés pour un produit
+  const getProductSelectionInfo = (productId: string, product: Product) => {
+    const selection = productSelections.find(s => s.productId === productId)
+    const selectedSize = selection?.size || product.size?.[0] || ''
+
+    let price = product.price
+    if (product.priceBySize && selectedSize && product.priceBySize[selectedSize] > 0) {
+      price = product.priceBySize[selectedSize]
+    }
+
+    return { selectedSize, price }
+  }
 
   const handleAddToCart = () => {
     if (!pack) return
@@ -253,29 +291,36 @@ export default function PackDetailPage() {
                   Ce coffret contient
                 </p>
                 <div className="border rounded-lg p-4 space-y-3">
-                  {packProducts.map((product) => (
-                    <Link
-                      key={product.id}
-                      href={`/parfum/${product.slug}`}
-                      className="flex items-center gap-4 hover:bg-gray-50 p-2 rounded transition-colors"
-                    >
-                      <div className="relative w-16 h-16 bg-[#F9F6F1] rounded overflow-hidden flex-shrink-0">
-                        {product.images[0] && (
-                          <Image
-                            src={product.images[0]}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{product.name}</p>
-                        <p className="text-sm text-gray-500">{product.price} €</p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
-                    </Link>
-                  ))}
+                  {packProducts.map((product) => {
+                    const { selectedSize, price } = getProductSelectionInfo(product.id, product)
+                    return (
+                      <Link
+                        key={product.id}
+                        href={`/parfum/${product.slug}`}
+                        className="flex items-center gap-4 hover:bg-gray-50 p-2 rounded transition-colors"
+                      >
+                        <div className="relative w-16 h-16 bg-[#F9F6F1] rounded overflow-hidden flex-shrink-0">
+                          {product.images[0] && (
+                            <Image
+                              src={product.images[0]}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{product.name}</p>
+                          <p className="text-sm text-gray-500">
+                            {selectedSize && <span className="text-[#C9A962]">{selectedSize}</span>}
+                            {selectedSize && ' — '}
+                            {price} €
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                      </Link>
+                    )
+                  })}
                 </div>
                 {pack.original_price && (
                   <p className="text-sm text-gray-500 mt-2">

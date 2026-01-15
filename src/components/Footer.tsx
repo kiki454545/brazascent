@@ -12,12 +12,6 @@ const footerLinks = {
     { name: 'Marques', href: '/marques' },
     { name: 'Packs', href: '/packs' },
   ],
-  maison: [
-    { name: 'Notre Histoire', href: '/maison' },
-    { name: 'Savoir-faire', href: '/maison/savoir-faire' },
-    { name: 'Nos Boutiques', href: '/boutiques' },
-    { name: 'Carrières', href: '/carrieres' },
-  ],
   services: [
     { name: 'Mon Compte', href: '/compte' },
     { name: 'Suivi de commande', href: '/compte/commandes' },
@@ -126,8 +120,8 @@ export function Footer() {
               </h2>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-6 max-w-sm">
-              Maison de parfumerie d&apos;exception, Braza Scent perpétue l&apos;art de la haute parfumerie
-              française depuis 2024. Chaque création est une invitation au voyage.
+              Boutique de parfums en petites quantités pour découvrir et tester les plus grandes fragrances.
+              Trouvez votre signature olfactive sans vous ruiner.
             </p>
 
             {/* Contact */}
@@ -152,22 +146,6 @@ export function Footer() {
             <h4 className="text-sm tracking-[0.2em] uppercase mb-6">Boutique</h4>
             <ul className="space-y-3">
               {footerLinks.boutique.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-gray-400 hover:text-[#C9A962] transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-sm tracking-[0.2em] uppercase mb-6">La Maison</h4>
-            <ul className="space-y-3">
-              {footerLinks.maison.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}

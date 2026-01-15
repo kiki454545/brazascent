@@ -1,10 +1,15 @@
 import Stripe from 'stripe'
 
 // Client Stripe côté serveur
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-12-15.clover',
-  typescript: true,
-})
+// La clé est optionnelle pour permettre le build sans Stripe configuré
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || ''
+
+export const stripe = stripeSecretKey
+  ? new Stripe(stripeSecretKey, {
+      apiVersion: '2025-12-15.clover',
+      typescript: true,
+    })
+  : null as unknown as Stripe
 
 // Configuration des produits pour Stripe
 export function formatAmountForStripe(amount: number): number {

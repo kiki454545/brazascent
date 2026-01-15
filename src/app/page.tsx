@@ -274,7 +274,7 @@ export default function HomePage() {
             {[
               {
                 title: 'Livraison Premium',
-                description: `Livraison offerte dès ${settings.freeShippingThreshold}€. Écrin luxueux et personnalisé.`,
+                description: `Livraison offerte dès ${settings.freeShippingThreshold}€.`,
               },
               {
                 title: 'Échantillons',
