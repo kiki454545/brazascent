@@ -16,17 +16,26 @@ interface ProductCardProps {
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [selectedSize, setSelectedSize] = useState(product.size[0])
+  const [selectedSize, setSelectedSize] = useState(product.size?.[0] || '')
   const [mounted, setMounted] = useState(false)
   const { addItem, openCart } = useCartStore()
   const { toggleItem, isInWishlist } = useWishlistStore()
 
   // Calculer le prix selon la taille sélectionnée
   const getSizePrice = (size: string) => {
-    if (product.priceBySize && product.priceBySize[size] !== undefined && product.priceBySize[size] > 0) {
+    // Si priceBySize existe et a un prix pour cette taille
+    if (product.priceBySize && size && product.priceBySize[size] !== undefined && product.priceBySize[size] > 0) {
       return product.priceBySize[size]
     }
-    return product.price
+    // Si pas de taille ou taille invalide mais priceBySize existe, prendre le prix minimum
+    if (product.priceBySize && Object.keys(product.priceBySize).length > 0) {
+      const prices = Object.values(product.priceBySize).filter(p => p > 0)
+      if (prices.length > 0) {
+        return Math.min(...prices)
+      }
+    }
+    // Fallback sur le prix de base du produit
+    return product.price || 0
   }
 
   const currentPrice = getSizePrice(selectedSize)
@@ -127,7 +136,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           >
             {/* Size selector */}
             <div className="flex items-center justify-center gap-2 mb-3">
-              {product.size.map((size) => (
+              {(product.size || []).map((size) => (
                 <button
                   key={size}
                   onClick={(e) => {

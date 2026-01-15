@@ -55,28 +55,41 @@ export default function BrandPage() {
         if (productsError) {
           console.error('Error fetching products:', productsError)
         } else if (productsData) {
-          const mappedProducts: Product[] = productsData.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            description: p.description || '',
-            shortDescription: p.short_description || '',
-            price: p.price,
-            originalPrice: p.original_price,
-            images: p.images || [],
-            size: p.sizes || [],
-            category: p.category || 'unisexe',
-            collection: p.collection,
-            notes: {
-              top: p.notes_top || [],
-              heart: p.notes_heart || [],
-              base: p.notes_base || []
-            },
-            inStock: (p.stock || 0) > 0,
-            new: p.is_new,
-            bestseller: p.is_bestseller,
-            featured: p.is_bestseller
-          }))
+          // Mapper exactement comme la page Parfums
+          const mappedProducts: Product[] = productsData.map((p: any) => {
+            // Parser price_by_size (peut être string JSON ou objet)
+            const priceBySize = typeof p.price_by_size === 'string'
+              ? JSON.parse(p.price_by_size)
+              : (p.price_by_size || {})
+
+            // Calculer le prix à afficher (prix minimum ou premier prix disponible)
+            const prices = Object.values(priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
+            const displayPrice = prices.length > 0 ? Math.min(...prices) : p.price
+
+            return {
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+              description: p.description || '',
+              shortDescription: p.short_description || '',
+              price: displayPrice,
+              originalPrice: p.original_price,
+              priceBySize,
+              images: p.images || [],
+              size: p.sizes || [],
+              category: p.category || 'unisexe',
+              collection: p.collection,
+              notes: {
+                top: p.notes_top || [],
+                heart: p.notes_heart || [],
+                base: p.notes_base || []
+              },
+              inStock: (p.stock || 0) > 0,
+              new: p.is_new,
+              bestseller: p.is_bestseller,
+              featured: p.is_bestseller
+            }
+          })
           setProducts(mappedProducts)
         }
       } catch (err) {
