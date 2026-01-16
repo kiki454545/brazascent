@@ -8,6 +8,12 @@ import { ProductCard } from '@/components/ProductCard'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 
+interface Brand {
+  id: string
+  name: string
+  slug: string
+}
+
 const categories = [
   { id: 'all', name: 'Tous' },
   { id: 'Eau de Parfum', name: 'Eau de Parfum' },
@@ -24,8 +30,10 @@ const sortOptions = [
 
 export default function ParfumsPage() {
   const [products, setProducts] = useState<Product[]>([])
+  const [brands, setBrands] = useState<Brand[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedBrand, setSelectedBrand] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
@@ -38,28 +46,32 @@ export default function ParfumsPage() {
       return message.includes('AbortError') || message.includes('aborted')
     }
 
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .order('created_at', { ascending: false })
+        // Fetch products and brands in parallel
+        const [productsResponse, brandsResponse] = await Promise.all([
+          supabase
+            .from('products')
+            .select('*')
+            .order('display_order', { ascending: true }),
+          supabase
+            .from('brands')
+            .select('id, name, slug')
+            .order('name', { ascending: true })
+        ])
 
         if (!isMounted) return
 
-        if (error) {
-          if (!isAbortError(error)) {
-            console.error('Error fetching products:', error.message)
+        if (productsResponse.error) {
+          if (!isAbortError(productsResponse.error)) {
+            console.error('Error fetching products:', productsResponse.error.message)
           }
-        } else if (data) {
-          // Mapper les champs Supabase vers le format Product
-          const mappedProducts: Product[] = data.map((p: any) => {
-            // Parser price_by_size
+        } else if (productsResponse.data) {
+          const mappedProducts: Product[] = productsResponse.data.map((p: any) => {
             const priceBySize = typeof p.price_by_size === 'string'
               ? JSON.parse(p.price_by_size)
               : (p.price_by_size || {})
 
-            // Calculer le prix à afficher (prix minimum ou premier prix disponible)
             const prices = Object.values(priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
             const displayPrice = prices.length > 0 ? Math.min(...prices) : p.price
 
@@ -76,6 +88,7 @@ export default function ParfumsPage() {
               size: p.sizes || [],
               category: p.category || 'unisexe',
               collection: p.collection,
+              brand: p.brand || '',
               notes: {
                 top: p.notes_top || [],
                 heart: p.notes_heart || [],
@@ -89,6 +102,10 @@ export default function ParfumsPage() {
           })
           setProducts(mappedProducts)
         }
+
+        if (!brandsResponse.error && brandsResponse.data) {
+          setBrands(brandsResponse.data)
+        }
       } catch (err) {
         if (!isAbortError(err)) {
           console.error('Error:', err)
@@ -100,7 +117,7 @@ export default function ParfumsPage() {
       }
     }
 
-    fetchProducts()
+    fetchData()
 
     return () => {
       isMounted = false
@@ -109,6 +126,7 @@ export default function ParfumsPage() {
 
   const filteredProducts = products
     .filter((product) => selectedCategory === 'all' || product.category === selectedCategory)
+    .filter((product) => selectedBrand === 'all' || product.brand === selectedBrand)
     .sort((a, b) => {
       switch (sortBy) {
         case 'price-asc':
@@ -194,7 +212,7 @@ export default function ParfumsPage() {
               className="mb-12 pb-6 border-b"
             >
               <div className="flex items-center justify-between mb-6">
-                <span className="text-sm tracking-[0.2em] uppercase">Catégories</span>
+                <span className="text-sm tracking-[0.2em] uppercase">Filtres</span>
                 <button
                   onClick={() => setIsFilterOpen(false)}
                   className="p-1 hover:text-[#C9A962] transition-colors"
@@ -202,20 +220,42 @@ export default function ParfumsPage() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="flex flex-wrap gap-3">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`px-5 py-2.5 text-sm tracking-wider border transition-colors ${
-                      selectedCategory === category.id
-                        ? 'bg-[#19110B] text-white border-[#19110B]'
-                        : 'border-gray-300 hover:border-[#19110B]'
-                    }`}
-                  >
-                    {category.name}
-                  </button>
-                ))}
+
+              {/* Filtre par marque */}
+              <div className="mb-6">
+                <span className="text-xs tracking-[0.15em] uppercase text-gray-500 mb-3 block">Marque</span>
+                <select
+                  value={selectedBrand}
+                  onChange={(e) => setSelectedBrand(e.target.value)}
+                  className="w-full sm:w-64 px-4 py-2.5 border border-gray-300 rounded-none text-sm focus:outline-none focus:border-[#19110B] bg-white"
+                >
+                  <option value="all">Toutes les marques</option>
+                  {brands.map((brand) => (
+                    <option key={brand.id} value={brand.name}>
+                      {brand.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filtre par catégorie */}
+              <div>
+                <span className="text-xs tracking-[0.15em] uppercase text-gray-500 mb-3 block">Catégorie</span>
+                <div className="flex flex-wrap gap-3">
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`px-5 py-2.5 text-sm tracking-wider border transition-colors ${
+                        selectedCategory === category.id
+                          ? 'bg-[#19110B] text-white border-[#19110B]'
+                          : 'border-gray-300 hover:border-[#19110B]'
+                      }`}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}

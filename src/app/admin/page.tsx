@@ -36,41 +36,48 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchStats()
-  }, [])
+    let isMounted = true
 
-  const fetchStats = async () => {
-    try {
-      // Récupérer les commandes
-      const { data: orders, error: ordersError } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false })
+    const fetchStats = async () => {
+      try {
+        const { data: orders, error: ordersError } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false })
 
-      // Récupérer les utilisateurs
-      const { count: usersCount } = await supabase
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true })
+        const { count: usersCount } = await supabase
+          .from('user_profiles')
+          .select('*', { count: 'exact', head: true })
 
-      if (!ordersError && orders) {
-        const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0)
+        if (!isMounted) return
 
-        setStats({
-          totalOrders: orders.length,
-          totalRevenue,
-          totalUsers: usersCount || 0,
-          totalProducts: 12, // Statique pour l'instant
-          recentOrders: orders.slice(0, 5),
-          ordersChange: 12.5,
-          revenueChange: 8.2
-        })
+        if (!ordersError && orders) {
+          const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0)
+
+          setStats({
+            totalOrders: orders.length,
+            totalRevenue,
+            totalUsers: usersCount || 0,
+            totalProducts: 12,
+            recentOrders: orders.slice(0, 5),
+            ordersChange: 12.5,
+            revenueChange: 8.2
+          })
+        }
+      } catch (error) {
+        if (!isMounted) return
+        console.error('Error fetching stats:', error)
+      } finally {
+        if (isMounted) setLoading(false)
       }
-    } catch (error) {
-      console.error('Error fetching stats:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+
+    fetchStats()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const statCards = [
     {

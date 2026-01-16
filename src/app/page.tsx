@@ -37,6 +37,7 @@ export default function HomePage() {
           .from('products')
           .select('*')
           .eq('is_bestseller', true)
+          .order('display_order', { ascending: true })
           .limit(4)
 
         if (!isMounted) return

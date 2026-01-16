@@ -10,8 +10,9 @@ import {
   Edit,
   Trash2,
   Package,
-  MoreVertical,
-  Eye
+  Eye,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -30,6 +31,7 @@ interface Product {
   is_new?: boolean
   is_bestseller?: boolean
   is_active?: boolean
+  display_order?: number
 }
 
 // Calculer la valeur totale du stock (prix × quantité pour chaque taille)
@@ -61,30 +63,49 @@ export default function AdminProductsPage() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
+    let isMounted = true
+
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('display_order', { ascending: true })
+
+        if (!isMounted) return
+
+        if (error) {
+          console.error('Error fetching products from Supabase:', error)
+          setProducts([])
+        } else if (data) {
+          setProducts(data)
+          setIsFromSupabase(true)
+        } else {
+          setProducts([])
+        }
+      } catch (error) {
+        if (!isMounted) return
+        console.error('Error fetching products:', error)
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+
     fetchProducts()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
-  const fetchProducts = async () => {
-    try {
-      // Récupérer les produits depuis Supabase
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false })
+  const refetchProducts = async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .order('display_order', { ascending: true })
 
-      if (error) {
-        console.error('Error fetching products from Supabase:', error)
-        setProducts([])
-      } else if (data) {
-        setProducts(data)
-        setIsFromSupabase(true)
-      } else {
-        setProducts([])
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error)
-    } finally {
-      setLoading(false)
+    if (!error && data) {
+      setProducts(data)
     }
   }
 
@@ -113,6 +134,43 @@ export default function AdminProductsPage() {
       setDeleteError('Une erreur inattendue est survenue')
     } finally {
       setDeleting(false)
+    }
+  }
+
+  const moveProduct = async (productId: string, direction: 'up' | 'down') => {
+    const currentIndex = products.findIndex(p => p.id === productId)
+    if (currentIndex === -1) return
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+    if (targetIndex < 0 || targetIndex >= products.length) return
+
+    const currentProduct = products[currentIndex]
+    const targetProduct = products[targetIndex]
+
+    // Échanger les display_order
+    const currentOrder = currentProduct.display_order ?? currentIndex
+    const targetOrder = targetProduct.display_order ?? targetIndex
+
+    try {
+      // Mettre à jour les deux produits dans Supabase
+      await Promise.all([
+        supabase
+          .from('products')
+          .update({ display_order: targetOrder })
+          .eq('id', currentProduct.id),
+        supabase
+          .from('products')
+          .update({ display_order: currentOrder })
+          .eq('id', targetProduct.id)
+      ])
+
+      // Mettre à jour l'état local
+      const newProducts = [...products]
+      newProducts[currentIndex] = { ...targetProduct, display_order: currentOrder }
+      newProducts[targetIndex] = { ...currentProduct, display_order: targetOrder }
+      setProducts(newProducts)
+    } catch (error) {
+      console.error('Error moving product:', error)
     }
   }
 
@@ -222,6 +280,9 @@ export default function AdminProductsPage() {
                       className="w-4 h-4 rounded border-gray-300 accent-[#C9A962]"
                     />
                   </th>
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ordre
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Produit
                   </th>
@@ -243,7 +304,7 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredProducts.map((product) => (
+                {filteredProducts.map((product, index) => (
                   <tr key={product.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <input
@@ -252,6 +313,34 @@ export default function AdminProductsPage() {
                         onChange={() => handleSelectProduct(product.id)}
                         className="w-4 h-4 rounded border-gray-300 accent-[#C9A962]"
                       />
+                    </td>
+                    <td className="px-3 py-4">
+                      <div className="flex flex-col items-center gap-1">
+                        <button
+                          onClick={() => moveProduct(product.id, 'up')}
+                          disabled={index === 0}
+                          className={`p-1 rounded transition-colors ${
+                            index === 0
+                              ? 'text-gray-200 cursor-not-allowed'
+                              : 'text-gray-400 hover:text-[#C9A962] hover:bg-gray-100'
+                          }`}
+                          title="Monter"
+                        >
+                          <ChevronUp className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => moveProduct(product.id, 'down')}
+                          disabled={index === filteredProducts.length - 1}
+                          className={`p-1 rounded transition-colors ${
+                            index === filteredProducts.length - 1
+                              ? 'text-gray-200 cursor-not-allowed'
+                              : 'text-gray-400 hover:text-[#C9A962] hover:bg-gray-100'
+                          }`}
+                          title="Descendre"
+                        >
+                          <ChevronDown className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">

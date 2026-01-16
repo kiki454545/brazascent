@@ -94,7 +94,33 @@ export default function AdminOrdersPage() {
   })
 
   useEffect(() => {
+    let isMounted = true
+
+    const fetchOrders = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (!isMounted) return
+
+        if (!error && data) {
+          setOrders(data)
+        }
+      } catch (error) {
+        if (!isMounted) return
+        console.error('Error fetching orders:', error)
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+
     fetchOrders()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   // Fermer le dropdown quand on clique ailleurs
@@ -120,20 +146,14 @@ export default function AdminOrdersPage() {
     }
   }, [selectedOrder])
 
-  const fetchOrders = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false })
+  const refetchOrders = async () => {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-      if (!error && data) {
-        setOrders(data)
-      }
-    } catch (error) {
-      console.error('Error fetching orders:', error)
-    } finally {
-      setLoading(false)
+    if (!error && data) {
+      setOrders(data)
     }
   }
 

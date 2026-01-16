@@ -27,14 +27,17 @@ export default function BrandPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true
+
     const fetchBrandAndProducts = async () => {
       try {
-        // Récupérer la marque par slug
         const { data: brandData, error: brandError } = await supabase
           .from('brands')
           .select('*')
           .eq('slug', slug)
           .single()
+
+        if (!isMounted) return
 
         if (brandError || !brandData) {
           console.error('Error fetching brand:', brandError)
@@ -44,25 +47,23 @@ export default function BrandPage() {
 
         setBrand(brandData)
 
-        // Récupérer les produits de cette marque
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select('*')
           .eq('brand', brandData.name)
           .eq('is_active', true)
-          .order('created_at', { ascending: false })
+          .order('display_order', { ascending: true })
+
+        if (!isMounted) return
 
         if (productsError) {
           console.error('Error fetching products:', productsError)
         } else if (productsData) {
-          // Mapper exactement comme la page Parfums
           const mappedProducts: Product[] = productsData.map((p: any) => {
-            // Parser price_by_size (peut être string JSON ou objet)
             const priceBySize = typeof p.price_by_size === 'string'
               ? JSON.parse(p.price_by_size)
               : (p.price_by_size || {})
 
-            // Calculer le prix à afficher (prix minimum ou premier prix disponible)
             const prices = Object.values(priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
             const displayPrice = prices.length > 0 ? Math.min(...prices) : p.price
 
@@ -93,14 +94,19 @@ export default function BrandPage() {
           setProducts(mappedProducts)
         }
       } catch (err) {
+        if (!isMounted) return
         console.error('Error:', err)
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     if (slug) {
       fetchBrandAndProducts()
+    }
+
+    return () => {
+      isMounted = false
     }
   }, [slug])
 
