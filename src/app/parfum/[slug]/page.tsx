@@ -136,8 +136,8 @@ export default function ProductPage() {
       <div className="min-h-screen pt-32 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl mb-4">Produit non trouvé</h1>
-          <Link href="/collections" className="text-[#C9A962] hover:underline">
-            Retour aux collections
+          <Link href="/parfums" className="text-[#C9A962] hover:underline">
+            Retour aux parfums
           </Link>
         </div>
       </div>
@@ -170,16 +170,8 @@ export default function ProductPage() {
         <nav className="flex items-center gap-2 text-sm text-gray-500">
           <Link href="/" className="hover:text-[#C9A962]">Accueil</Link>
           <ChevronRight className="w-4 h-4" />
-          <Link href="/collections" className="hover:text-[#C9A962]">Collections</Link>
+          <Link href="/parfums" className="hover:text-[#C9A962]">Parfums</Link>
           <ChevronRight className="w-4 h-4" />
-          {product.collection && (
-            <>
-              <Link href={`/collections/${product.collection.toLowerCase()}`} className="hover:text-[#C9A962]">
-                {product.collection}
-              </Link>
-              <ChevronRight className="w-4 h-4" />
-            </>
-          )}
           <span className="text-[#19110B]">{product.name}</span>
         </nav>
       </div>

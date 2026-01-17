@@ -58,7 +58,7 @@ export function CartDrawer() {
                   <ShoppingBag className="w-16 h-16 text-gray-300 mb-4" />
                   <p className="text-lg mb-2">Votre panier est vide</p>
                   <p className="text-sm text-gray-500 mb-6">
-                    Découvrez nos collections et trouvez votre fragrance idéale
+                    Découvrez nos parfums et trouvez votre fragrance idéale
                   </p>
                   <button
                     onClick={closeCart}

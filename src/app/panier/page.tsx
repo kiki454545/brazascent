@@ -36,10 +36,10 @@ export default function PanierPage() {
               Votre panier est vide
             </h1>
             <p className="text-gray-500 mb-8">
-              Découvrez nos collections et trouvez la fragrance qui vous correspond
+              Découvrez nos parfums et trouvez la fragrance qui vous correspond
             </p>
             <Link
-              href="/collections"
+              href="/parfums"
               className="inline-flex items-center gap-3 px-8 py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
             >
               Découvrir nos parfums
@@ -203,7 +203,7 @@ export default function PanierPage() {
               </Link>
 
               <Link
-                href="/collections"
+                href="/parfums"
                 className="block w-full py-3 text-center border border-[#19110B] text-sm tracking-[0.15em] uppercase hover:bg-[#19110B] hover:text-white transition-colors"
               >
                 Continuer mes achats

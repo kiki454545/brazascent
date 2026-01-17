@@ -98,7 +98,7 @@ export default function FavorisPage() {
               Votre liste de favoris est vide
             </h1>
             <p className="text-gray-500 mb-8">
-              Explorez nos collections et ajoutez vos parfums préférés à votre liste
+              Explorez nos parfums et ajoutez vos préférés à votre liste
             </p>
             <Link
               href="/parfums"
