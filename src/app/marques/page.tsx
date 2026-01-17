@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowRight, Building2 } from 'lucide-react'
-import { supabase, isAbortError } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 interface Brand {
   id: string
@@ -22,6 +22,9 @@ export default function MarquesPage() {
   useEffect(() => {
     let isMounted = true
 
+    // Forcer loading à true au démarrage
+    setLoading(true)
+
     const fetchBrands = async () => {
       try {
         const { data, error } = await supabase
@@ -31,14 +34,16 @@ export default function MarquesPage() {
 
         if (!isMounted) return
 
-        if (error && !isAbortError(error)) {
+        if (error) {
           console.error('Error fetching brands:', error)
-        } else if (data) {
-          setBrands(data)
+          setBrands([])
+        } else {
+          setBrands(data || [])
         }
       } catch (err) {
-        if (!isAbortError(err)) {
+        if (isMounted) {
           console.error('Error:', err)
+          setBrands([])
         }
       } finally {
         if (isMounted) {
@@ -92,7 +97,7 @@ export default function MarquesPage() {
               <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : brands.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
               {brands.map((brand, index) => (
                 <motion.div
                   key={brand.id}

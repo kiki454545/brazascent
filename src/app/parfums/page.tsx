@@ -40,6 +40,11 @@ export default function ParfumsPage() {
   useEffect(() => {
     let isMounted = true
 
+    // Forcer loading à true au démarrage
+    setLoading(true)
+    setProducts([])
+    setBrands([])
+
     const isAbortError = (error: unknown): boolean => {
       if (!error) return false
       const message = (error as { message?: string }).message || String(error)
@@ -267,7 +272,7 @@ export default function ParfumsPage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
                 {filteredProducts.map((product, index) => (
                   <ProductCard key={product.id} product={product} index={index} />
                 ))}
