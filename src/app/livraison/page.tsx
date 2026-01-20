@@ -69,7 +69,7 @@ export default function LivraisonPage() {
               </div>
               <div>
                 <h3 className="text-lg font-medium text-[#19110B]">Livraison Express</h3>
-                <p className="text-sm text-gray-500">Chronopost</p>
+                <p className="text-sm text-gray-500">Mondial Relay</p>
               </div>
             </div>
             <div className="space-y-3 mb-6">
