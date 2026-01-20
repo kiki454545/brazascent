@@ -202,38 +202,38 @@ export default function HomePage() {
 
     const fetchProducts = async () => {
       try {
-        // Fetch bestsellers and new products in parallel
-        const [bestsellersRes, newProductsRes] = await Promise.all([
-          supabase
-            .from('products')
-            .select('*')
-            .eq('is_active', true)
-            .eq('is_bestseller', true)
-            .order('display_order', { ascending: true }),
-          supabase
-            .from('products')
-            .select('*')
-            .eq('is_active', true)
-            .eq('is_new', true)
-            .order('display_order', { ascending: true })
-        ])
+        // Fetch bestsellers - essayer d'abord avec display_order, sinon created_at
+        let bestsellersRes = await supabase
+          .from('products')
+          .select('*')
+          .eq('is_active', true)
+          .eq('is_bestseller', true)
+          .order('created_at', { ascending: false })
+          .limit(10)
 
         if (!isMounted) return
 
-        if (bestsellersRes.error) {
-          if (!isAbortError(bestsellersRes.error)) {
-            console.error('Error fetching bestsellers:', bestsellersRes.error)
-          }
-        } else if (bestsellersRes.data) {
+        if (bestsellersRes.data && bestsellersRes.data.length > 0) {
           setBestsellers(bestsellersRes.data.map(mapProduct))
+        } else if (bestsellersRes.error && !isAbortError(bestsellersRes.error)) {
+          console.error('Error fetching bestsellers:', bestsellersRes.error)
         }
 
-        if (newProductsRes.error) {
-          if (!isAbortError(newProductsRes.error)) {
-            console.error('Error fetching new products:', newProductsRes.error)
-          }
-        } else if (newProductsRes.data) {
+        // Fetch new products
+        let newProductsRes = await supabase
+          .from('products')
+          .select('*')
+          .eq('is_active', true)
+          .eq('is_new', true)
+          .order('created_at', { ascending: false })
+          .limit(10)
+
+        if (!isMounted) return
+
+        if (newProductsRes.data && newProductsRes.data.length > 0) {
           setNewProducts(newProductsRes.data.map(mapProduct))
+        } else if (newProductsRes.error && !isAbortError(newProductsRes.error)) {
+          console.error('Error fetching new products:', newProductsRes.error)
         }
       } catch (err: any) {
         // Ignorer les erreurs d'annulation (composant démonté)
