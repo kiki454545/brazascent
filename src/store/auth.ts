@@ -225,56 +225,110 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     console.log('fetchProfile: fetching for user', user.id)
 
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+    // Réessayer en cas d'AbortError (problème connu avec React 19)
+    let data = null
+    let error = null
+    let retries = 0
+    const maxRetries = 3
 
-      console.log('fetchProfile result:', { data, errorCode: error?.code, errorMessage: error?.message, errorDetails: error?.details, errorHint: error?.hint })
+    while (retries < maxRetries) {
+      try {
+        const result = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
 
-      if (error) {
-        // Si le profil n'existe pas, le créer automatiquement
-        if (error.code === 'PGRST116') {
-          console.log('Profile not found, creating one...')
-          const { data: newProfile, error: createError } = await supabase
-            .from('user_profiles')
-            .insert({
-              id: user.id,
-              email: user.email || '',
-            })
-            .select()
-            .single()
+        data = result.data
+        error = result.error
 
-          console.log('Create profile result:', { newProfile, createError })
+        // Si c'est une AbortError, réessayer
+        if (error && isAbortError(error)) {
+          console.log('fetchProfile: AbortError, retrying...', retries + 1)
+          retries++
+          await new Promise(resolve => setTimeout(resolve, 100 * retries))
+          continue
+        }
+        break
+      } catch (err: any) {
+        if (isAbortError(err) && retries < maxRetries - 1) {
+          console.log('fetchProfile: caught AbortError, retrying...', retries + 1)
+          retries++
+          await new Promise(resolve => setTimeout(resolve, 100 * retries))
+          continue
+        }
+        console.error('fetchProfile catch error:', err)
+        return
+      }
+    }
 
-          if (createError) {
-            console.error('Error creating profile:', createError)
+    console.log('fetchProfile result:', { data, errorCode: error?.code, errorMessage: error?.message })
+
+    if (error) {
+      // Si le profil n'existe pas, le créer automatiquement
+      if (error.code === 'PGRST116') {
+        console.log('Profile not found, creating one...')
+
+        // Réessayer la création aussi en cas d'AbortError
+        let newProfile = null
+        let createError = null
+        retries = 0
+
+        while (retries < maxRetries) {
+          try {
+            const result = await supabase
+              .from('user_profiles')
+              .insert({
+                id: user.id,
+                email: user.email || '',
+              })
+              .select()
+              .single()
+
+            newProfile = result.data
+            createError = result.error
+
+            if (createError && isAbortError(createError)) {
+              console.log('createProfile: AbortError, retrying...', retries + 1)
+              retries++
+              await new Promise(resolve => setTimeout(resolve, 100 * retries))
+              continue
+            }
+            break
+          } catch (err: any) {
+            if (isAbortError(err) && retries < maxRetries - 1) {
+              retries++
+              await new Promise(resolve => setTimeout(resolve, 100 * retries))
+              continue
+            }
+            console.error('createProfile catch error:', err)
             return
           }
+        }
 
-          if (newProfile) {
-            console.log('Setting new profile:', newProfile)
-            set({ profile: newProfile })
-          }
+        console.log('Create profile result:', { newProfile, createError })
+
+        if (createError) {
+          console.error('Error creating profile:', createError)
           return
         }
 
-        if (!isAbortError(error)) {
-          console.error('Fetch profile error:', error)
+        if (newProfile) {
+          console.log('Setting new profile:', newProfile)
+          set({ profile: newProfile })
         }
         return
       }
 
-      if (data) {
-        console.log('Setting existing profile:', data)
-        set({ profile: data })
-      }
-    } catch (error) {
       if (!isAbortError(error)) {
-        console.error('Fetch profile catch error:', error)
+        console.error('Fetch profile error:', error)
       }
+      return
+    }
+
+    if (data) {
+      console.log('Setting existing profile:', data)
+      set({ profile: data })
     }
   },
 }))
