@@ -154,14 +154,19 @@ export async function POST(request: NextRequest) {
       metadata: {
         userId: userId || '',
         shippingMethod,
-        shippingAddress: JSON.stringify(shippingAddress),
+        // Stocker l'adresse de manière compacte
+        shipping: JSON.stringify({
+          name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+          email: shippingAddress.email,
+          phone: shippingAddress.phone,
+          address: `${shippingAddress.street}, ${shippingAddress.postalCode} ${shippingAddress.city}, ${shippingAddress.country}`
+        }),
+        // Stocker les items de manière compacte (sans images, noms courts)
         items: JSON.stringify(items.map(item => ({
-          productId: item.product.id,
-          name: item.product.name,
-          size: item.selectedSize,
-          quantity: item.quantity,
-          price: getItemPrice(item),
-          image: item.product.images[0],
+          id: item.product.id,
+          s: item.selectedSize,
+          q: item.quantity,
+          p: getItemPrice(item),
         }))),
       },
       locale: 'fr',
