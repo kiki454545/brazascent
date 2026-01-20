@@ -9,6 +9,39 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // SÉCURITÉ: Vérifier l'authentification admin AVANT tout traitement
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader) {
+      return NextResponse.json(
+        { error: 'Non autorisé - Token manquant' },
+        { status: 401 }
+      )
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Non autorisé - Token invalide' },
+        { status: 401 }
+      )
+    }
+
+    // Vérifier le rôle admin dans user_profiles
+    const { data: profile } = await supabaseAdmin
+      .from('user_profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.is_admin) {
+      return NextResponse.json(
+        { error: 'Accès refusé - Droits administrateur requis' },
+        { status: 403 }
+      )
+    }
+
     const { subject, content, recipients } = await request.json()
 
     if (!subject || !content || !recipients || recipients.length === 0) {
@@ -16,28 +49,6 @@ export async function POST(request: NextRequest) {
         { error: 'Données manquantes' },
         { status: 400 }
       )
-    }
-
-    // Vérifier que l'utilisateur est admin
-    const authHeader = request.headers.get('authorization')
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '')
-      const { data: { user } } = await supabaseAdmin.auth.getUser(token)
-
-      if (user) {
-        const { data: profile } = await supabaseAdmin
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single()
-
-        if (profile?.role !== 'admin') {
-          return NextResponse.json(
-            { error: 'Non autorisé' },
-            { status: 403 }
-          )
-        }
-      }
     }
 
     // Option 1: Utiliser Resend (recommandé)
@@ -83,15 +94,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Option 2: Simulation pour le développement (sans vrai envoi)
-    // En production, vous devrez configurer Resend ou un autre service
-    console.log('=== NEWSLETTER SIMULATION ===')
-    console.log('Sujet:', subject)
-    console.log('Destinataires:', recipients.length)
-    console.log('Contenu:', content.substring(0, 100) + '...')
-    console.log('=============================')
+    // En production, configurez RESEND_API_KEY
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[DEV] Newsletter simulation:', recipients.length, 'destinataires')
+    }
 
     // Simuler un délai d'envoi
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     return NextResponse.json({
       success: true,
@@ -101,7 +110,8 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Newsletter send error:', error)
+    // SÉCURITÉ: Ne pas exposer les détails d'erreur
+    console.error('Newsletter error')
     return NextResponse.json(
       { error: 'Erreur lors de l\'envoi' },
       { status: 500 }

@@ -1,54 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { stripe, formatAmountForStripe } from '@/lib/stripe'
+import { z } from 'zod'
 
-// Client Supabase côté serveur
+// Client Supabase côté serveur avec service role
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-interface CartItem {
-  product: {
-    id: string
-    name: string
-    price: number
-    priceBySize?: Record<string, number>
-    images: string[]
-  }
-  selectedSize: string
-  quantity: number
-}
+// =====================================================
+// SCHÉMAS DE VALIDATION ZOD
+// =====================================================
 
-// Obtenir le prix d'un article selon sa taille
-const getItemPrice = (item: CartItem): number => {
-  const priceBySize = item.product.priceBySize
-  if (priceBySize && priceBySize[item.selectedSize] > 0) {
-    return priceBySize[item.selectedSize]
-  }
-  return item.product.price
-}
+const shippingAddressSchema = z.object({
+  firstName: z.string().min(1, 'Prénom requis').max(100),
+  lastName: z.string().min(1, 'Nom requis').max(100),
+  email: z.string().email('Email invalide'),
+  phone: z.string().min(10, 'Téléphone invalide').max(20),
+  street: z.string().min(1, 'Adresse requise').max(255),
+  city: z.string().min(1, 'Ville requise').max(100),
+  postalCode: z.string().min(4, 'Code postal invalide').max(20),
+  country: z.string().min(1, 'Pays requis').max(100),
+})
 
-interface CheckoutBody {
-  items: CartItem[]
-  shippingAddress: {
-    firstName: string
-    lastName: string
-    email: string
-    phone: string
-    street: string
-    city: string
-    postalCode: string
-    country: string
-  }
-  shippingMethod: 'standard' | 'express'
-  userId?: string
-  promoCode?: {
-    id: string
-    code: string
-    discount: number
-  } | null
-}
+const cartItemSchema = z.object({
+  product: z.object({
+    id: z.string().uuid('ID produit invalide'),
+    name: z.string(),
+    price: z.number(),
+    priceBySize: z.record(z.string(), z.number()).optional(),
+    images: z.array(z.string()),
+  }),
+  selectedSize: z.string().min(1),
+  quantity: z.number().int().min(1).max(99),
+})
+
+const checkoutSchema = z.object({
+  items: z.array(cartItemSchema).min(1, 'Le panier est vide'),
+  shippingAddress: shippingAddressSchema,
+  shippingMethod: z.enum(['standard', 'express']),
+  userId: z.string().uuid().optional(),
+  promoCode: z.object({
+    id: z.string().uuid(),
+    code: z.string(),
+    discount: z.number(), // On ignore cette valeur, on recalcule côté serveur
+  }).nullable().optional(),
+})
+
+// =====================================================
+// TYPES
+// =====================================================
 
 interface ShippingSettings {
   freeShippingThreshold: number
@@ -56,6 +58,19 @@ interface ShippingSettings {
   expressShippingPrice: number
   enableExpressShipping: boolean
 }
+
+interface VerifiedPromoCode {
+  id: string
+  code: string
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  min_order_amount: number
+  calculatedDiscount: number
+}
+
+// =====================================================
+// FONCTIONS UTILITAIRES
+// =====================================================
 
 // Récupérer les paramètres de livraison depuis Supabase
 async function getShippingSettings(): Promise<ShippingSettings> {
@@ -89,14 +104,139 @@ async function getShippingSettings(): Promise<ShippingSettings> {
   }
 }
 
+// SÉCURITÉ: Vérifier et recalculer le code promo côté serveur
+async function verifyPromoCode(
+  promoCodeId: string,
+  orderTotal: number
+): Promise<VerifiedPromoCode | null> {
+  try {
+    const { data: promoCode, error } = await supabase
+      .from('promo_codes')
+      .select('*')
+      .eq('id', promoCodeId)
+      .single()
+
+    if (error || !promoCode) {
+      return null
+    }
+
+    // Vérifier si le code est actif
+    if (!promoCode.is_active) {
+      return null
+    }
+
+    // Vérifier la date de début
+    const now = new Date()
+    const startsAt = new Date(promoCode.starts_at)
+    if (startsAt > now) {
+      return null
+    }
+
+    // Vérifier la date d'expiration
+    if (promoCode.expires_at) {
+      const expiresAt = new Date(promoCode.expires_at)
+      if (expiresAt < now) {
+        return null
+      }
+    }
+
+    // Vérifier le nombre d'utilisations
+    if (promoCode.max_uses !== null && promoCode.current_uses >= promoCode.max_uses) {
+      return null
+    }
+
+    // Vérifier le montant minimum de commande
+    if (promoCode.min_order_amount > 0 && orderTotal < promoCode.min_order_amount) {
+      return null
+    }
+
+    // SÉCURITÉ: Recalculer la réduction côté serveur (jamais faire confiance au client)
+    let calculatedDiscount = 0
+    if (promoCode.discount_type === 'percentage') {
+      calculatedDiscount = (orderTotal * promoCode.discount_value) / 100
+    } else {
+      calculatedDiscount = Math.min(promoCode.discount_value, orderTotal)
+    }
+
+    return {
+      id: promoCode.id,
+      code: promoCode.code,
+      discount_type: promoCode.discount_type,
+      discount_value: promoCode.discount_value,
+      min_order_amount: promoCode.min_order_amount,
+      calculatedDiscount: Math.round(calculatedDiscount * 100) / 100,
+    }
+  } catch {
+    return null
+  }
+}
+
+// SÉCURITÉ: Vérifier les prix des produits côté serveur
+async function verifyProductPrices(
+  items: z.infer<typeof cartItemSchema>[]
+): Promise<{ valid: boolean; verifiedItems: Array<{ id: string; size: string; quantity: number; serverPrice: number }> }> {
+  const productIds = items.map(item => item.product.id)
+
+  const { data: products, error } = await supabase
+    .from('products')
+    .select('id, price, price_by_size')
+    .in('id', productIds)
+
+  if (error || !products) {
+    return { valid: false, verifiedItems: [] }
+  }
+
+  const productMap = new Map(products.map(p => [p.id, p]))
+  const verifiedItems: Array<{ id: string; size: string; quantity: number; serverPrice: number }> = []
+
+  for (const item of items) {
+    const serverProduct = productMap.get(item.product.id)
+    if (!serverProduct) {
+      return { valid: false, verifiedItems: [] }
+    }
+
+    // Obtenir le prix serveur pour cette taille
+    let serverPrice = serverProduct.price
+    if (serverProduct.price_by_size && serverProduct.price_by_size[item.selectedSize]) {
+      serverPrice = serverProduct.price_by_size[item.selectedSize]
+    }
+
+    verifiedItems.push({
+      id: item.product.id,
+      size: item.selectedSize,
+      quantity: item.quantity,
+      serverPrice,
+    })
+  }
+
+  return { valid: true, verifiedItems }
+}
+
+// =====================================================
+// ROUTE HANDLER
+// =====================================================
+
 export async function POST(request: NextRequest) {
   try {
-    const body: CheckoutBody = await request.json()
-    const { items, shippingAddress, shippingMethod, userId, promoCode } = body
+    // SÉCURITÉ: Valider toutes les entrées avec Zod
+    const rawBody = await request.json()
+    const parseResult = checkoutSchema.safeParse(rawBody)
 
-    if (!items || items.length === 0) {
+    if (!parseResult.success) {
+      const errors = parseResult.error.issues.map(e => e.message).join(', ')
       return NextResponse.json(
-        { error: 'Le panier est vide' },
+        { error: `Données invalides: ${errors}` },
+        { status: 400 }
+      )
+    }
+
+    const { items, shippingAddress, shippingMethod, userId, promoCode } = parseResult.data
+
+    // SÉCURITÉ: Vérifier les prix des produits côté serveur
+    const { valid, verifiedItems } = await verifyProductPrices(items)
+    if (!valid) {
+      return NextResponse.json(
+        { error: 'Un ou plusieurs produits sont invalides' },
         { status: 400 }
       )
     }
@@ -112,22 +252,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculer les frais de livraison avec les paramètres admin
-    const subtotal = items.reduce((sum, item) => sum + getItemPrice(item) * item.quantity, 0)
+    // SÉCURITÉ: Calculer le sous-total avec les prix vérifiés côté serveur
+    const subtotal = verifiedItems.reduce((sum, item) => sum + item.serverPrice * item.quantity, 0)
     const shippingCost = shippingMethod === 'express'
       ? shippingSettings.expressShippingPrice
       : (subtotal >= shippingSettings.freeShippingThreshold ? 0 : shippingSettings.standardShippingPrice)
 
-    // Créer les line items pour Stripe
-    const lineItems = items.map((item) => ({
+    // SÉCURITÉ: Vérifier et recalculer le code promo côté serveur
+    let verifiedPromoCode: VerifiedPromoCode | null = null
+    if (promoCode?.id) {
+      verifiedPromoCode = await verifyPromoCode(promoCode.id, subtotal)
+      // Si le code promo fourni est invalide, on continue sans réduction (pas d'erreur)
+    }
+
+    // Créer les line items pour Stripe avec les prix vérifiés
+    const lineItems = verifiedItems.map((item, index) => ({
       price_data: {
         currency: 'eur',
         product_data: {
-          name: item.product.name,
-          description: `Taille: ${item.selectedSize}`,
-          images: item.product.images.slice(0, 1), // Stripe accepte max 8 images
+          name: items[index].product.name,
+          description: `Taille: ${item.size}`,
+          images: items[index].product.images.slice(0, 1),
         },
-        unit_amount: formatAmountForStripe(getItemPrice(item)),
+        unit_amount: formatAmountForStripe(item.serverPrice),
       },
       quantity: item.quantity,
     }))
@@ -148,26 +295,26 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Gérer le code promo avec les coupons Stripe
+    // Gérer le code promo avec les coupons Stripe (montant recalculé côté serveur)
     let stripeCouponId: string | undefined
-    if (promoCode && promoCode.discount > 0) {
+    if (verifiedPromoCode && verifiedPromoCode.calculatedDiscount > 0) {
       try {
-        // Créer un coupon Stripe temporaire pour cette commande
         const coupon = await stripe.coupons.create({
-          amount_off: formatAmountForStripe(promoCode.discount),
+          amount_off: formatAmountForStripe(verifiedPromoCode.calculatedDiscount),
           currency: 'eur',
           duration: 'once',
-          name: `Code promo: ${promoCode.code}`,
+          name: `Code promo: ${verifiedPromoCode.code}`,
           max_redemptions: 1,
         })
         stripeCouponId = coupon.id
       } catch (couponError) {
-        console.error('Error creating Stripe coupon:', couponError)
-        // Continuer sans le coupon si erreur
+        // Log sans exposer de détails sensibles
+        console.error('Erreur création coupon Stripe')
       }
     }
 
     // Créer la session Stripe Checkout
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sessionConfig: any = {
       payment_method_types: ['card'],
       line_items: lineItems,
@@ -178,24 +325,21 @@ export async function POST(request: NextRequest) {
       metadata: {
         userId: userId || '',
         shippingMethod,
-        // Stocker l'adresse de manière compacte
         shipping: JSON.stringify({
           name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
           email: shippingAddress.email,
           phone: shippingAddress.phone,
           address: `${shippingAddress.street}, ${shippingAddress.postalCode} ${shippingAddress.city}, ${shippingAddress.country}`
         }),
-        // Stocker les items de manière compacte (sans images, noms courts)
-        items: JSON.stringify(items.map(item => ({
-          id: item.product.id,
-          s: item.selectedSize,
+        items: JSON.stringify(verifiedItems.map(item => ({
+          id: item.id,
+          s: item.size,
           q: item.quantity,
-          p: getItemPrice(item),
+          p: item.serverPrice,
         }))),
-        // Stocker les infos du code promo
-        promoCodeId: promoCode?.id || '',
-        promoCodeCode: promoCode?.code || '',
-        promoCodeDiscount: promoCode?.discount?.toString() || '',
+        promoCodeId: verifiedPromoCode?.id || '',
+        promoCodeCode: verifiedPromoCode?.code || '',
+        promoCodeDiscount: verifiedPromoCode?.calculatedDiscount?.toString() || '',
       },
       locale: 'fr',
     }
@@ -207,54 +351,40 @@ export async function POST(request: NextRequest) {
 
     const session = await stripe.checkout.sessions.create(sessionConfig)
 
-    // Enregistrer l'utilisation du code promo et incrémenter le compteur
-    if (promoCode) {
+    // Enregistrer l'utilisation du code promo
+    if (verifiedPromoCode) {
       try {
-        // Incrémenter le compteur d'utilisations
-        await supabase.rpc('increment_promo_code_usage', { code_id: promoCode.id })
+        await supabase.rpc('increment_promo_code_usage', { code_id: verifiedPromoCode.id })
 
-        // Enregistrer l'utilisation dans les logs
         await supabase.from('promo_code_usage').insert({
-          promo_code_id: promoCode.id,
+          promo_code_id: verifiedPromoCode.id,
           user_id: userId || null,
           user_email: shippingAddress.email,
           order_id: session.id,
           order_total: subtotal + shippingCost,
-          discount_applied: promoCode.discount,
+          discount_applied: verifiedPromoCode.calculatedDiscount,
         })
-      } catch (promoError) {
-        console.error('Error recording promo code usage:', promoError)
+      } catch {
         // Ne pas bloquer la commande si l'enregistrement échoue
       }
     }
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
-  } catch (error: any) {
-    console.error('Stripe checkout error:', error)
-    console.error('Error message:', error?.message)
-    console.error('Error type:', error?.type)
-    console.error('Error code:', error?.code)
-    console.error('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY)
-    console.error('NEXT_PUBLIC_BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL)
+  } catch (error: unknown) {
+    // SÉCURITÉ: Ne pas exposer les détails d'erreur en production
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
+    console.error('Checkout error:', errorMessage)
 
     // Vérifier si Stripe est configuré
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
-        { error: 'Configuration Stripe manquante. Contactez l\'administrateur.' },
-        { status: 500 }
-      )
-    }
-
-    // Erreurs Stripe spécifiques
-    if (error?.type === 'StripeInvalidRequestError') {
-      return NextResponse.json(
-        { error: `Erreur Stripe: ${error?.message}` },
-        { status: 400 }
+        { error: 'Service de paiement temporairement indisponible' },
+        { status: 503 }
       )
     }
 
     return NextResponse.json(
-      { error: error?.message || 'Erreur lors de la création de la session de paiement' },
+      { error: 'Erreur lors de la création de la session de paiement' },
       { status: 500 }
     )
   }

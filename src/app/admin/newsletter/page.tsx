@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Mail,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { ConfirmModal } from '@/components/ConfirmModal'
+import DOMPurify from 'dompurify'
 
 // Helper pour ignorer les AbortError
 const isAbortError = (error: unknown): boolean => {
@@ -583,7 +584,7 @@ Vous pouvez utiliser du HTML basique pour la mise en forme."
                   <p className="text-sm text-gray-500">Sujet</p>
                   <p className="font-medium">{previewEmail.subject}</p>
                 </div>
-                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: previewEmail.content }} />
+                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewEmail.content) }} />
               </div>
             </motion.div>
           </motion.div>

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
+import { z } from 'zod'
 
 // Créer un client Supabase avec la clé service pour bypasser RLS
 const supabaseAdmin = createClient(
@@ -7,16 +9,43 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+// Schéma de validation Zod
+const validatePromoSchema = z.object({
+  code: z.string().min(1, 'Code promo requis').max(50),
+  orderTotal: z.number().min(0).optional(),
+})
+
 export async function POST(request: NextRequest) {
   try {
-    const { code, orderTotal } = await request.json()
+    // SÉCURITÉ: Rate limiting pour éviter le brute force
+    const clientIP = getClientIP(request)
+    const rateLimit = checkRateLimit(`promo:${clientIP}`, RATE_LIMITS.PROMO_VALIDATE)
 
-    if (!code) {
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: `Trop de tentatives. Réessayez dans ${rateLimit.resetIn} secondes.` },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': rateLimit.resetIn.toString(),
+            'X-RateLimit-Remaining': '0',
+          }
+        }
+      )
+    }
+
+    // SÉCURITÉ: Validation des entrées avec Zod
+    const rawBody = await request.json()
+    const parseResult = validatePromoSchema.safeParse(rawBody)
+
+    if (!parseResult.success) {
       return NextResponse.json(
         { error: 'Code promo requis' },
         { status: 400 }
       )
     }
+
+    const { code, orderTotal } = parseResult.data
 
     // Rechercher le code promo
     const { data: promoCode, error: fetchError } = await supabaseAdmin
