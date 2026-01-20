@@ -13,7 +13,7 @@ import {
   Save,
   Loader2
 } from 'lucide-react'
-import { supabase, supabaseFetch } from '@/lib/supabase'
+import { supabase, supabaseFetch, isAbortError } from '@/lib/supabase'
 import { ImageUpload } from '@/components/ImageUpload'
 
 interface Brand {
