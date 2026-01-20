@@ -160,14 +160,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       }
 
       if (data?.user) {
-        console.log('SignIn success, user:', data.user.id)
         set({ user: data.user })
         // Passer le token directement pour éviter un nouvel appel à getSession
         const accessToken = data.session?.access_token
         await get().fetchProfile(accessToken)
-        console.log('After fetchProfile, profile:', get().profile)
-      } else {
-        console.log('SignIn: no user in data', data)
       }
 
       set({ isLoading: false })
@@ -220,47 +216,36 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   fetchProfile: async (providedToken?: string) => {
     const { user } = get()
-    if (!user) {
-      console.log('fetchProfile: no user')
-      return
-    }
-
-    console.log('fetchProfile: fetching for user', user.id)
+    if (!user) return
 
     // Utiliser fetch directement pour éviter les AbortError de Supabase
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const accessToken = providedToken || supabaseKey
 
     try {
-      // Utiliser le token fourni ou l'apikey par défaut
-      const accessToken = providedToken || supabaseKey
-
       const response = await fetch(
         `${supabaseUrl}/rest/v1/user_profiles?id=eq.${user.id}&select=*`,
         {
           method: 'GET',
           headers: {
             'apikey': supabaseKey!,
-            'Authorization': `Bearer ${accessToken || supabaseKey}`,
+            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
-            'Accept': 'application/vnd.pgrst.object+json', // Pour obtenir un seul objet
+            'Accept': 'application/vnd.pgrst.object+json',
           },
         }
       )
 
-      console.log('fetchProfile response status:', response.status)
-
       if (response.status === 406) {
         // Pas de profil trouvé, le créer
-        console.log('Profile not found (406), creating one...')
-
         const createResponse = await fetch(
           `${supabaseUrl}/rest/v1/user_profiles`,
           {
             method: 'POST',
             headers: {
               'apikey': supabaseKey!,
-              'Authorization': `Bearer ${accessToken || supabaseKey}`,
+              'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
               'Prefer': 'return=representation',
             },
@@ -271,31 +256,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           }
         )
 
-        console.log('Create profile response status:', createResponse.status)
-
         if (createResponse.ok) {
           const newProfile = await createResponse.json()
-          console.log('Setting new profile:', newProfile)
-          // Le résultat est un tableau, prendre le premier élément
           set({ profile: Array.isArray(newProfile) ? newProfile[0] : newProfile })
-        } else {
-          const errorText = await createResponse.text()
-          console.error('Error creating profile:', errorText)
         }
         return
       }
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Fetch profile error:', response.status, errorText)
-        return
+      if (response.ok) {
+        const data = await response.json()
+        set({ profile: data })
       }
-
-      const data = await response.json()
-      console.log('Setting existing profile:', data)
-      set({ profile: data })
     } catch (error) {
-      console.error('fetchProfile catch error:', error)
+      console.error('fetchProfile error:', error)
     }
   },
 }))

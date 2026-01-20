@@ -5,16 +5,8 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 // Fetch personnalisé qui ignore les signaux d'annulation de React 19
 // Cela évite les AbortError qui se produisent lors du démontage des composants
-const customFetch = async (url: RequestInfo | URL, options?: RequestInit): Promise<Response> => {
-  // Supprimer complètement le signal pour éviter les AbortError
+const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Response> => {
   const { signal, ...restOptions } = options || {}
-
-  // Log pour debug
-  const urlStr = typeof url === 'string' ? url : url.toString()
-  if (urlStr.includes('user_profiles')) {
-    console.log('customFetch called for user_profiles, signal was:', signal ? 'present' : 'absent')
-  }
-
   return fetch(url, restOptions)
 }
 
