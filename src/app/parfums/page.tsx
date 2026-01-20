@@ -143,7 +143,7 @@ export default function ParfumsPage() {
       const query = searchQuery.toLowerCase()
       return (
         product.name.toLowerCase().includes(query) ||
-        product.brand.toLowerCase().includes(query)
+        (product.brand?.toLowerCase().includes(query) ?? false)
       )
     })
     .sort((a, b) => {
