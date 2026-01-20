@@ -149,13 +149,13 @@ export default function PacksPage() {
             transition={{ duration: 0.8 }}
           >
             <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
-              Coffrets
+              Packs
             </span>
             <h1 className="text-5xl lg:text-6xl font-light tracking-[0.2em] uppercase mb-4">
-              Nos Packs
+              Notre Sélection
             </h1>
             <p className="text-lg font-light max-w-xl mx-auto">
-              Des coffrets d&apos;exception pour offrir ou se faire plaisir
+              Explorez une sélection de packs soigneusement composés pour vous faire voyager à travers différentes maisons et univers olfactifs.
             </p>
           </motion.div>
         </div>

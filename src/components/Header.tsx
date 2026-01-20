@@ -1,15 +1,28 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, User, ShoppingBag, Heart, Menu, X, ChevronRight, LogOut } from 'lucide-react'
+import { Search, User, ShoppingBag, Heart, Menu, X, ChevronRight, LogOut, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { useAuthStore } from '@/store/auth'
 import { useSettingsStore } from '@/store/settings'
 import { CartDrawer } from './CartDrawer'
+import { supabase } from '@/lib/supabase'
+
+interface SearchProduct {
+  id: string
+  name: string
+  slug: string
+  brand: string
+  images: string[]
+  price: number
+  price_by_size?: Record<string, number>
+  is_bestseller?: boolean
+}
 
 // Composant pour le carrousel d'annonces horizontal infini
 function AnnouncementCarousel() {
@@ -75,15 +88,86 @@ const navigation = [
 
 export function Header() {
   const pathname = usePathname()
+  const router = useRouter()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchProduct[]>([])
+  const [bestSellers, setBestSellers] = useState<SearchProduct[]>([])
+  const [isSearching, setIsSearching] = useState(false)
   const { items, openCart } = useCartStore()
   const { items: wishlistItems } = useWishlistStore()
   const { user, profile, signOut } = useAuthStore()
   const { settings } = useSettingsStore()
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0)
+
+  // Charger les best sellers au montage
+  useEffect(() => {
+    const fetchBestSellers = async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, slug, brand, images, price, price_by_size, is_bestseller')
+        .eq('is_bestseller', true)
+        .gt('stock', 0)
+        .limit(6)
+
+      if (data) {
+        setBestSellers(data)
+      }
+    }
+    fetchBestSellers()
+  }, [])
+
+  // Recherche en temps réel
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([])
+      return
+    }
+
+    const searchProducts = async () => {
+      setIsSearching(true)
+      const query = searchQuery.trim()
+
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, slug, brand, images, price, price_by_size')
+        .gt('stock', 0)
+        .or(`name.ilike.%${query}%,brand.ilike.%${query}%`)
+        .limit(8)
+
+      if (data) {
+        setSearchResults(data)
+      }
+      setIsSearching(false)
+    }
+
+    const debounce = setTimeout(searchProducts, 300)
+    return () => clearTimeout(debounce)
+  }, [searchQuery])
+
+  // Gérer la soumission de la recherche
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/parfums?search=${encodeURIComponent(searchQuery.trim())}`)
+      setIsSearchOpen(false)
+      setSearchQuery('')
+    }
+  }
+
+  // Calculer le prix d'un produit
+  const getProductPrice = (product: SearchProduct): number => {
+    if (product.price_by_size) {
+      const prices = Object.values(product.price_by_size).filter(p => p > 0)
+      if (prices.length > 0) {
+        return Math.min(...prices)
+      }
+    }
+    return product.price
+  }
 
   // Déterminer si on est sur une page avec hero (fond sombre)
   const isHeroPage = pathname === '/' || pathname === '/parfums' || pathname === '/marques' || pathname === '/packs'
@@ -359,12 +443,15 @@ export function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[60] bg-white"
+            className="fixed inset-0 z-[60] bg-white overflow-y-auto"
           >
             {/* Search header */}
             <div className="flex items-center justify-between px-6 lg:px-12 h-16 lg:h-20 border-b">
               <button
-                onClick={() => setIsSearchOpen(false)}
+                onClick={() => {
+                  setIsSearchOpen(false)
+                  setSearchQuery('')
+                }}
                 className="p-2 hover:text-[#C9A962] transition-colors"
               >
                 <X className="w-6 h-6" />
@@ -376,48 +463,132 @@ export function Header() {
             </div>
 
             {/* Search content */}
-            <div className="max-w-3xl mx-auto px-6 pt-12 lg:pt-20">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Que recherchez-vous ?"
-                  className="w-full py-4 text-xl lg:text-3xl border-b-2 border-[#19110B] focus:outline-none focus:border-[#C9A962] transition-colors bg-transparent"
-                  autoFocus
-                />
-                <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400" />
-              </div>
-
-              <div className="mt-12">
-                <p className="text-sm tracking-[0.2em] uppercase text-gray-500 mb-6">
-                  Recherches populaires
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  {['Oud Royal', 'Rose Éternelle', 'Noir Absolu', 'Coffrets', 'Nouveautés'].map((term) => (
-                    <button
-                      key={term}
-                      className="px-5 py-2.5 border border-[#19110B] text-sm tracking-wider hover:bg-[#19110B] hover:text-white transition-colors"
-                    >
-                      {term}
-                    </button>
-                  ))}
+            <div className="max-w-3xl mx-auto px-6 pt-12 lg:pt-20 pb-12">
+              <form onSubmit={handleSearchSubmit}>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Rechercher un parfum ou une marque..."
+                    className="w-full py-4 pr-12 text-xl lg:text-2xl border-b-2 border-[#19110B] focus:outline-none focus:border-[#C9A962] transition-colors bg-transparent"
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 p-2 hover:text-[#C9A962] transition-colors"
+                  >
+                    {isSearching ? (
+                      <Loader2 className="w-6 h-6 animate-spin text-[#C9A962]" />
+                    ) : (
+                      <Search className="w-6 h-6 text-gray-400" />
+                    )}
+                  </button>
                 </div>
-              </div>
+              </form>
 
-              <div className="mt-12">
+              {/* Résultats de recherche */}
+              {searchQuery.trim() ? (
+                <div className="mt-8">
+                  <p className="text-sm tracking-[0.2em] uppercase text-gray-500 mb-6">
+                    {searchResults.length > 0
+                      ? `${searchResults.length} résultat${searchResults.length > 1 ? 's' : ''}`
+                      : 'Aucun résultat'
+                    }
+                  </p>
+                  {searchResults.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {searchResults.map((product) => (
+                        <Link
+                          key={product.id}
+                          href={`/parfum/${product.slug}`}
+                          onClick={() => {
+                            setIsSearchOpen(false)
+                            setSearchQuery('')
+                          }}
+                          className="group"
+                        >
+                          <div className="relative aspect-square bg-[#F9F6F1] overflow-hidden mb-2">
+                            <Image
+                              src={product.images?.[0] || '/images/placeholder.jpg'}
+                              alt={product.name}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wider">{product.brand}</p>
+                          <p className="text-sm font-medium truncate group-hover:text-[#C9A962] transition-colors">{product.name}</p>
+                          <p className="text-sm text-[#C9A962]">À partir de {getProductPrice(product)} €</p>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  {searchResults.length > 0 && (
+                    <button
+                      onClick={handleSearchSubmit}
+                      className="mt-6 w-full py-3 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                    >
+                      Voir tous les résultats
+                    </button>
+                  )}
+                </div>
+              ) : (
+                /* Best sellers par défaut */
+                <div className="mt-8">
+                  <p className="text-sm tracking-[0.2em] uppercase text-gray-500 mb-6">
+                    Best Sellers
+                  </p>
+                  {bestSellers.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {bestSellers.map((product) => (
+                        <Link
+                          key={product.id}
+                          href={`/parfum/${product.slug}`}
+                          onClick={() => {
+                            setIsSearchOpen(false)
+                            setSearchQuery('')
+                          }}
+                          className="group"
+                        >
+                          <div className="relative aspect-square bg-[#F9F6F1] overflow-hidden mb-2">
+                            <Image
+                              src={product.images?.[0] || '/images/placeholder.jpg'}
+                              alt={product.name}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wider">{product.brand}</p>
+                          <p className="text-sm font-medium truncate group-hover:text-[#C9A962] transition-colors">{product.name}</p>
+                          <p className="text-sm text-[#C9A962]">À partir de {getProductPrice(product)} €</p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">Chargement...</p>
+                  )}
+                </div>
+              )}
+
+              {/* Catégories */}
+              <div className="mt-12 pt-8 border-t">
                 <p className="text-sm tracking-[0.2em] uppercase text-gray-500 mb-6">
                   Catégories
                 </p>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-wrap gap-3">
                   {[
-                    { name: 'Parfums', href: '/parfums' },
+                    { name: 'Tous les parfums', href: '/parfums' },
                     { name: 'Marques', href: '/marques' },
                     { name: 'Packs', href: '/packs' },
                   ].map((item) => (
                     <Link
                       key={item.name}
                       href={item.href}
-                      onClick={() => setIsSearchOpen(false)}
-                      className="py-3 text-lg hover:text-[#C9A962] transition-colors"
+                      onClick={() => {
+                        setIsSearchOpen(false)
+                        setSearchQuery('')
+                      }}
+                      className="px-5 py-2.5 border border-[#19110B] text-sm tracking-wider hover:bg-[#19110B] hover:text-white transition-colors"
                     >
                       {item.name}
                     </Link>

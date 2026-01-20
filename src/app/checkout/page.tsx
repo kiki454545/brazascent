@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CreditCard, Truck, Shield, Check, ChevronDown } from 'lucide-react'
+import { ArrowLeft, CreditCard, Truck, Shield, Check, ChevronDown, MapPin, Plus } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
+import { supabase } from '@/lib/supabase'
 import { CartItem } from '@/types'
 
 // Obtenir le prix d'un article selon sa taille
@@ -32,6 +33,16 @@ interface ShippingAddress {
   country: string
 }
 
+interface SavedAddress {
+  id: string
+  label: string
+  street: string
+  city: string
+  postal_code: string
+  country: string
+  is_default: boolean
+}
+
 interface ShippingSettings {
   freeShippingThreshold: number
   standardShippingPrice: number
@@ -41,12 +52,18 @@ interface ShippingSettings {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, getTotal, clearCart } = useCartStore()
+  const { items, getTotal } = useCartStore()
   const { user, profile } = useAuthStore()
 
   const [currentStep, setCurrentStep] = useState<Step>('information')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Adresses sauvegardées
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
+  const [useNewAddress, setUseNewAddress] = useState(false)
+  const [loadingAddresses, setLoadingAddresses] = useState(true)
 
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     firstName: '',
@@ -83,7 +100,6 @@ export default function CheckoutPage() {
             expressShippingPrice: data.shipping.expressShippingPrice ?? 14.90,
             enableExpressShipping: data.shipping.enableExpressShipping ?? true,
           })
-          // Si express désactivé et qu'on l'avait sélectionné, revenir à standard
           if (!data.shipping.enableExpressShipping && shippingMethod === 'express') {
             setShippingMethod('standard')
           }
@@ -95,11 +111,44 @@ export default function CheckoutPage() {
     fetchSettings()
   }, [])
 
-  const subtotal = getTotal()
-  const shippingCost = shippingMethod === 'express'
-    ? shippingSettings.expressShippingPrice
-    : (subtotal >= shippingSettings.freeShippingThreshold ? 0 : shippingSettings.standardShippingPrice)
-  const total = subtotal + shippingCost
+  // Charger les adresses sauvegardées si l'utilisateur est connecté
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      if (!user) {
+        setLoadingAddresses(false)
+        setUseNewAddress(true)
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('addresses')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('is_default', { ascending: false })
+
+        if (error) throw error
+
+        setSavedAddresses(data || [])
+
+        // Si l'utilisateur a des adresses, sélectionner la première par défaut
+        if (data && data.length > 0) {
+          const defaultAddress = data.find(a => a.is_default) || data[0]
+          setSelectedAddressId(defaultAddress.id)
+          setUseNewAddress(false)
+        } else {
+          setUseNewAddress(true)
+        }
+      } catch (err) {
+        console.error('Error fetching addresses:', err)
+        setUseNewAddress(true)
+      } finally {
+        setLoadingAddresses(false)
+      }
+    }
+
+    fetchAddresses()
+  }, [user])
 
   // Pré-remplir avec les infos du profil
   useEffect(() => {
@@ -114,6 +163,12 @@ export default function CheckoutPage() {
     }
   }, [profile])
 
+  const subtotal = getTotal()
+  const shippingCost = shippingMethod === 'express'
+    ? shippingSettings.expressShippingPrice
+    : (subtotal >= shippingSettings.freeShippingThreshold ? 0 : shippingSettings.standardShippingPrice)
+  const total = subtotal + shippingCost
+
   // Rediriger si panier vide
   useEffect(() => {
     if (items.length === 0) {
@@ -121,8 +176,39 @@ export default function CheckoutPage() {
     }
   }, [items, router])
 
+  // Obtenir l'adresse finale à utiliser
+  const getFinalAddress = (): ShippingAddress => {
+    if (useNewAddress) {
+      return shippingAddress
+    }
+
+    const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId)
+    if (selectedAddress) {
+      return {
+        firstName: profile?.first_name || shippingAddress.firstName,
+        lastName: profile?.last_name || shippingAddress.lastName,
+        email: profile?.email || shippingAddress.email,
+        phone: shippingAddress.phone, // Toujours utiliser le téléphone du formulaire
+        street: selectedAddress.street,
+        city: selectedAddress.city,
+        postalCode: selectedAddress.postal_code,
+        country: selectedAddress.country,
+      }
+    }
+
+    return shippingAddress
+  }
+
   const handleInformationSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Vérifier que le téléphone est renseigné
+    if (!shippingAddress.phone.trim()) {
+      setError('Le numéro de téléphone est requis pour la livraison')
+      return
+    }
+
+    setError(null)
     setCurrentStep('shipping')
   }
 
@@ -143,6 +229,8 @@ export default function CheckoutPage() {
     setIsLoading(true)
 
     try {
+      const finalAddress = getFinalAddress()
+
       // Créer une session Stripe Checkout
       const response = await fetch('/api/checkout', {
         method: 'POST',
@@ -151,7 +239,7 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           items,
-          shippingAddress,
+          shippingAddress: finalAddress,
           shippingMethod,
           userId: user?.id,
         }),
@@ -184,6 +272,8 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return null
   }
+
+  const finalAddress = getFinalAddress()
 
   return (
     <div className="min-h-screen pt-32 pb-24 bg-[#F9F6F1]">
@@ -252,115 +342,201 @@ export default function CheckoutPage() {
                 </h2>
 
                 <form onSubmit={handleInformationSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-2">Prénom *</label>
-                      <input
-                        type="text"
-                        value={shippingAddress.firstName}
-                        onChange={(e) =>
-                          setShippingAddress({ ...shippingAddress, firstName: e.target.value })
-                        }
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-2">Nom *</label>
-                      <input
-                        type="text"
-                        value={shippingAddress.lastName}
-                        onChange={(e) =>
-                          setShippingAddress({ ...shippingAddress, lastName: e.target.value })
-                        }
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
-                      />
-                    </div>
-                  </div>
+                  {/* Adresses sauvegardées */}
+                  {user && !loadingAddresses && savedAddresses.length > 0 && (
+                    <div className="space-y-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Adresse de livraison
+                      </label>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-2">Email *</label>
-                      <input
-                        type="email"
-                        value={shippingAddress.email}
-                        onChange={(e) =>
-                          setShippingAddress({ ...shippingAddress, email: e.target.value })
-                        }
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-2">Téléphone *</label>
-                      <input
-                        type="tel"
-                        value={shippingAddress.phone}
-                        onChange={(e) =>
-                          setShippingAddress({ ...shippingAddress, phone: e.target.value })
-                        }
-                        required
-                        placeholder="+33 6 00 00 00 00"
-                        className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
-                      />
-                    </div>
-                  </div>
+                      {/* Liste des adresses sauvegardées */}
+                      <div className="space-y-3">
+                        {savedAddresses.map((address) => (
+                          <label
+                            key={address.id}
+                            className={`flex items-start gap-4 p-4 border cursor-pointer transition-colors ${
+                              !useNewAddress && selectedAddressId === address.id
+                                ? 'border-[#C9A962] bg-[#F9F6F1]'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="address"
+                              checked={!useNewAddress && selectedAddressId === address.id}
+                              onChange={() => {
+                                setSelectedAddressId(address.id)
+                                setUseNewAddress(false)
+                              }}
+                              className="w-5 h-5 mt-0.5 accent-[#C9A962]"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <MapPin className="w-4 h-4 text-[#C9A962]" />
+                                <span className="font-medium">{address.label}</span>
+                                {address.is_default && (
+                                  <span className="px-2 py-0.5 bg-[#C9A962] text-white text-xs uppercase">
+                                    Par défaut
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600">{address.street}</p>
+                              <p className="text-sm text-gray-600">
+                                {address.postal_code} {address.city}, {address.country}
+                              </p>
+                            </div>
+                          </label>
+                        ))}
 
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-2">Adresse *</label>
+                        {/* Option nouvelle adresse */}
+                        <label
+                          className={`flex items-center gap-4 p-4 border cursor-pointer transition-colors ${
+                            useNewAddress
+                              ? 'border-[#C9A962] bg-[#F9F6F1]'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="address"
+                            checked={useNewAddress}
+                            onChange={() => setUseNewAddress(true)}
+                            className="w-5 h-5 accent-[#C9A962]"
+                          />
+                          <div className="flex items-center gap-2">
+                            <Plus className="w-4 h-4 text-[#C9A962]" />
+                            <span className="font-medium">Utiliser une nouvelle adresse</span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Formulaire nouvelle adresse */}
+                  {(useNewAddress || !user || savedAddresses.length === 0) && (
+                    <>
+                      {user && savedAddresses.length > 0 && (
+                        <div className="border-t pt-6 mt-6">
+                          <h3 className="text-sm font-medium text-gray-700 mb-4">Nouvelle adresse</h3>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm text-gray-600 mb-2">Prénom *</label>
+                          <input
+                            type="text"
+                            value={shippingAddress.firstName}
+                            onChange={(e) =>
+                              setShippingAddress({ ...shippingAddress, firstName: e.target.value })
+                            }
+                            required
+                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-600 mb-2">Nom *</label>
+                          <input
+                            type="text"
+                            value={shippingAddress.lastName}
+                            onChange={(e) =>
+                              setShippingAddress({ ...shippingAddress, lastName: e.target.value })
+                            }
+                            required
+                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-2">Email *</label>
+                        <input
+                          type="email"
+                          value={shippingAddress.email}
+                          onChange={(e) =>
+                            setShippingAddress({ ...shippingAddress, email: e.target.value })
+                          }
+                          required
+                          className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-600 mb-2">Adresse *</label>
+                        <input
+                          type="text"
+                          value={shippingAddress.street}
+                          onChange={(e) =>
+                            setShippingAddress({ ...shippingAddress, street: e.target.value })
+                          }
+                          required
+                          placeholder="123 rue Example"
+                          className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                        <div>
+                          <label className="block text-sm text-gray-600 mb-2">Code postal *</label>
+                          <input
+                            type="text"
+                            value={shippingAddress.postalCode}
+                            onChange={(e) =>
+                              setShippingAddress({ ...shippingAddress, postalCode: e.target.value })
+                            }
+                            required
+                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-600 mb-2">Ville *</label>
+                          <input
+                            type="text"
+                            value={shippingAddress.city}
+                            onChange={(e) =>
+                              setShippingAddress({ ...shippingAddress, city: e.target.value })
+                            }
+                            required
+                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                          />
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <label className="block text-sm text-gray-600 mb-2">Pays *</label>
+                          <select
+                            value={shippingAddress.country}
+                            onChange={(e) =>
+                              setShippingAddress({ ...shippingAddress, country: e.target.value })
+                            }
+                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                          >
+                            <option value="France">France</option>
+                            <option value="Belgique">Belgique</option>
+                            <option value="Suisse">Suisse</option>
+                            <option value="Luxembourg">Luxembourg</option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Téléphone - Toujours visible */}
+                  <div className={user && savedAddresses.length > 0 && !useNewAddress ? 'border-t pt-6' : ''}>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      Téléphone * <span className="text-gray-400">(requis pour la livraison)</span>
+                    </label>
                     <input
-                      type="text"
-                      value={shippingAddress.street}
+                      type="tel"
+                      value={shippingAddress.phone}
                       onChange={(e) =>
-                        setShippingAddress({ ...shippingAddress, street: e.target.value })
+                        setShippingAddress({ ...shippingAddress, phone: e.target.value })
                       }
                       required
-                      placeholder="123 rue Example"
+                      placeholder="+33 6 00 00 00 00"
                       className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
                     />
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-2">Code postal *</label>
-                      <input
-                        type="text"
-                        value={shippingAddress.postalCode}
-                        onChange={(e) =>
-                          setShippingAddress({ ...shippingAddress, postalCode: e.target.value })
-                        }
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-600 mb-2">Ville *</label>
-                      <input
-                        type="text"
-                        value={shippingAddress.city}
-                        onChange={(e) =>
-                          setShippingAddress({ ...shippingAddress, city: e.target.value })
-                        }
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
-                      />
-                    </div>
-                    <div className="col-span-2 sm:col-span-1">
-                      <label className="block text-sm text-gray-600 mb-2">Pays *</label>
-                      <select
-                        value={shippingAddress.country}
-                        onChange={(e) =>
-                          setShippingAddress({ ...shippingAddress, country: e.target.value })
-                        }
-                        className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
-                      >
-                        <option value="France">France</option>
-                        <option value="Belgique">Belgique</option>
-                        <option value="Suisse">Suisse</option>
-                        <option value="Luxembourg">Luxembourg</option>
-                      </select>
-                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Le transporteur peut vous contacter pour la livraison
+                    </p>
                   </div>
 
                   <button
@@ -454,11 +630,14 @@ export default function CheckoutPage() {
                       </button>
                     </div>
                     <p className="text-sm">
-                      {shippingAddress.firstName} {shippingAddress.lastName}
+                      {finalAddress.firstName} {finalAddress.lastName}
                     </p>
-                    <p className="text-sm">{shippingAddress.street}</p>
+                    <p className="text-sm">{finalAddress.street}</p>
                     <p className="text-sm">
-                      {shippingAddress.postalCode} {shippingAddress.city}, {shippingAddress.country}
+                      {finalAddress.postalCode} {finalAddress.city}, {finalAddress.country}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Tél: {finalAddress.phone}
                     </p>
                   </div>
 
@@ -520,11 +699,14 @@ export default function CheckoutPage() {
                       </button>
                     </div>
                     <p className="text-sm">
-                      {shippingAddress.firstName} {shippingAddress.lastName}
+                      {finalAddress.firstName} {finalAddress.lastName}
                     </p>
-                    <p className="text-sm">{shippingAddress.street}</p>
+                    <p className="text-sm">{finalAddress.street}</p>
                     <p className="text-sm">
-                      {shippingAddress.postalCode} {shippingAddress.city}, {shippingAddress.country}
+                      {finalAddress.postalCode} {finalAddress.city}, {finalAddress.country}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Tél: {finalAddress.phone}
                     </p>
                   </div>
 

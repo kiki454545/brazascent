@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { SlidersHorizontal, X } from 'lucide-react'
+import { SlidersHorizontal, X, Search } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
@@ -29,6 +30,9 @@ const sortOptions = [
 ]
 
 export default function ParfumsPage() {
+  const searchParams = useSearchParams()
+  const initialSearch = searchParams.get('search') || ''
+
   const [products, setProducts] = useState<Product[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,6 +40,7 @@ export default function ParfumsPage() {
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState(initialSearch)
 
   useEffect(() => {
     let isMounted = true
@@ -133,6 +138,14 @@ export default function ParfumsPage() {
   const filteredProducts = products
     .filter((product) => selectedCategory === 'all' || product.category === selectedCategory)
     .filter((product) => selectedBrand === 'all' || product.brand === selectedBrand)
+    .filter((product) => {
+      if (!searchQuery.trim()) return true
+      const query = searchQuery.toLowerCase()
+      return (
+        product.name.toLowerCase().includes(query) ||
+        product.brand.toLowerCase().includes(query)
+      )
+    })
     .sort((a, b) => {
       switch (sortBy) {
         case 'price-asc':
@@ -181,7 +194,7 @@ export default function ParfumsPage() {
       <section className="py-16 lg:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           {/* Filter bar */}
-          <div className="flex items-center justify-between mb-12 pb-6 border-b">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-12 pb-6 border-b">
             <div className="flex items-center gap-6">
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -196,17 +209,39 @@ export default function ParfumsPage() {
               </span>
             </div>
 
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="text-sm tracking-[0.1em] uppercase bg-transparent border-none focus:outline-none cursor-pointer"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-4">
+              {/* Barre de recherche */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher..."
+                  className="w-48 sm:w-64 pl-9 pr-3 py-2 text-sm border border-gray-300 focus:border-[#C9A962] focus:outline-none transition-colors"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:text-[#C9A962]"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="text-sm tracking-[0.1em] uppercase bg-transparent border-none focus:outline-none cursor-pointer"
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Filter panel */}
