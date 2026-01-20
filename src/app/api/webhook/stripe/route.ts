@@ -220,11 +220,39 @@ export async function POST(request: NextRequest) {
 
       const productMap = new Map(products?.map(p => [p.id, p]) || [])
 
+      // Récupérer les paramètres de livraison depuis l'admin
+      let shippingSettings = {
+        freeShippingThreshold: 150,
+        standardShippingPrice: 5,
+        expressShippingPrice: 14.90,
+      }
+      try {
+        const { data: settingsData } = await supabaseAdmin
+          .from('settings')
+          .select('value')
+          .eq('key', 'shipping')
+          .single()
+        if (settingsData?.value) {
+          const sv = settingsData.value as typeof shippingSettings
+          shippingSettings = {
+            freeShippingThreshold: sv.freeShippingThreshold ?? 150,
+            standardShippingPrice: sv.standardShippingPrice ?? 5,
+            expressShippingPrice: sv.expressShippingPrice ?? 14.90,
+          }
+        }
+      } catch {
+        // Utiliser les valeurs par défaut si erreur
+      }
+
       // Calculer le sous-total avec les prix vérifiés
       const subtotal = rawItems.reduce((sum: number, item: { p: number; q: number }) =>
         sum + item.p * item.q, 0
       )
-      const shippingCost = subtotal >= 150 ? 0 : shippingMethod === 'express' ? 14.90 : 9.90
+      const shippingCost = subtotal >= shippingSettings.freeShippingThreshold
+        ? 0
+        : shippingMethod === 'express'
+          ? shippingSettings.expressShippingPrice
+          : shippingSettings.standardShippingPrice
 
       // Créer la commande dans Supabase
       const { data: order, error: orderError } = await supabaseAdmin
