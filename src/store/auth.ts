@@ -36,7 +36,25 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (get().isInitialized) return
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      // Réessayer getSession en cas d'AbortError (problème connu avec React 19)
+      let session = null
+      let retries = 0
+      const maxRetries = 3
+
+      while (retries < maxRetries) {
+        try {
+          const { data } = await supabase.auth.getSession()
+          session = data.session
+          break
+        } catch (err) {
+          if (isAbortError(err) && retries < maxRetries - 1) {
+            retries++
+            await new Promise(resolve => setTimeout(resolve, 100))
+            continue
+          }
+          throw err
+        }
+      }
 
       if (session?.user) {
         set({ user: session.user })
@@ -55,7 +73,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       set({ isInitialized: true })
     } catch (error) {
-      console.error('Auth initialization error:', error)
+      // Ignorer les AbortError pour l'initialisation
+      if (!isAbortError(error)) {
+        console.error('Auth initialization error:', error)
+      }
       set({ isInitialized: true })
     }
   },
@@ -105,10 +126,30 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ isLoading: true })
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      // Réessayer en cas d'AbortError (problème connu avec React 19)
+      let data = null
+      let error = null
+      let retries = 0
+      const maxRetries = 3
+
+      while (retries < maxRetries) {
+        try {
+          const result = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          })
+          data = result.data
+          error = result.error
+          break
+        } catch (err: any) {
+          if (isAbortError(err) && retries < maxRetries - 1) {
+            retries++
+            await new Promise(resolve => setTimeout(resolve, 100))
+            continue
+          }
+          throw err
+        }
+      }
 
       if (error) {
         set({ isLoading: false })
@@ -118,7 +159,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         return { error: error.message }
       }
 
-      if (data.user) {
+      if (data?.user) {
         set({ user: data.user })
         await get().fetchProfile()
       }
@@ -127,6 +168,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       return { error: null }
     } catch (error: any) {
       set({ isLoading: false })
+      // Ignorer les AbortError pour l'UX
+      if (isAbortError(error)) {
+        return { error: 'Erreur de connexion, veuillez réessayer' }
+      }
       return { error: error.message || 'Une erreur est survenue' }
     }
   },
