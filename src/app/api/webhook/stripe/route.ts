@@ -35,16 +35,26 @@ export async function POST(request: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session
 
     try {
-      // Récupérer les métadonnées
+      // Récupérer les métadonnées (format du checkout sécurisé)
       const metadata = session.metadata || {}
-      const shippingAddress = metadata.shippingAddress ? JSON.parse(metadata.shippingAddress) : null
-      const items = metadata.items ? JSON.parse(metadata.items) : []
+      const shippingData = metadata.shipping ? JSON.parse(metadata.shipping) : null
+      // Format items: {id, s (size), q (quantity), p (price)}
+      const rawItems = metadata.items ? JSON.parse(metadata.items) : []
       const userId = metadata.userId || null
       const shippingMethod = metadata.shippingMethod || 'standard'
 
-      // Calculer les frais de livraison
-      const subtotal = items.reduce((sum: number, item: { price: number; quantity: number }) =>
-        sum + item.price * item.quantity, 0
+      // Récupérer les infos produits depuis la BDD pour avoir les noms et images
+      const productIds = rawItems.map((item: { id: string }) => item.id)
+      const { data: products } = await supabaseAdmin
+        .from('products')
+        .select('id, name, images')
+        .in('id', productIds)
+
+      const productMap = new Map(products?.map(p => [p.id, p]) || [])
+
+      // Calculer le sous-total avec les prix vérifiés
+      const subtotal = rawItems.reduce((sum: number, item: { p: number; q: number }) =>
+        sum + item.p * item.q, 0
       )
       const shippingCost = subtotal >= 150 ? 0 : shippingMethod === 'express' ? 14.90 : 9.90
 
@@ -57,7 +67,7 @@ export async function POST(request: NextRequest) {
           subtotal: subtotal,
           shipping: shippingCost,
           total: session.amount_total ? session.amount_total / 100 : subtotal + shippingCost,
-          shipping_address: shippingAddress,
+          shipping_address: shippingData,
           payment_method: 'stripe',
           payment_status: 'completed',
           stripe_session_id: session.id,
@@ -72,23 +82,24 @@ export async function POST(request: NextRequest) {
       }
 
       // Ajouter les articles de la commande
-      if (items.length > 0 && order) {
-        const orderItems = items.map((item: {
-          productId: string
-          name: string
-          size: string
-          quantity: number
-          price: number
-          image: string
-        }) => ({
-          order_id: order.id,
-          product_id: item.productId,
-          product_name: item.name,
-          product_image: item.image,
-          size: item.size,
-          quantity: item.quantity,
-          price: item.price * item.quantity,
-        }))
+      if (rawItems.length > 0 && order) {
+        const orderItems = rawItems.map((item: {
+          id: string
+          s: string   // size
+          q: number   // quantity
+          p: number   // price
+        }) => {
+          const product = productMap.get(item.id)
+          return {
+            order_id: order.id,
+            product_id: item.id,
+            product_name: product?.name || 'Produit',
+            product_image: product?.images?.[0] || '',
+            size: item.s,
+            quantity: item.q,
+            price: item.p * item.q,
+          }
+        })
 
         const { error: itemsError } = await supabaseAdmin
           .from('order_items')
