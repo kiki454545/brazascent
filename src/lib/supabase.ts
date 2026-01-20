@@ -3,12 +3,22 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
+// Fetch personnalisé qui ignore les signaux d'annulation de React 19
+// Cela évite les AbortError qui se produisent lors du démontage des composants
+const customFetch = (url: RequestInfo | URL, options?: RequestInit) => {
+  const { signal, ...restOptions } = options || {}
+  return fetch(url, restOptions)
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-  }
+  },
+  global: {
+    fetch: customFetch,
+  },
 })
 
 // Helper pour détecter les erreurs d'annulation (AbortError)
