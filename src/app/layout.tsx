@@ -22,14 +22,51 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: "Braza Scent | Maison de Parfumerie d'Exception",
-  description: "Découvrez l'univers Braza Scent, maison de haute parfumerie française. Des créations uniques aux notes raffinées.",
-  keywords: "parfum, parfumerie, luxe, fragrance, Braza Scent",
+  title: {
+    default: "Braza Scent | Décants & Échantillons de Parfums de Luxe",
+    template: "%s | Braza Scent",
+  },
+  description: "Décantage haut de gamme : décants et échantillons de parfums de niche et collection privée en format voyage. Découvrez des fragrances d'exception à moindre coût avec Brazascent. Livraison rapide et paiement sécurisé.",
+  keywords: "décant parfum, échantillon parfum, parfum de niche, collection privée, parfum luxe, format voyage, Braza Scent, brazascent, parfumerie haut de gamme",
+  authors: [{ name: "Braza Scent" }],
+  creator: "Braza Scent",
+  publisher: "Braza Scent",
+  metadataBase: new URL("https://brazascent.com"),
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Braza Scent | Maison de Parfumerie d'Exception",
-    description: "Découvrez l'univers Braza Scent, maison de haute parfumerie française.",
+    title: "Braza Scent | Décants & Échantillons de Parfums de Luxe",
+    description: "Décantage haut de gamme : décants et échantillons de parfums de niche et collection privée en format voyage. Découvrez des fragrances d'exception à moindre coût avec Brazascent.",
     type: "website",
     locale: "fr_FR",
+    siteName: "Braza Scent",
+    url: "https://brazascent.com",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Braza Scent | Décants & Échantillons de Parfums de Luxe",
+    description: "Décantage haut de gamme : décants et échantillons de parfums de niche et collection privée en format voyage.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    // Ajouter ici les codes de vérification Google Search Console si nécessaire
+    // google: "votre-code-verification",
   },
 }
 
