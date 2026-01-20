@@ -25,14 +25,6 @@ interface AuthStore {
   fetchProfile: () => Promise<void>
 }
 
-// Helper pour ignorer les AbortError
-const isAbortError = (error: any): boolean => {
-  if (!error) return false
-  return error.name === 'AbortError' ||
-         error.message?.includes('AbortError') ||
-         error.message?.includes('signal is aborted')
-}
-
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   profile: null,
@@ -44,13 +36,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (get().isInitialized) return
 
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-
-      // Ignorer les erreurs d'annulation
-      if (sessionError && isAbortError(sessionError)) {
-        set({ isInitialized: true })
-        return
-      }
+      const { data: { session } } = await supabase.auth.getSession()
 
       if (session?.user) {
         set({ user: session.user })
@@ -59,28 +45,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       // Écouter les changements d'auth
       supabase.auth.onAuthStateChange(async (event, session) => {
-        try {
-          if (event === 'SIGNED_IN' && session?.user) {
-            set({ user: session.user })
-            await get().fetchProfile()
-          } else if (event === 'SIGNED_OUT') {
-            set({ user: null, profile: null })
-          }
-        } catch (error: any) {
-          // Ignorer les AbortError dans le listener
-          if (!isAbortError(error)) {
-            console.error('Auth state change error:', error)
-          }
+        if (event === 'SIGNED_IN' && session?.user) {
+          set({ user: session.user })
+          await get().fetchProfile()
+        } else if (event === 'SIGNED_OUT') {
+          set({ user: null, profile: null })
         }
       })
 
       set({ isInitialized: true })
-    } catch (error: any) {
-      // Ignorer les erreurs d'annulation
-      if (isAbortError(error)) {
-        set({ isInitialized: true })
-        return
-      }
+    } catch (error) {
       console.error('Auth initialization error:', error)
       set({ isInitialized: true })
     }
@@ -96,11 +70,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       })
 
       if (error) {
-        // Ignorer les AbortError
-        if (isAbortError(error)) {
-          set({ isLoading: false })
-          return { error: null }
-        }
         set({ isLoading: false })
         return { error: error.message }
       }
@@ -116,7 +85,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             last_name: lastName || null,
           })
 
-        if (profileError && !isAbortError(profileError)) {
+        if (profileError) {
           console.error('Profile creation error:', profileError)
         }
 
@@ -127,13 +96,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false })
       return { error: null }
     } catch (error: any) {
-      // Ignorer les AbortError
-      if (isAbortError(error)) {
-        set({ isLoading: false })
-        return { error: null }
-      }
       set({ isLoading: false })
-      return { error: 'Une erreur est survenue' }
+      return { error: error.message || 'Une erreur est survenue' }
     }
   },
 
@@ -147,13 +111,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       })
 
       if (error) {
-        // Ignorer les AbortError
-        if (isAbortError(error)) {
-          set({ isLoading: false })
-          return { error: null }
-        }
         set({ isLoading: false })
-
         if (error.message === 'Invalid login credentials') {
           return { error: 'Email ou mot de passe incorrect' }
         }
@@ -168,13 +126,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false })
       return { error: null }
     } catch (error: any) {
-      // Ignorer les AbortError
-      if (isAbortError(error)) {
-        set({ isLoading: false })
-        return { error: null }
-      }
       set({ isLoading: false })
-      return { error: 'Une erreur est survenue' }
+      return { error: error.message || 'Une erreur est survenue' }
     }
   },
 
@@ -182,11 +135,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ isLoading: true })
     try {
       await supabase.auth.signOut()
-    } catch (error: any) {
-      // Ignorer les AbortError
-      if (!isAbortError(error)) {
-        console.error('Sign out error:', error)
-      }
+    } catch (error) {
+      console.error('Sign out error:', error)
     }
     set({ user: null, profile: null, isLoading: false })
   },
@@ -204,11 +154,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         .eq('id', user.id)
 
       if (error) {
-        // Ignorer les AbortError
-        if (isAbortError(error)) {
-          set({ isLoading: false })
-          return { error: null }
-        }
         set({ isLoading: false })
         return { error: error.message }
       }
@@ -217,13 +162,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false })
       return { error: null }
     } catch (error: any) {
-      // Ignorer les AbortError
-      if (isAbortError(error)) {
-        set({ isLoading: false })
-        return { error: null }
-      }
       set({ isLoading: false })
-      return { error: 'Une erreur est survenue' }
+      return { error: error.message || 'Une erreur est survenue' }
     }
   },
 
