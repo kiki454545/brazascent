@@ -324,7 +324,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-black/40" />
         </div>
 
-        <div className="relative h-full flex flex-col items-center justify-center text-white text-center px-6 pt-24 sm:pt-0">
+        <div className="relative h-full flex flex-col items-center justify-center text-white text-center px-6 pt-32 sm:pt-0">
           <motion.div
             initial="hidden"
             animate="visible"
