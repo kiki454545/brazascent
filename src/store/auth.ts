@@ -224,6 +224,29 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         .single()
 
       if (error) {
+        // Si le profil n'existe pas, le créer automatiquement
+        if (error.code === 'PGRST116') {
+          console.log('Profile not found, creating one...')
+          const { data: newProfile, error: createError } = await supabase
+            .from('user_profiles')
+            .insert({
+              id: user.id,
+              email: user.email || '',
+            })
+            .select()
+            .single()
+
+          if (createError) {
+            console.error('Error creating profile:', createError)
+            return
+          }
+
+          if (newProfile) {
+            set({ profile: newProfile })
+          }
+          return
+        }
+
         if (!isAbortError(error)) {
           console.error('Fetch profile error:', error)
         }
