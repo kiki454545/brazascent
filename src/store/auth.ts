@@ -22,7 +22,7 @@ interface AuthStore {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   updateProfile: (data: Partial<UserProfile>) => Promise<{ error: string | null }>
-  fetchProfile: () => Promise<void>
+  fetchProfile: (accessToken?: string) => Promise<void>
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -58,14 +58,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       if (session?.user) {
         set({ user: session.user })
-        await get().fetchProfile()
+        await get().fetchProfile(session.access_token)
       }
 
       // Écouter les changements d'auth
       supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
           set({ user: session.user })
-          await get().fetchProfile()
+          await get().fetchProfile(session.access_token)
         } else if (event === 'SIGNED_OUT') {
           set({ user: null, profile: null })
         }
@@ -162,7 +162,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       if (data?.user) {
         console.log('SignIn success, user:', data.user.id)
         set({ user: data.user })
-        await get().fetchProfile()
+        // Passer le token directement pour éviter un nouvel appel à getSession
+        const accessToken = data.session?.access_token
+        await get().fetchProfile(accessToken)
         console.log('After fetchProfile, profile:', get().profile)
       } else {
         console.log('SignIn: no user in data', data)
@@ -216,7 +218,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
   },
 
-  fetchProfile: async () => {
+  fetchProfile: async (providedToken?: string) => {
     const { user } = get()
     if (!user) {
       console.log('fetchProfile: no user')
@@ -230,9 +232,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     try {
-      // Récupérer le token de session pour l'authentification
-      const { data: sessionData } = await supabase.auth.getSession()
-      const accessToken = sessionData?.session?.access_token
+      // Utiliser le token fourni ou l'apikey par défaut
+      const accessToken = providedToken || supabaseKey
 
       const response = await fetch(
         `${supabaseUrl}/rest/v1/user_profiles?id=eq.${user.id}&select=*`,
