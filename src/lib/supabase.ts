@@ -8,16 +8,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-  },
-  global: {
-    fetch: (url, options = {}) => {
-      // Créer une nouvelle copie des options sans le signal d'annulation
-      const { signal, ...restOptions } = options as RequestInit
-      return fetch(url, {
-        ...restOptions,
-        // Ignorer le signal pour éviter les AbortError
-      })
-    }
   }
 })
 
