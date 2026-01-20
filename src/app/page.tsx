@@ -324,15 +324,15 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-black/40" />
         </div>
 
-        <div className="relative h-full flex flex-col items-center justify-center text-white text-center px-6 pt-32 sm:pt-0">
+        <div className="relative h-full flex flex-col items-center justify-center text-white text-center px-4 sm:px-6 pt-20 sm:pt-0">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={stagger}
           >
             {/* Kicker */}
-            <motion.div variants={fadeUp} className="mb-6">
-              <span className="inline-flex items-center gap-2 px-4 py-2 border border-[#C9A962]/50 rounded-full text-xs tracking-[0.2em] uppercase text-[#C9A962]">
+            <motion.div variants={fadeUp} className="mb-4 sm:mb-6">
+              <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 border border-[#C9A962]/50 rounded-full text-[10px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase text-[#C9A962]">
                 Décants premium • Niche • Collection privée
               </span>
             </motion.div>
@@ -340,7 +340,7 @@ export default function HomePage() {
             {/* Main Title */}
             <motion.h1
               variants={fadeUp}
-              className="text-4xl md:text-6xl lg:text-7xl font-light tracking-[0.1em] uppercase mb-6 leading-tight"
+              className="text-[1.65rem] sm:text-4xl md:text-6xl lg:text-7xl font-light tracking-[0.05em] sm:tracking-[0.1em] uppercase mb-4 sm:mb-6 leading-tight"
             >
               Découvre des parfums rares<br />
               <span className="text-[#C9A962]">sans acheter le flacon</span>
@@ -349,40 +349,40 @@ export default function HomePage() {
             {/* Subtitle */}
             <motion.p
               variants={fadeUp}
-              className="text-lg md:text-xl font-light max-w-3xl mx-auto mb-10 leading-relaxed"
+              className="text-sm sm:text-lg md:text-xl font-light max-w-3xl mx-auto mb-6 sm:mb-10 leading-relaxed"
             >
               Braza Scent est spécialisé dans le décantage à partir de flacons authentiques :
               parfumerie de niche, éditions limitées et pièces issues de collections privées.
             </motion.p>
 
             {/* CTA Buttons */}
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-8 sm:mb-12">
               <Link
                 href="/parfums"
-                className="btn-luxury px-10 py-4 bg-white text-[#19110B] text-sm tracking-[0.2em] uppercase font-medium hover:bg-[#C9A962] hover:text-white transition-colors"
+                className="btn-luxury px-6 sm:px-10 py-3 sm:py-4 bg-white text-[#19110B] text-xs sm:text-sm tracking-[0.15em] sm:tracking-[0.2em] uppercase font-medium hover:bg-[#C9A962] hover:text-white transition-colors"
               >
                 Découvrir la sélection
               </Link>
               <Link
                 href="/packs"
-                className="px-10 py-4 border border-[#C9A962] bg-[#C9A962]/10 text-[#C9A962] text-sm tracking-[0.2em] uppercase font-medium hover:bg-[#C9A962] hover:text-white transition-colors"
+                className="px-6 sm:px-10 py-3 sm:py-4 border border-[#C9A962] bg-[#C9A962]/10 text-[#C9A962] text-xs sm:text-sm tracking-[0.15em] sm:tracking-[0.2em] uppercase font-medium hover:bg-[#C9A962] hover:text-white transition-colors"
               >
                 Découvrir les packs
               </Link>
               <Link
                 href="#comment-ca-marche"
-                className="px-10 py-4 border border-white text-sm tracking-[0.2em] uppercase font-medium hover:bg-white hover:text-[#19110B] transition-colors"
+                className="px-6 sm:px-10 py-3 sm:py-4 border border-white text-xs sm:text-sm tracking-[0.15em] sm:tracking-[0.2em] uppercase font-medium hover:bg-white hover:text-[#19110B] transition-colors"
               >
                 Comment ça marche ?
               </Link>
             </motion.div>
 
             {/* Trust Badges */}
-            <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-3">
+            <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-2 sm:gap-3">
               {['Authenticité garantie', 'Décantage soigné', 'Packaging sécurisé', 'Stock limité'].map((badge) => (
                 <span
                   key={badge}
-                  className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-xs tracking-wider"
+                  className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-[10px] sm:text-xs tracking-wider"
                 >
                   {badge}
                 </span>
