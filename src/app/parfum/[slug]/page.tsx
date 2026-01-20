@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Heart, Minus, Plus, ChevronRight, Truck, Gift } from 'lucide-react'
+import { Heart, Minus, Plus, ChevronRight, Truck, Gift, Share2, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 import { useCartStore } from '@/store/cart'
@@ -27,6 +27,7 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedSize, setSelectedSize] = useState('')
   const [quantity, setQuantity] = useState(1)
+  const [copied, setCopied] = useState(false)
 
   const { addItem, openCart } = useCartStore()
   const { toggleItem, isInWishlist } = useWishlistStore()
@@ -394,10 +395,31 @@ export default function ProductPage() {
                     ? 'border-[#C9A962] bg-[#C9A962] text-white'
                     : 'border-gray-300 hover:border-[#19110B]'
                 }`}
+                title="Ajouter aux favoris"
               >
                 <Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
               </button>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href)
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2000)
+                }}
+                className={`p-4 border transition-colors ${
+                  copied
+                    ? 'border-green-500 bg-green-500 text-white'
+                    : 'border-gray-300 hover:border-[#19110B]'
+                }`}
+                title="Partager"
+              >
+                {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+              </button>
             </div>
+
+            {/* Message de copie */}
+            {copied && (
+              <p className="text-sm text-green-600 mt-2">Lien copié !</p>
+            )}
 
             {/* Services */}
             <div className="border-t border-b py-6 space-y-4">
