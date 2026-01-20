@@ -225,110 +225,76 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     console.log('fetchProfile: fetching for user', user.id)
 
-    // Réessayer en cas d'AbortError (problème connu avec React 19)
-    let data = null
-    let error = null
-    let retries = 0
-    const maxRetries = 3
+    // Utiliser fetch directement pour éviter les AbortError de Supabase
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    while (retries < maxRetries) {
-      try {
-        const result = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
+    try {
+      // Récupérer le token de session pour l'authentification
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token
 
-        data = result.data
-        error = result.error
-
-        // Si c'est une AbortError, réessayer
-        if (error && isAbortError(error)) {
-          console.log('fetchProfile: AbortError, retrying...', retries + 1)
-          retries++
-          await new Promise(resolve => setTimeout(resolve, 100 * retries))
-          continue
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/user_profiles?id=eq.${user.id}&select=*`,
+        {
+          method: 'GET',
+          headers: {
+            'apikey': supabaseKey!,
+            'Authorization': `Bearer ${accessToken || supabaseKey}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/vnd.pgrst.object+json', // Pour obtenir un seul objet
+          },
         }
-        break
-      } catch (err: any) {
-        if (isAbortError(err) && retries < maxRetries - 1) {
-          console.log('fetchProfile: caught AbortError, retrying...', retries + 1)
-          retries++
-          await new Promise(resolve => setTimeout(resolve, 100 * retries))
-          continue
-        }
-        console.error('fetchProfile catch error:', err)
-        return
-      }
-    }
+      )
 
-    console.log('fetchProfile result:', { data, errorCode: error?.code, errorMessage: error?.message })
+      console.log('fetchProfile response status:', response.status)
 
-    if (error) {
-      // Si le profil n'existe pas, le créer automatiquement
-      if (error.code === 'PGRST116') {
-        console.log('Profile not found, creating one...')
+      if (response.status === 406) {
+        // Pas de profil trouvé, le créer
+        console.log('Profile not found (406), creating one...')
 
-        // Réessayer la création aussi en cas d'AbortError
-        let newProfile = null
-        let createError = null
-        retries = 0
-
-        while (retries < maxRetries) {
-          try {
-            const result = await supabase
-              .from('user_profiles')
-              .insert({
-                id: user.id,
-                email: user.email || '',
-              })
-              .select()
-              .single()
-
-            newProfile = result.data
-            createError = result.error
-
-            if (createError && isAbortError(createError)) {
-              console.log('createProfile: AbortError, retrying...', retries + 1)
-              retries++
-              await new Promise(resolve => setTimeout(resolve, 100 * retries))
-              continue
-            }
-            break
-          } catch (err: any) {
-            if (isAbortError(err) && retries < maxRetries - 1) {
-              retries++
-              await new Promise(resolve => setTimeout(resolve, 100 * retries))
-              continue
-            }
-            console.error('createProfile catch error:', err)
-            return
+        const createResponse = await fetch(
+          `${supabaseUrl}/rest/v1/user_profiles`,
+          {
+            method: 'POST',
+            headers: {
+              'apikey': supabaseKey!,
+              'Authorization': `Bearer ${accessToken || supabaseKey}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=representation',
+            },
+            body: JSON.stringify({
+              id: user.id,
+              email: user.email || '',
+            }),
           }
-        }
+        )
 
-        console.log('Create profile result:', { newProfile, createError })
+        console.log('Create profile response status:', createResponse.status)
 
-        if (createError) {
-          console.error('Error creating profile:', createError)
-          return
-        }
-
-        if (newProfile) {
+        if (createResponse.ok) {
+          const newProfile = await createResponse.json()
           console.log('Setting new profile:', newProfile)
-          set({ profile: newProfile })
+          // Le résultat est un tableau, prendre le premier élément
+          set({ profile: Array.isArray(newProfile) ? newProfile[0] : newProfile })
+        } else {
+          const errorText = await createResponse.text()
+          console.error('Error creating profile:', errorText)
         }
         return
       }
 
-      if (!isAbortError(error)) {
-        console.error('Fetch profile error:', error)
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Fetch profile error:', response.status, errorText)
+        return
       }
-      return
-    }
 
-    if (data) {
+      const data = await response.json()
       console.log('Setting existing profile:', data)
       set({ profile: data })
+    } catch (error) {
+      console.error('fetchProfile catch error:', error)
     }
   },
 }))
