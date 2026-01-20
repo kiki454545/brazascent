@@ -6,8 +6,35 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowRight, Sparkles, Award, Star, Truck } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
-import { supabase } from '@/lib/supabase'
+import { supabase, isAbortError } from '@/lib/supabase'
 import { Product } from '@/types'
+
+// Helper pour exécuter une requête Supabase avec retry en cas d'AbortError
+async function fetchWithRetry<T>(
+  queryFn: () => PromiseLike<{ data: T | null; error: any }>,
+  maxRetries = 3
+): Promise<{ data: T | null; error: any }> {
+  let lastError: any = null
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const result = await queryFn()
+      if (result.error && isAbortError(result.error)) {
+        lastError = result.error
+        await new Promise(resolve => setTimeout(resolve, 100 * (i + 1)))
+        continue
+      }
+      return result
+    } catch (err) {
+      if (isAbortError(err) && i < maxRetries - 1) {
+        lastError = err
+        await new Promise(resolve => setTimeout(resolve, 100 * (i + 1)))
+        continue
+      }
+      return { data: null, error: err }
+    }
+  }
+  return { data: null, error: lastError }
+}
 
 // Composant Carrousel Draggable amélioré
 function DraggableCarousel({ products }: { products: Product[] }) {
@@ -193,37 +220,43 @@ export default function HomePage() {
 
     const fetchProducts = async () => {
       try {
-        // Fetch bestsellers (produits avec is_bestseller = true)
-        const { data: bestsellersData, error: bestsellersError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('is_active', true)
-          .eq('is_bestseller', true)
-          .order('created_at', { ascending: false })
+        // Fetch bestsellers avec retry (produits avec is_bestseller = true)
+        const { data: bestsellersData, error: bestsellersError } = await fetchWithRetry<any[]>(() =>
+          supabase
+            .from('products')
+            .select('*')
+            .eq('is_active', true)
+            .eq('is_bestseller', true)
+            .order('created_at', { ascending: false })
+        )
 
         if (isMounted && bestsellersData) {
           setBestsellers(bestsellersData.map(mapProduct))
         }
-        if (bestsellersError) {
+        if (bestsellersError && !isAbortError(bestsellersError)) {
           console.error('Bestsellers error:', bestsellersError)
         }
 
-        // Fetch new products (produits avec is_new = true)
-        const { data: newData, error: newError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('is_active', true)
-          .eq('is_new', true)
-          .order('created_at', { ascending: false })
+        // Fetch new products avec retry (produits avec is_new = true)
+        const { data: newData, error: newError } = await fetchWithRetry<any[]>(() =>
+          supabase
+            .from('products')
+            .select('*')
+            .eq('is_active', true)
+            .eq('is_new', true)
+            .order('created_at', { ascending: false })
+        )
 
         if (isMounted && newData) {
           setNewProducts(newData.map(mapProduct))
         }
-        if (newError) {
+        if (newError && !isAbortError(newError)) {
           console.error('New products error:', newError)
         }
       } catch (err: any) {
-        console.error('Fetch error:', err)
+        if (!isAbortError(err)) {
+          console.error('Fetch error:', err)
+        }
       } finally {
         if (isMounted) setLoading(false)
       }
