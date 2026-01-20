@@ -97,11 +97,11 @@ export default function LivraisonPage() {
             <h3 className="text-xl font-medium text-[#19110B]">Zones de livraison</h3>
           </div>
           <p className="text-gray-600 leading-relaxed mb-4">
-            Nous livrons actuellement en <strong>France métropolitaine uniquement</strong>.
+            Nous livrons actuellement en <strong>France métropolitaine</strong> et en <strong>Belgique</strong>.
           </p>
           <p className="text-gray-600 leading-relaxed">
-            La livraison vers les DOM-TOM et à l'international sera bientôt disponible.
-            Inscrivez-vous à notre newsletter pour être informé de l'ouverture de ces zones.
+            La livraison vers les DOM-TOM et dans d'autres pays sera bientôt disponible.
+            Inscrivez-vous à notre newsletter pour être informé de l'ouverture de nouvelles zones.
           </p>
         </div>
 

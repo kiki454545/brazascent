@@ -172,7 +172,7 @@ export default function FAQPage() {
             Notre équipe est là pour vous aider
           </p>
           <a
-            href="/contact"
+            href="mailto:brazascent@gmail.com"
             className="inline-block px-8 py-3 bg-[#C9A962] text-white text-sm tracking-[0.15em] uppercase font-medium hover:bg-[#B8944F] transition-colors"
           >
             Nous contacter
