@@ -14,17 +14,7 @@ import {
   Package,
   Upload
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-
-// Helper pour ignorer les AbortError
-const isAbortError = (error: unknown): boolean => {
-  if (!error) return false
-  const err = error as { name?: string; message?: string }
-  return err.name === 'AbortError' ||
-         err.message?.includes('AbortError') ||
-         err.message?.includes('signal is aborted') ||
-         false
-}
+import { supabase, supabaseFetch } from '@/lib/supabase'
 
 interface Pack {
   id: string
@@ -101,20 +91,17 @@ export default function AdminPacksPage() {
 
   const fetchPacks = async () => {
     try {
-      const { data, error } = await supabase
-        .from('packs')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const { data, error } = await supabaseFetch<Pack[]>('packs', {
+        order: { column: 'created_at', ascending: false }
+      })
 
       if (error) {
-        if (!isAbortError(error)) throw error
+        console.error('Error fetching packs:', error)
         return
       }
       setPacks(data || [])
     } catch (error) {
-      if (!isAbortError(error)) {
-        console.error('Error fetching packs:', error)
-      }
+      console.error('Error fetching packs:', error)
     } finally {
       setLoading(false)
     }
@@ -122,20 +109,18 @@ export default function AdminPacksPage() {
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, images, price, sizes, price_by_size')
-        .order('name')
+      const { data, error } = await supabaseFetch<Product[]>('products', {
+        select: 'id, name, images, price, sizes, price_by_size',
+        order: { column: 'name', ascending: true }
+      })
 
       if (error) {
-        if (!isAbortError(error)) throw error
+        console.error('Error fetching products:', error)
         return
       }
       setProducts(data || [])
     } catch (error) {
-      if (!isAbortError(error)) {
-        console.error('Error fetching products:', error)
-      }
+      console.error('Error fetching products:', error)
     }
   }
 
@@ -170,10 +155,8 @@ export default function AdminPacksPage() {
 
       setForm(prev => ({ ...prev, image: publicUrl }))
     } catch (error) {
-      if (!isAbortError(error)) {
-        console.error('Error uploading image:', error)
-        setError('Erreur lors du téléchargement de l\'image')
-      }
+      console.error('Error uploading image:', error)
+      setError('Erreur lors du téléchargement de l\'image')
     } finally {
       setUploading(false)
     }
@@ -272,10 +255,8 @@ export default function AdminPacksPage() {
       setShowModal(false)
       fetchPacks()
     } catch (error: any) {
-      if (!isAbortError(error)) {
-        console.error('Save error:', error)
-        setError(error.message)
-      }
+      console.error('Save error:', error)
+      setError(error.message)
     } finally {
       setSaving(false)
     }
@@ -291,14 +272,12 @@ export default function AdminPacksPage() {
         .eq('id', pack.id)
 
       if (error) {
-        if (!isAbortError(error)) throw error
+        console.error('Error deleting pack:', error)
         return
       }
       fetchPacks()
     } catch (error) {
-      if (!isAbortError(error)) {
-        console.error('Error deleting pack:', error)
-      }
+      console.error('Error deleting pack:', error)
     }
   }
 
