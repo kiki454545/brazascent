@@ -691,7 +691,7 @@ export default function HomePage() {
               </p>
             </motion.div>
 
-            <motion.div variants={fadeUp} className="grid grid-cols-3 gap-4 lg:gap-8">
+            <motion.div variants={fadeUp} className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-8">
               {[
                 { size: '2ml', label: 'Test rapide' },
                 { size: '5ml', label: 'Découverte complète' },
@@ -699,10 +699,10 @@ export default function HomePage() {
               ].map((format) => (
                 <div
                   key={format.size}
-                  className="p-6 lg:p-8 border border-gray-200 text-center hover:border-[#C9A962] transition-colors"
+                  className="p-3 sm:p-6 lg:p-8 border border-gray-200 text-center hover:border-[#C9A962] transition-colors"
                 >
-                  <div className="text-3xl lg:text-4xl font-light text-[#C9A962] mb-2">{format.size}</div>
-                  <div className="text-sm text-gray-600 tracking-wider uppercase">{format.label}</div>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-light text-[#C9A962] mb-1 sm:mb-2">{format.size}</div>
+                  <div className="text-[10px] sm:text-sm text-gray-600 tracking-wider uppercase leading-tight">{format.label}</div>
                 </div>
               ))}
             </motion.div>
