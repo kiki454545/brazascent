@@ -111,29 +111,39 @@ export default function ProductPage() {
         if (!isMounted) return
 
         if (relatedData) {
-          const mappedRelated: Product[] = relatedData.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            description: p.description || '',
-            shortDescription: p.short_description || '',
-            price: p.price,
-            originalPrice: p.original_price,
-            images: p.images || [],
-            size: p.sizes || [],
-            category: p.category || 'unisexe',
-            collection: p.collection,
-            notes: {
-              top: p.notes_top || [],
-              heart: p.notes_heart || [],
-              base: p.notes_base || []
-            },
-            stock: p.stock ?? 1,
-            inStock: (p.stock || 0) > 0,
-            new: p.is_new,
-            bestseller: p.is_bestseller,
-            featured: p.is_bestseller
-          }))
+          const mappedRelated: Product[] = relatedData.map((p: any) => {
+            const relatedPriceBySize = typeof p.price_by_size === 'string'
+              ? JSON.parse(p.price_by_size)
+              : (p.price_by_size || {})
+            const prices = Object.values(relatedPriceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
+            const displayPrice = prices.length > 0 ? Math.min(...prices) : p.price
+
+            return {
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+              description: p.description || '',
+              shortDescription: p.short_description || '',
+              price: displayPrice,
+              originalPrice: p.original_price,
+              priceBySize: relatedPriceBySize,
+              images: p.images || [],
+              size: p.sizes || [],
+              category: p.category || 'unisexe',
+              collection: p.collection,
+              brand: p.brand || '',
+              notes: {
+                top: p.notes_top || [],
+                heart: p.notes_heart || [],
+                base: p.notes_base || []
+              },
+              stock: p.stock ?? 1,
+              inStock: (p.stock || 0) > 0,
+              new: p.is_new,
+              bestseller: p.is_bestseller,
+              featured: p.is_bestseller
+            }
+          })
           setRelatedProducts(mappedRelated)
         }
       } catch (err) {

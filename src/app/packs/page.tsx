@@ -263,31 +263,6 @@ export default function PacksPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 bg-[#19110B] text-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <Gift className="w-16 h-16 text-[#C9A962] mx-auto mb-6" />
-            <h2 className="text-3xl lg:text-4xl font-light tracking-[0.15em] uppercase mb-6">
-              Coffret personnalisé
-            </h2>
-            <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-              Créez votre propre coffret sur-mesure en sélectionnant vos parfums préférés.
-              Un cadeau unique et personnel.
-            </p>
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-3 px-8 py-4 border border-[#C9A962] text-[#C9A962] text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] hover:text-white transition-colors"
-            >
-              Nous contacter
-            </Link>
-          </motion.div>
-        </div>
-      </section>
     </div>
   )
 }

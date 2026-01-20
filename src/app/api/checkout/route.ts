@@ -168,10 +168,32 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Stripe checkout error:', error)
+    console.error('Error message:', error?.message)
+    console.error('Error type:', error?.type)
+    console.error('Error code:', error?.code)
+    console.error('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY)
+    console.error('NEXT_PUBLIC_BASE_URL:', process.env.NEXT_PUBLIC_BASE_URL)
+
+    // Vérifier si Stripe est configuré
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { error: 'Configuration Stripe manquante. Contactez l\'administrateur.' },
+        { status: 500 }
+      )
+    }
+
+    // Erreurs Stripe spécifiques
+    if (error?.type === 'StripeInvalidRequestError') {
+      return NextResponse.json(
+        { error: `Erreur Stripe: ${error?.message}` },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Erreur lors de la création de la session de paiement' },
+      { error: error?.message || 'Erreur lors de la création de la session de paiement' },
       { status: 500 }
     )
   }
