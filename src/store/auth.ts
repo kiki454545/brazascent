@@ -160,8 +160,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       }
 
       if (data?.user) {
+        console.log('SignIn success, user:', data.user.id)
         set({ user: data.user })
         await get().fetchProfile()
+        console.log('After fetchProfile, profile:', get().profile)
+      } else {
+        console.log('SignIn: no user in data', data)
       }
 
       set({ isLoading: false })
