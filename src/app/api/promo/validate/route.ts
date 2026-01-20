@@ -1,0 +1,109 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+// Créer un client Supabase avec la clé service pour bypasser RLS
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+export async function POST(request: NextRequest) {
+  try {
+    const { code, orderTotal } = await request.json()
+
+    if (!code) {
+      return NextResponse.json(
+        { error: 'Code promo requis' },
+        { status: 400 }
+      )
+    }
+
+    // Rechercher le code promo
+    const { data: promoCode, error: fetchError } = await supabaseAdmin
+      .from('promo_codes')
+      .select('*')
+      .eq('code', code.toUpperCase().trim())
+      .single()
+
+    if (fetchError || !promoCode) {
+      return NextResponse.json(
+        { error: 'Code promo invalide' },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier si le code est actif
+    if (!promoCode.is_active) {
+      return NextResponse.json(
+        { error: 'Ce code promo n\'est plus actif' },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier la date de début
+    const now = new Date()
+    const startsAt = new Date(promoCode.starts_at)
+    if (startsAt > now) {
+      return NextResponse.json(
+        { error: 'Ce code promo n\'est pas encore valide' },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier la date d'expiration
+    if (promoCode.expires_at) {
+      const expiresAt = new Date(promoCode.expires_at)
+      if (expiresAt < now) {
+        return NextResponse.json(
+          { error: 'Ce code promo a expiré' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Vérifier le nombre d'utilisations
+    if (promoCode.max_uses !== null && promoCode.current_uses >= promoCode.max_uses) {
+      return NextResponse.json(
+        { error: 'Ce code promo a atteint sa limite d\'utilisation' },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier le montant minimum de commande
+    if (orderTotal && promoCode.min_order_amount > 0 && orderTotal < promoCode.min_order_amount) {
+      return NextResponse.json(
+        { error: `Montant minimum de commande: ${promoCode.min_order_amount} €` },
+        { status: 400 }
+      )
+    }
+
+    // Calculer la réduction
+    let discountAmount = 0
+    if (orderTotal) {
+      if (promoCode.discount_type === 'percentage') {
+        discountAmount = (orderTotal * promoCode.discount_value) / 100
+      } else {
+        discountAmount = Math.min(promoCode.discount_value, orderTotal)
+      }
+    }
+
+    return NextResponse.json({
+      valid: true,
+      promoCode: {
+        id: promoCode.id,
+        code: promoCode.code,
+        description: promoCode.description,
+        discount_type: promoCode.discount_type,
+        discount_value: promoCode.discount_value,
+        min_order_amount: promoCode.min_order_amount,
+      },
+      discountAmount: Math.round(discountAmount * 100) / 100,
+    })
+  } catch (error) {
+    console.error('Error validating promo code:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la validation du code promo' },
+      { status: 500 }
+    )
+  }
+}

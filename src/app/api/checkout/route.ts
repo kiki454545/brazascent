@@ -43,6 +43,11 @@ interface CheckoutBody {
   }
   shippingMethod: 'standard' | 'express'
   userId?: string
+  promoCode?: {
+    id: string
+    code: string
+    discount: number
+  } | null
 }
 
 interface ShippingSettings {
@@ -87,7 +92,7 @@ async function getShippingSettings(): Promise<ShippingSettings> {
 export async function POST(request: NextRequest) {
   try {
     const body: CheckoutBody = await request.json()
-    const { items, shippingAddress, shippingMethod, userId } = body
+    const { items, shippingAddress, shippingMethod, userId, promoCode } = body
 
     if (!items || items.length === 0) {
       return NextResponse.json(
@@ -143,8 +148,27 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Gérer le code promo avec les coupons Stripe
+    let stripeCouponId: string | undefined
+    if (promoCode && promoCode.discount > 0) {
+      try {
+        // Créer un coupon Stripe temporaire pour cette commande
+        const coupon = await stripe.coupons.create({
+          amount_off: formatAmountForStripe(promoCode.discount),
+          currency: 'eur',
+          duration: 'once',
+          name: `Code promo: ${promoCode.code}`,
+          max_redemptions: 1,
+        })
+        stripeCouponId = coupon.id
+      } catch (couponError) {
+        console.error('Error creating Stripe coupon:', couponError)
+        // Continuer sans le coupon si erreur
+      }
+    }
+
     // Créer la session Stripe Checkout
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: any = {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
@@ -168,9 +192,41 @@ export async function POST(request: NextRequest) {
           q: item.quantity,
           p: getItemPrice(item),
         }))),
+        // Stocker les infos du code promo
+        promoCodeId: promoCode?.id || '',
+        promoCodeCode: promoCode?.code || '',
+        promoCodeDiscount: promoCode?.discount?.toString() || '',
       },
       locale: 'fr',
-    })
+    }
+
+    // Ajouter le coupon si disponible
+    if (stripeCouponId) {
+      sessionConfig.discounts = [{ coupon: stripeCouponId }]
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
+
+    // Enregistrer l'utilisation du code promo et incrémenter le compteur
+    if (promoCode) {
+      try {
+        // Incrémenter le compteur d'utilisations
+        await supabase.rpc('increment_promo_code_usage', { code_id: promoCode.id })
+
+        // Enregistrer l'utilisation dans les logs
+        await supabase.from('promo_code_usage').insert({
+          promo_code_id: promoCode.id,
+          user_id: userId || null,
+          user_email: shippingAddress.email,
+          order_id: session.id,
+          order_total: subtotal + shippingCost,
+          discount_applied: promoCode.discount,
+        })
+      } catch (promoError) {
+        console.error('Error recording promo code usage:', promoError)
+        // Ne pas bloquer la commande si l'enregistrement échoue
+      }
+    }
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
   } catch (error: any) {

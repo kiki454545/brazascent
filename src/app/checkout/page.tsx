@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CreditCard, Truck, Shield, Check, ChevronDown, MapPin, Plus } from 'lucide-react'
+import { ArrowLeft, CreditCard, Truck, Shield, Check, ChevronDown, MapPin, Plus, Tag, X, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
@@ -50,6 +50,16 @@ interface ShippingSettings {
   enableExpressShipping: boolean
 }
 
+interface AppliedPromoCode {
+  id: string
+  code: string
+  description: string | null
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  min_order_amount: number
+}
+
+
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, getTotal } = useCartStore()
@@ -78,6 +88,13 @@ export default function CheckoutPage() {
 
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express'>('standard')
   const [acceptTerms, setAcceptTerms] = useState(false)
+
+  // Code promo
+  const [promoCode, setPromoCode] = useState('')
+  const [appliedPromoCode, setAppliedPromoCode] = useState<AppliedPromoCode | null>(null)
+  const [promoDiscount, setPromoDiscount] = useState(0)
+  const [promoError, setPromoError] = useState<string | null>(null)
+  const [validatingPromo, setValidatingPromo] = useState(false)
 
   // Paramètres de livraison depuis l'admin
   const [shippingSettings, setShippingSettings] = useState<ShippingSettings>({
@@ -167,7 +184,59 @@ export default function CheckoutPage() {
   const shippingCost = shippingMethod === 'express'
     ? shippingSettings.expressShippingPrice
     : (subtotal >= shippingSettings.freeShippingThreshold ? 0 : shippingSettings.standardShippingPrice)
-  const total = subtotal + shippingCost
+  const total = subtotal + shippingCost - promoDiscount
+
+  // Valider le code promo
+  const handleApplyPromoCode = async () => {
+    if (!promoCode.trim()) return
+
+    setValidatingPromo(true)
+    setPromoError(null)
+
+    try {
+      const response = await fetch('/api/promo/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: promoCode.trim(),
+          orderTotal: subtotal,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setPromoError(data.error || 'Code promo invalide')
+        return
+      }
+
+      setAppliedPromoCode(data.promoCode)
+      setPromoDiscount(data.discountAmount)
+      setPromoCode('')
+    } catch (err) {
+      setPromoError('Erreur lors de la validation du code promo')
+    } finally {
+      setValidatingPromo(false)
+    }
+  }
+
+  // Retirer le code promo
+  const handleRemovePromoCode = () => {
+    setAppliedPromoCode(null)
+    setPromoDiscount(0)
+    setPromoError(null)
+  }
+
+  // Recalculer la réduction quand le sous-total change
+  useEffect(() => {
+    if (appliedPromoCode) {
+      if (appliedPromoCode.discount_type === 'percentage') {
+        setPromoDiscount(Math.round((subtotal * appliedPromoCode.discount_value) / 100 * 100) / 100)
+      } else {
+        setPromoDiscount(Math.min(appliedPromoCode.discount_value, subtotal))
+      }
+    }
+  }, [subtotal, appliedPromoCode])
 
   // Rediriger si panier vide
   useEffect(() => {
@@ -242,6 +311,11 @@ export default function CheckoutPage() {
           shippingAddress: finalAddress,
           shippingMethod,
           userId: user?.id,
+          promoCode: appliedPromoCode ? {
+            id: appliedPromoCode.id,
+            code: appliedPromoCode.code,
+            discount: promoDiscount,
+          } : null,
         }),
       })
 
@@ -795,12 +869,73 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* Code promo */}
+              <div className="border-t pt-4 mb-4">
+                <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-[#C9A962]" />
+                  Code promo
+                </p>
+                {appliedPromoCode ? (
+                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div>
+                      <p className="font-mono font-semibold text-green-700">{appliedPromoCode.code}</p>
+                      <p className="text-xs text-green-600">
+                        {appliedPromoCode.discount_type === 'percentage'
+                          ? `-${appliedPromoCode.discount_value}%`
+                          : `-${appliedPromoCode.discount_value} €`}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleRemovePromoCode}
+                      className="p-1 hover:bg-green-100 rounded-full transition-colors"
+                    >
+                      <X className="w-4 h-4 text-green-600" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoCode}
+                        onChange={(e) => {
+                          setPromoCode(e.target.value.toUpperCase())
+                          setPromoError(null)
+                        }}
+                        placeholder="Entrer le code"
+                        className="flex-1 px-3 py-2 border border-gray-300 text-sm focus:border-[#C9A962] focus:outline-none uppercase"
+                      />
+                      <button
+                        onClick={handleApplyPromoCode}
+                        disabled={validatingPromo || !promoCode.trim()}
+                        className="px-4 py-2 bg-[#19110B] text-white text-sm hover:bg-[#C9A962] transition-colors disabled:opacity-50"
+                      >
+                        {validatingPromo ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          'Appliquer'
+                        )}
+                      </button>
+                    </div>
+                    {promoError && (
+                      <p className="text-xs text-red-500">{promoError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Totals */}
               <div className="border-t pt-4 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Sous-total</span>
                   <span>{subtotal.toLocaleString('fr-FR')} €</span>
                 </div>
+                {promoDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Réduction ({appliedPromoCode?.code})</span>
+                    <span>-{promoDiscount.toLocaleString('fr-FR')} €</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Livraison</span>
                   <span>
