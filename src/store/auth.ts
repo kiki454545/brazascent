@@ -232,7 +232,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         .eq('id', user.id)
         .single()
 
-      console.log('fetchProfile result:', { data, error })
+      console.log('fetchProfile result:', { data, errorCode: error?.code, errorMessage: error?.message, errorDetails: error?.details, errorHint: error?.hint })
 
       if (error) {
         // Si le profil n'existe pas, le créer automatiquement
