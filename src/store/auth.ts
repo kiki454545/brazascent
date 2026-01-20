@@ -218,7 +218,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   fetchProfile: async () => {
     const { user } = get()
-    if (!user) return
+    if (!user) {
+      console.log('fetchProfile: no user')
+      return
+    }
+
+    console.log('fetchProfile: fetching for user', user.id)
 
     try {
       const { data, error } = await supabase
@@ -226,6 +231,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         .select('*')
         .eq('id', user.id)
         .single()
+
+      console.log('fetchProfile result:', { data, error })
 
       if (error) {
         // Si le profil n'existe pas, le créer automatiquement
@@ -240,12 +247,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             .select()
             .single()
 
+          console.log('Create profile result:', { newProfile, createError })
+
           if (createError) {
             console.error('Error creating profile:', createError)
             return
           }
 
           if (newProfile) {
+            console.log('Setting new profile:', newProfile)
             set({ profile: newProfile })
           }
           return
@@ -258,11 +268,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       }
 
       if (data) {
+        console.log('Setting existing profile:', data)
         set({ profile: data })
       }
     } catch (error) {
       if (!isAbortError(error)) {
-        console.error('Fetch profile error:', error)
+        console.error('Fetch profile catch error:', error)
       }
     }
   },
