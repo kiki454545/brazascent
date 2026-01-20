@@ -187,6 +187,56 @@ export default function AdminProductsPage() {
     }
   }
 
+  const toggleProductBadge = async (productId: string, field: 'is_bestseller' | 'is_new' | 'out_of_stock') => {
+    const product = products.find(p => p.id === productId)
+    if (!product) return
+
+    try {
+      let updateData: Record<string, any> = {}
+
+      if (field === 'is_bestseller') {
+        updateData = { is_bestseller: !product.is_bestseller }
+      } else if (field === 'is_new') {
+        updateData = { is_new: !product.is_new }
+      } else if (field === 'out_of_stock') {
+        // Pour la rupture de stock, on met le stock à 0 ou on le restaure à 1
+        // Utiliser == pour matcher aussi undefined/null
+        const isCurrentlyOutOfStock = product.stock === 0 || product.stock == null
+        updateData = { stock: isCurrentlyOutOfStock ? 1 : 0 }
+        console.log('Toggle out_of_stock: current stock=', product.stock, ', isOutOfStock=', isCurrentlyOutOfStock, ', new stock=', updateData.stock)
+      }
+
+      const { error, data } = await supabase
+        .from('products')
+        .update(updateData)
+        .eq('id', productId)
+        .select()
+
+      console.log('Supabase update result:', { error, data, updateData })
+
+      if (error) {
+        console.error('Error toggling badge:', error)
+        return
+      }
+
+      // Mettre à jour l'état local
+      setProducts(products.map(p => {
+        if (p.id === productId) {
+          if (field === 'is_bestseller') {
+            return { ...p, is_bestseller: !p.is_bestseller }
+          } else if (field === 'is_new') {
+            return { ...p, is_new: !p.is_new }
+          } else if (field === 'out_of_stock') {
+            return { ...p, stock: (p.stock === 0 || p.stock == null) ? 1 : 0 }
+          }
+        }
+        return p
+      }))
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
+
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.brand.toLowerCase().includes(searchQuery.toLowerCase())
@@ -284,15 +334,6 @@ export default function AdminProductsPage() {
                     Produit
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Valeur stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Catégorie
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Statut
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -356,41 +397,48 @@ export default function AdminProductsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium">{calculateStockValue(product).toLocaleString('fr-FR')} €</p>
-                        <p className="text-xs text-gray-400">valeur totale</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`font-medium ${
-                        product.stock < 10 ? 'text-red-600' :
-                        product.stock < 20 ? 'text-orange-600' : 'text-green-600'
-                      }`}>
-                        {product.stock}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 text-xs bg-gray-100 rounded-full">
-                        {product.collection}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {product.is_active === false && (
                           <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">
                             Inactif
                           </span>
                         )}
-                        {product.is_new && (
-                          <span className="px-2 py-1 text-xs bg-[#C9A962]/10 text-[#C9A962] rounded">
-                            Nouveau
-                          </span>
-                        )}
-                        {product.is_bestseller && (
-                          <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded">
-                            Bestseller
-                          </span>
-                        )}
+                        <button
+                          onClick={() => toggleProductBadge(product.id, 'is_new')}
+                          disabled={!isFromSupabase}
+                          className={`px-2 py-1 text-xs rounded transition-all ${
+                            product.is_new
+                              ? 'bg-[#C9A962]/20 text-[#C9A962] ring-1 ring-[#C9A962]'
+                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                          } ${!isFromSupabase ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                          title={product.is_new ? 'Retirer Nouveau' : 'Ajouter Nouveau'}
+                        >
+                          Nouveau
+                        </button>
+                        <button
+                          onClick={() => toggleProductBadge(product.id, 'is_bestseller')}
+                          disabled={!isFromSupabase}
+                          className={`px-2 py-1 text-xs rounded transition-all ${
+                            product.is_bestseller
+                              ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-400'
+                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                          } ${!isFromSupabase ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                          title={product.is_bestseller ? 'Retirer Bestseller' : 'Ajouter Bestseller'}
+                        >
+                          Bestseller
+                        </button>
+                        <button
+                          onClick={() => toggleProductBadge(product.id, 'out_of_stock')}
+                          disabled={!isFromSupabase}
+                          className={`px-2 py-1 text-xs rounded transition-all ${
+                            product.stock === 0
+                              ? 'bg-red-100 text-red-700 ring-1 ring-red-400'
+                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                          } ${!isFromSupabase ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                          title={product.stock === 0 ? 'Remettre en stock' : 'Mettre en rupture'}
+                        >
+                          Rupture
+                        </button>
                       </div>
                     </td>
                     <td className="px-6 py-4">

@@ -71,7 +71,7 @@ export default function MarquesPage() {
       {/* Hero Section */}
       <section className="relative h-[50vh] min-h-[400px] overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=1920&q=90"
+          src="https://images.unsplash.com/photo-1592765213186-912a7504662d?w=1920&q=90"
           alt="Nos Marques"
           fill
           className="object-cover"

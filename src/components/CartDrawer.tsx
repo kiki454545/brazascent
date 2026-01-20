@@ -1,10 +1,15 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Minus, Plus, ShoppingBag } from 'lucide-react'
+import { X, Minus, Plus, ShoppingBag, AlertTriangle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCartStore } from '@/store/cart'
+
+// Vérifier si un produit est en rupture (stock = 0 exactement)
+const isProductOutOfStock = (product: { stock?: number }) => {
+  return product.stock !== undefined && product.stock === 0
+}
 
 // Obtenir le prix d'un article selon sa taille
 const getItemPrice = (item: { product: { price: number; priceBySize?: Record<string, number> }; selectedSize: string }) => {
@@ -19,6 +24,10 @@ export function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, getTotal } = useCartStore()
 
   const total = getTotal()
+
+  // Vérifier s'il y a des produits en rupture dans le panier
+  const outOfStockItems = items.filter(item => isProductOutOfStock(item.product))
+  const hasOutOfStockItems = outOfStockItems.length > 0
 
   return (
     <AnimatePresence>
@@ -69,74 +78,109 @@ export function CartDrawer() {
                 </div>
               ) : (
                 <div className="p-6 space-y-6">
-                  {items.map((item) => (
-                    <div
-                      key={`${item.product.id}-${item.selectedSize}`}
-                      className="flex gap-4"
-                    >
-                      {/* Image */}
-                      <div className="relative w-24 h-24 bg-[#F9F6F1] flex-shrink-0">
-                        <Image
-                          src={item.product.images[0]}
-                          alt={item.product.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-
-                      {/* Details */}
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-medium">{item.product.name}</h3>
-                            <p className="text-sm text-gray-500">{item.selectedSize}</p>
-                          </div>
-                          <button
-                            onClick={() => removeItem(item.product.id, item.selectedSize)}
-                            className="p-1 text-gray-400 hover:text-[#19110B] transition-colors"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between">
-                          {/* Quantity */}
-                          <div className="flex items-center border border-gray-200">
-                            <button
-                              onClick={() =>
-                                updateQuantity(
-                                  item.product.id,
-                                  item.selectedSize,
-                                  item.quantity - 1
-                                )
-                              }
-                              className="p-2 hover:bg-gray-100 transition-colors"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <span className="w-8 text-center text-sm">{item.quantity}</span>
-                            <button
-                              onClick={() =>
-                                updateQuantity(
-                                  item.product.id,
-                                  item.selectedSize,
-                                  item.quantity + 1
-                                )
-                              }
-                              className="p-2 hover:bg-gray-100 transition-colors"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                          </div>
-
-                          {/* Price */}
-                          <p className="font-medium">
-                            {(getItemPrice(item) * item.quantity).toLocaleString('fr-FR')} €
-                          </p>
-                        </div>
+                  {/* Alerte produits en rupture */}
+                  {hasOutOfStockItems && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-red-800">
+                          {outOfStockItems.length === 1 ? 'Un produit est' : `${outOfStockItems.length} produits sont`} en rupture de stock
+                        </p>
+                        <p className="text-xs text-red-600 mt-1">
+                          Veuillez retirer les produits indisponibles pour continuer votre commande.
+                        </p>
                       </div>
                     </div>
-                  ))}
+                  )}
+
+                  {items.map((item) => {
+                    const itemOutOfStock = isProductOutOfStock(item.product)
+                    return (
+                      <div
+                        key={`${item.product.id}-${item.selectedSize}`}
+                        className={`flex gap-4 ${itemOutOfStock ? 'opacity-60' : ''}`}
+                      >
+                        {/* Image */}
+                        <div className="relative w-24 h-24 bg-[#F9F6F1] flex-shrink-0">
+                          <Image
+                            src={item.product.images[0]}
+                            alt={item.product.name}
+                            fill
+                            className="object-cover"
+                          />
+                          {itemOutOfStock && (
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                              <span className="bg-red-600 text-white text-xs px-2 py-1 uppercase tracking-wider">
+                                Rupture
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Details */}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-medium">{item.product.name}</h3>
+                              <p className="text-sm text-gray-500">{item.selectedSize}</p>
+                              {itemOutOfStock && (
+                                <p className="text-xs text-red-600 mt-1">Produit indisponible</p>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => removeItem(item.product.id, item.selectedSize)}
+                              className={`p-1 transition-colors ${
+                                itemOutOfStock
+                                  ? 'text-red-500 hover:text-red-700'
+                                  : 'text-gray-400 hover:text-[#19110B]'
+                              }`}
+                              title={itemOutOfStock ? 'Retirer du panier' : 'Supprimer'}
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          {!itemOutOfStock && (
+                            <div className="mt-3 flex items-center justify-between">
+                              {/* Quantity */}
+                              <div className="flex items-center border border-gray-200">
+                                <button
+                                  onClick={() =>
+                                    updateQuantity(
+                                      item.product.id,
+                                      item.selectedSize,
+                                      item.quantity - 1
+                                    )
+                                  }
+                                  className="p-2 hover:bg-gray-100 transition-colors"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="w-8 text-center text-sm">{item.quantity}</span>
+                                <button
+                                  onClick={() =>
+                                    updateQuantity(
+                                      item.product.id,
+                                      item.selectedSize,
+                                      item.quantity + 1
+                                    )
+                                  }
+                                  className="p-2 hover:bg-gray-100 transition-colors"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              {/* Price */}
+                              <p className="font-medium">
+                                {(getItemPrice(item) * item.quantity).toLocaleString('fr-FR')} €
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -163,13 +207,19 @@ export function CartDrawer() {
                   >
                     Voir le panier
                   </Link>
-                  <Link
-                    href="/checkout"
-                    onClick={closeCart}
-                    className="btn-luxury block w-full py-3 text-center bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
-                  >
-                    Passer commande
-                  </Link>
+                  {hasOutOfStockItems ? (
+                    <div className="block w-full py-3 text-center bg-gray-300 text-gray-500 text-sm tracking-[0.15em] uppercase cursor-not-allowed">
+                      Retirez les produits indisponibles
+                    </div>
+                  ) : (
+                    <Link
+                      href="/checkout"
+                      onClick={closeCart}
+                      className="btn-luxury block w-full py-3 text-center bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                    >
+                      Passer commande
+                    </Link>
+                  )}
                 </div>
 
                 {/* Payment icons */}

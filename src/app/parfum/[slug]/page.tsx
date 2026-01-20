@@ -21,6 +21,8 @@ export default function ProductPage() {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [stockBySize, setStockBySize] = useState<Record<string, number>>({})
   const [priceBySize, setPriceBySize] = useState<Record<string, number>>({})
+  const [unlimitedStock, setUnlimitedStock] = useState(false)
+  const [globalStock, setGlobalStock] = useState<number>(1)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedSize, setSelectedSize] = useState('')
@@ -76,6 +78,7 @@ export default function ProductPage() {
             heart: data.notes_heart || [],
             base: data.notes_base || []
           },
+          stock: data.stock ?? 1,
           inStock: (data.stock || 0) > 0,
           new: data.is_new,
           bestseller: data.is_bestseller,
@@ -84,6 +87,10 @@ export default function ProductPage() {
 
         setProduct(mappedProduct)
         setStockBySize(data.stock_by_size || {})
+        setUnlimitedStock(data.unlimited_stock ?? false)
+        // Si stock est explicitement 0, c'est une rupture. Si null/undefined, utiliser 1 par défaut
+        setGlobalStock(data.stock !== null && data.stock !== undefined ? data.stock : 1)
+        console.log('Stock from DB:', data.stock, 'unlimited:', data.unlimited_stock)
         const parsedPriceBySize = typeof data.price_by_size === 'string'
           ? JSON.parse(data.price_by_size)
           : (data.price_by_size || {})
@@ -120,6 +127,7 @@ export default function ProductPage() {
               heart: p.notes_heart || [],
               base: p.notes_base || []
             },
+            stock: p.stock ?? 1,
             inStock: (p.stock || 0) > 0,
             new: p.is_new,
             bestseller: p.is_bestseller,
@@ -168,7 +176,12 @@ export default function ProductPage() {
 
   const inWishlist = isInWishlist(product.id)
 
+  // Vérifier si le produit est en rupture globale (stock = 0)
+  // Si stock global est à 0, c'est une rupture même si unlimited_stock est activé
+  const isGloballyOutOfStock = globalStock === 0
+
   const handleAddToCart = () => {
+    if (isGloballyOutOfStock) return
     addItem(product, selectedSize, quantity)
     openCart()
   }
@@ -219,17 +232,27 @@ export default function ProductPage() {
 
               {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
-                {product.new && (
+                {isGloballyOutOfStock && (
+                  <span className="px-3 py-1 bg-red-600 text-white text-xs tracking-[0.15em] uppercase">
+                    Rupture de stock
+                  </span>
+                )}
+                {product.new && !isGloballyOutOfStock && (
                   <span className="px-3 py-1 bg-[#C9A962] text-white text-xs tracking-[0.15em] uppercase">
                     Nouveau
                   </span>
                 )}
-                {product.bestseller && (
+                {product.bestseller && !isGloballyOutOfStock && (
                   <span className="px-3 py-1 bg-[#19110B] text-white text-xs tracking-[0.15em] uppercase">
                     Best-seller
                   </span>
                 )}
               </div>
+
+              {/* Overlay rupture de stock */}
+              {isGloballyOutOfStock && (
+                <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+              )}
             </div>
 
             {/* Thumbnails */}
@@ -294,14 +317,15 @@ export default function ProductPage() {
               <div className="flex flex-wrap gap-3">
                 {product.size.map((size) => {
                   const sizeStock = stockBySize[size] ?? 0
-                  const isOutOfStock = sizeStock === 0
+                  // Une taille est en rupture si le stock global est à 0 (peu importe unlimited_stock) OU si le stock de cette taille est à 0
+                  const isSizeOutOfStock = isGloballyOutOfStock || (!unlimitedStock && sizeStock === 0)
                   return (
                     <button
                       key={size}
-                      onClick={() => !isOutOfStock && setSelectedSize(size)}
-                      disabled={isOutOfStock}
+                      onClick={() => !isSizeOutOfStock && setSelectedSize(size)}
+                      disabled={isSizeOutOfStock}
                       className={`px-6 py-3 border text-sm tracking-wider transition-all relative ${
-                        isOutOfStock
+                        isSizeOutOfStock
                           ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
                           : selectedSize === size
                           ? 'border-[#19110B] bg-[#19110B] text-white'
@@ -313,13 +337,15 @@ export default function ProductPage() {
                         {getSizePrice(size).toLocaleString('fr-FR')} €
                       </span>
                       <span className={`block text-xs mt-1 ${
-                        isOutOfStock
-                          ? 'text-red-500'
+                        isSizeOutOfStock
+                          ? 'text-red-500 font-medium'
+                          : unlimitedStock
+                          ? selectedSize === size ? 'text-green-300' : 'text-green-600'
                           : sizeStock <= 5
                           ? selectedSize === size ? 'text-orange-300' : 'text-orange-500'
                           : selectedSize === size ? 'text-green-300' : 'text-green-600'
                       }`}>
-                        {isOutOfStock ? 'Rupture' : sizeStock <= 5 ? `Plus que ${sizeStock}` : `${sizeStock} en stock`}
+                        {isSizeOutOfStock ? 'Rupture' : unlimitedStock ? 'En stock' : sizeStock <= 5 ? `Plus que ${sizeStock}` : `${sizeStock} en stock`}
                       </span>
                     </button>
                   )
@@ -349,12 +375,18 @@ export default function ProductPage() {
 
             {/* Actions */}
             <div className="flex gap-4 mb-8">
-              <button
-                onClick={handleAddToCart}
-                className="btn-luxury flex-1 py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
-              >
-                Ajouter au panier
-              </button>
+              {isGloballyOutOfStock ? (
+                <div className="flex-1 py-4 bg-gray-300 text-gray-500 text-sm tracking-[0.15em] uppercase text-center cursor-not-allowed">
+                  Produit indisponible
+                </div>
+              ) : (
+                <button
+                  onClick={handleAddToCart}
+                  className="btn-luxury flex-1 py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                >
+                  Ajouter au panier
+                </button>
+              )}
               <button
                 onClick={() => toggleItem(product.id)}
                 className={`p-4 border transition-colors ${

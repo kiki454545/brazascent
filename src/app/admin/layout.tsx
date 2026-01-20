@@ -14,7 +14,8 @@ import {
   X,
   Building2,
   Mail,
-  Gift
+  Gift,
+  MessageSquare
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 
@@ -24,6 +25,7 @@ const adminNav = [
   { name: 'Packs', href: '/admin/packs', icon: Gift },
   { name: 'Marques', href: '/admin/marques', icon: Building2 },
   { name: 'Commandes', href: '/admin/commandes', icon: ShoppingCart },
+  { name: 'Tickets', href: '/admin/tickets', icon: MessageSquare },
   { name: 'Newsletter', href: '/admin/newsletter', icon: Mail },
   { name: 'Utilisateurs', href: '/admin/utilisateurs', icon: Users },
   { name: 'Paramètres', href: '/admin/parametres', icon: Settings },

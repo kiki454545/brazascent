@@ -17,6 +17,7 @@ export interface Product {
     base: string[]
   }
   size: string[]
+  stock?: number
   inStock: boolean
   featured?: boolean
   new?: boolean

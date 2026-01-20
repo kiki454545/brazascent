@@ -135,7 +135,7 @@ export default function PacksPage() {
       {/* Hero Section */}
       <section className="relative h-[50vh] min-h-[400px] overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=1920&q=90"
+          src="/images/packs-hero.jpg"
           alt="Nos Coffrets"
           fill
           className="object-cover"
@@ -166,7 +166,7 @@ export default function PacksPage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { icon: Gift, title: 'Emballage cadeau', description: 'Écrin luxueux offert' },
+              { icon: Gift, title: 'Échantillons offerts', description: 'Dès 120€ d\'achat' },
               { icon: Truck, title: 'Livraison offerte', description: `Dès ${freeShippingThreshold}€ d'achat` },
               { icon: Star, title: 'Économies', description: 'Réductions sur les packs' },
             ].map((benefit, index) => (

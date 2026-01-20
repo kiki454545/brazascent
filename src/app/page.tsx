@@ -39,57 +39,88 @@ async function fetchWithRetry<T>(
 // Composant Carrousel Draggable amélioré
 function DraggableCarousel({ products }: { products: Product[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [startX, setStartX] = useState(0)
-  const [scrollLeft, setScrollLeft] = useState(0)
+  const isDown = useRef(false)
+  const hasDragged = useRef(false)
+  const startX = useRef(0)
+  const scrollLeftStart = useRef(0)
+  const dragThreshold = 8
 
+  // Mouse events
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return
-    setIsDragging(true)
-    setStartX(e.pageX - containerRef.current.offsetLeft)
-    setScrollLeft(containerRef.current.scrollLeft)
-    containerRef.current.style.cursor = 'grabbing'
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-    if (containerRef.current) {
-      containerRef.current.style.cursor = 'grab'
-    }
+    isDown.current = true
+    hasDragged.current = false
+    startX.current = e.pageX
+    scrollLeftStart.current = containerRef.current.scrollLeft
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !containerRef.current) return
-    e.preventDefault()
-    const x = e.pageX - containerRef.current.offsetLeft
-    const walk = (x - startX) * 2 // Vitesse de défilement
-    containerRef.current.scrollLeft = scrollLeft - walk
+    if (!isDown.current || !containerRef.current) return
+    const x = e.pageX
+    const diff = startX.current - x
+
+    if (Math.abs(diff) > dragThreshold) {
+      hasDragged.current = true
+      containerRef.current.style.cursor = 'grabbing'
+    }
+
+    if (hasDragged.current) {
+      e.preventDefault()
+      containerRef.current.scrollLeft = scrollLeftStart.current + diff
+    }
+  }
+
+  const handleMouseUp = () => {
+    isDown.current = false
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grab'
+    }
+    setTimeout(() => { hasDragged.current = false }, 100)
   }
 
   const handleMouseLeave = () => {
-    setIsDragging(false)
+    isDown.current = false
     if (containerRef.current) {
       containerRef.current.style.cursor = 'grab'
     }
   }
 
-  // Touch events pour mobile
+  // Touch events
+  const touchStartX = useRef(0)
+  const touchScrollLeft = useRef(0)
+  const hasTouchDragged = useRef(false)
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!containerRef.current) return
-    setIsDragging(true)
-    setStartX(e.touches[0].pageX - containerRef.current.offsetLeft)
-    setScrollLeft(containerRef.current.scrollLeft)
+    touchStartX.current = e.touches[0].pageX
+    touchScrollLeft.current = containerRef.current.scrollLeft
+    hasTouchDragged.current = false
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || !containerRef.current) return
-    const x = e.touches[0].pageX - containerRef.current.offsetLeft
-    const walk = (x - startX) * 2
-    containerRef.current.scrollLeft = scrollLeft - walk
+    if (!containerRef.current) return
+    const x = e.touches[0].pageX
+    const diff = touchStartX.current - x
+
+    if (Math.abs(diff) > dragThreshold) {
+      hasTouchDragged.current = true
+    }
+
+    if (hasTouchDragged.current) {
+      containerRef.current.scrollLeft = touchScrollLeft.current + diff
+    }
   }
 
   const handleTouchEnd = () => {
-    setIsDragging(false)
+    setTimeout(() => { hasTouchDragged.current = false }, 100)
+  }
+
+  // Bloquer les clics sur les liens si on a draggé
+  const handleClick = (e: React.MouseEvent) => {
+    if (hasDragged.current || hasTouchDragged.current) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
   }
 
   return (
@@ -102,18 +133,19 @@ function DraggableCarousel({ products }: { products: Product[] }) {
         WebkitOverflowScrolling: 'touch'
       }}
       onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onClickCapture={handleClick}
     >
       {products.map((product: Product, index: number) => (
         <div
           key={product.id}
           className="flex-shrink-0 w-56 sm:w-64 lg:w-72"
-          style={{ pointerEvents: isDragging ? 'none' : 'auto' }}
+          onDragStart={(e) => e.preventDefault()}
         >
           <ProductCard product={product} index={index} />
         </div>
@@ -211,6 +243,7 @@ export default function HomePage() {
           heart: p.notes_heart || [],
           base: p.notes_base || []
         },
+        stock: p.stock ?? 1,
         inStock: (p.stock || 0) > 0,
         new: p.is_new,
         bestseller: p.is_bestseller,

@@ -47,6 +47,7 @@ interface ProductForm {
   is_new: boolean
   is_bestseller: boolean
   is_active: boolean
+  unlimited_stock: boolean
 }
 
 export default function EditProductPage() {
@@ -79,7 +80,8 @@ export default function EditProductPage() {
     stock: 150,
     is_new: true,
     is_bestseller: false,
-    is_active: true
+    is_active: true,
+    unlimited_stock: false
   })
 
   const [newNote, setNewNote] = useState({ top: '', heart: '', base: '' })
@@ -133,7 +135,8 @@ export default function EditProductPage() {
           stock: data.stock || 0,
           is_new: data.is_new ?? true,
           is_bestseller: data.is_bestseller ?? false,
-          is_active: data.is_active ?? true
+          is_active: data.is_active ?? true,
+          unlimited_stock: data.unlimited_stock ?? false
         })
       }
     } catch (err) {
@@ -166,7 +169,8 @@ export default function EditProductPage() {
         throw new Error('Ajoutez au moins une image')
       }
 
-      const updateData = {
+      // Essayer d'abord avec unlimited_stock
+      let updateData: Record<string, any> = {
         name: form.name,
         slug: form.slug,
         brand: form.brand,
@@ -185,21 +189,36 @@ export default function EditProductPage() {
         stock: form.stock,
         is_new: form.is_new,
         is_bestseller: form.is_bestseller,
-        is_active: form.is_active
+        is_active: form.is_active,
+        unlimited_stock: form.unlimited_stock
       }
 
       console.log('Updating product with data:', updateData)
 
-      const { data, error: updateError } = await supabase
+      let { data, error: updateError } = await supabase
         .from('products')
         .update(updateData)
         .eq('id', productId)
         .select()
 
+      // Si erreur liée à unlimited_stock, réessayer sans ce champ
+      if (updateError && (updateError.message?.includes('unlimited_stock') || updateError.code === '42703')) {
+        console.log('Column unlimited_stock does not exist, retrying without it')
+        const { unlimited_stock, ...dataWithoutUnlimited } = updateData
+        const retryResult = await supabase
+          .from('products')
+          .update(dataWithoutUnlimited)
+          .eq('id', productId)
+          .select()
+        data = retryResult.data
+        updateError = retryResult.error
+      }
+
       console.log('Update result:', { data, error: updateError })
 
       if (updateError) {
-        throw updateError
+        console.error('Supabase error details:', JSON.stringify(updateError, null, 2))
+        throw new Error(updateError.message || 'Erreur lors de la mise à jour dans la base de données')
       }
 
       router.push('/admin/produits')
@@ -724,10 +743,33 @@ export default function EditProductPage() {
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium">Prix et stock par taille</h2>
-                <div className="text-sm text-gray-500">
-                  Stock total : <span className="font-medium text-gray-900">{form.stock}</span> unités
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, unlimited_stock: !form.unlimited_stock })}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                      form.unlimited_stock
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {form.unlimited_stock ? 'Stock illimité' : 'Stock illimité'}
+                  </button>
+                  {!form.unlimited_stock && (
+                    <div className="text-sm text-gray-500">
+                      Stock total : <span className="font-medium text-gray-900">{form.stock}</span> unités
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {form.unlimited_stock && (
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-green-700 text-sm">
+                    Le stock est illimité pour ce produit. Les quantités en stock ne seront pas décomptées.
+                  </p>
+                </div>
+              )}
 
               {form.sizes.length > 0 ? (
                 <div className="space-y-4">
@@ -758,14 +800,20 @@ export default function EditProductPage() {
                           <label className="block text-xs font-medium text-gray-500 mb-1">
                             Stock
                           </label>
-                          <input
-                            type="number"
-                            min="0"
-                            value={form.stock_by_size[size] ?? 0}
-                            onChange={(e) => updateStockForSize(size, parseInt(e.target.value) || 0)}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
-                            placeholder="0"
-                          />
+                          {form.unlimited_stock ? (
+                            <div className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500">
+                              Illimité
+                            </div>
+                          ) : (
+                            <input
+                              type="number"
+                              min="0"
+                              value={form.stock_by_size[size] ?? 0}
+                              onChange={(e) => updateStockForSize(size, parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                              placeholder="0"
+                            />
+                          )}
                         </div>
                       </div>
                     </div>

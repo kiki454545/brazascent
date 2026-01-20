@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Package, Heart, MapPin, LogOut, Shield } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Package, Heart, MapPin, LogOut, Shield, MessageSquare } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 
 type Tab = 'login' | 'register'
@@ -159,6 +159,13 @@ export default function ComptePage() {
                     >
                       <MapPin className="w-5 h-5 text-[#C9A962]" />
                       <span>Mes adresses</span>
+                    </Link>
+                    <Link
+                      href="/compte/tickets"
+                      className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors"
+                    >
+                      <MessageSquare className="w-5 h-5 text-[#C9A962]" />
+                      <span>Support</span>
                     </Link>
                     <button
                       onClick={handleLogout}

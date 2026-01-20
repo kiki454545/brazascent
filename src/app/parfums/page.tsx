@@ -99,6 +99,7 @@ export default function ParfumsPage() {
                 heart: p.notes_heart || [],
                 base: p.notes_base || []
               },
+              stock: p.stock ?? 1,
               inStock: (p.stock || 0) > 0,
               new: p.is_new,
               bestseller: p.is_bestseller,
@@ -150,7 +151,7 @@ export default function ParfumsPage() {
       {/* Hero Section */}
       <section className="relative h-[50vh] min-h-[400px] overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1541643600914-78b084683601?w=1920&q=90"
+          src="/images/parfums-hero.jpg"
           alt="Nos Parfums"
           fill
           className="object-cover"
