@@ -66,9 +66,13 @@ async function sendOrderConfirmationEmail(
           <!-- Confirmation Message -->
           <tr>
             <td style="padding: 40px; text-align: center;">
-              <div style="width: 60px; height: 60px; background-color: #C9A962; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-                <span style="color: white; font-size: 30px;">✓</span>
-              </div>
+              <table role="presentation" style="margin: 0 auto 20px; border-collapse: collapse;">
+                <tr>
+                  <td style="width: 60px; height: 60px; background-color: #C9A962; border-radius: 50%; text-align: center; vertical-align: middle;">
+                    <span style="color: white; font-size: 30px; line-height: 60px;">✓</span>
+                  </td>
+                </tr>
+              </table>
               <h2 style="margin: 0 0 10px; color: #19110B; font-size: 24px; font-weight: 400;">
                 Merci pour votre commande !
               </h2>
@@ -147,7 +151,7 @@ async function sendOrderConfirmationEmail(
                 MAISON DE PARFUMERIE D'EXCEPTION
               </p>
               <p style="margin: 0; color: #888888; font-size: 11px;">
-                Une question ? Contactez-nous à contact@brazascent.com
+                Une question ? Contactez-nous à brazascent@gmail.com
               </p>
               <p style="margin: 15px 0 0; color: #666666; font-size: 10px;">
                 © ${new Date().getFullYear()} Braza Scent. Tous droits réservés.

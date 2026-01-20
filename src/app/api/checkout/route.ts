@@ -76,7 +76,7 @@ interface VerifiedPromoCode {
 async function getShippingSettings(): Promise<ShippingSettings> {
   const defaultSettings: ShippingSettings = {
     freeShippingThreshold: 150,
-    standardShippingPrice: 9.90,
+    standardShippingPrice: 5,
     expressShippingPrice: 14.90,
     enableExpressShipping: true,
   }
