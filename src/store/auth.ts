@@ -59,11 +59,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       // Écouter les changements d'auth
       supabase.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          set({ user: session.user })
-          await get().fetchProfile()
-        } else if (event === 'SIGNED_OUT') {
-          set({ user: null, profile: null })
+        try {
+          if (event === 'SIGNED_IN' && session?.user) {
+            set({ user: session.user })
+            await get().fetchProfile()
+          } else if (event === 'SIGNED_OUT') {
+            set({ user: null, profile: null })
+          }
+        } catch (error: any) {
+          // Ignorer les AbortError dans le listener
+          if (!isAbortError(error)) {
+            console.error('Auth state change error:', error)
+          }
         }
       })
 
@@ -89,6 +96,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       })
 
       if (error) {
+        // Ignorer les AbortError
+        if (isAbortError(error)) {
+          set({ isLoading: false })
+          return { error: null }
+        }
         set({ isLoading: false })
         return { error: error.message }
       }
@@ -104,7 +116,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             last_name: lastName || null,
           })
 
-        if (profileError) {
+        if (profileError && !isAbortError(profileError)) {
           console.error('Profile creation error:', profileError)
         }
 
@@ -114,7 +126,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       set({ isLoading: false })
       return { error: null }
-    } catch (error) {
+    } catch (error: any) {
+      // Ignorer les AbortError
+      if (isAbortError(error)) {
+        set({ isLoading: false })
+        return { error: null }
+      }
       set({ isLoading: false })
       return { error: 'Une erreur est survenue' }
     }
@@ -130,6 +147,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       })
 
       if (error) {
+        // Ignorer les AbortError
+        if (isAbortError(error)) {
+          set({ isLoading: false })
+          return { error: null }
+        }
         set({ isLoading: false })
 
         if (error.message === 'Invalid login credentials') {
@@ -145,7 +167,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       set({ isLoading: false })
       return { error: null }
-    } catch (error) {
+    } catch (error: any) {
+      // Ignorer les AbortError
+      if (isAbortError(error)) {
+        set({ isLoading: false })
+        return { error: null }
+      }
       set({ isLoading: false })
       return { error: 'Une erreur est survenue' }
     }
@@ -153,7 +180,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   signOut: async () => {
     set({ isLoading: true })
-    await supabase.auth.signOut()
+    try {
+      await supabase.auth.signOut()
+    } catch (error: any) {
+      // Ignorer les AbortError
+      if (!isAbortError(error)) {
+        console.error('Sign out error:', error)
+      }
+    }
     set({ user: null, profile: null, isLoading: false })
   },
 
@@ -170,6 +204,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         .eq('id', user.id)
 
       if (error) {
+        // Ignorer les AbortError
+        if (isAbortError(error)) {
+          set({ isLoading: false })
+          return { error: null }
+        }
         set({ isLoading: false })
         return { error: error.message }
       }
@@ -177,7 +216,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       await get().fetchProfile()
       set({ isLoading: false })
       return { error: null }
-    } catch (error) {
+    } catch (error: any) {
+      // Ignorer les AbortError
+      if (isAbortError(error)) {
+        set({ isLoading: false })
+        return { error: null }
+      }
       set({ isLoading: false })
       return { error: 'Une erreur est survenue' }
     }
@@ -194,11 +238,20 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         .eq('id', user.id)
         .single()
 
-      if (!error && data) {
+      if (error) {
+        if (!isAbortError(error)) {
+          console.error('Fetch profile error:', error)
+        }
+        return
+      }
+
+      if (data) {
         set({ profile: data })
       }
     } catch (error) {
-      console.error('Fetch profile error:', error)
+      if (!isAbortError(error)) {
+        console.error('Fetch profile error:', error)
+      }
     }
   },
 }))

@@ -16,6 +16,16 @@ import {
 import { supabase } from '@/lib/supabase'
 import { ImageUpload } from '@/components/ImageUpload'
 
+// Helper pour ignorer les AbortError
+const isAbortError = (error: unknown): boolean => {
+  if (!error) return false
+  const err = error as { name?: string; message?: string }
+  return err.name === 'AbortError' ||
+         err.message?.includes('AbortError') ||
+         err.message?.includes('signal is aborted') ||
+         false
+}
+
 interface Brand {
   id: string
   name: string
@@ -62,12 +72,16 @@ export default function AdminBrandsPage() {
         .order('name', { ascending: true })
 
       if (error) {
-        console.error('Error fetching brands:', error)
+        if (!isAbortError(error)) {
+          console.error('Error fetching brands:', error)
+        }
       } else if (data) {
         setBrands(data)
       }
     } catch (err) {
-      console.error('Error:', err)
+      if (!isAbortError(err)) {
+        console.error('Error:', err)
+      }
     } finally {
       setLoading(false)
     }
@@ -167,8 +181,10 @@ export default function AdminBrandsPage() {
 
       closeModal()
     } catch (err) {
-      console.error('Error saving brand:', err)
-      setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
+      if (!isAbortError(err)) {
+        console.error('Error saving brand:', err)
+        setError(err instanceof Error ? err.message : 'Erreur lors de la sauvegarde')
+      }
     } finally {
       setSaving(false)
     }
@@ -182,12 +198,16 @@ export default function AdminBrandsPage() {
         .eq('id', brandId)
 
       if (error) {
-        console.error('Error deleting brand:', error)
+        if (!isAbortError(error)) {
+          console.error('Error deleting brand:', error)
+        }
       } else {
         setBrands(brands.filter(b => b.id !== brandId))
       }
     } catch (err) {
-      console.error('Error:', err)
+      if (!isAbortError(err)) {
+        console.error('Error:', err)
+      }
     } finally {
       setDeleteModal(null)
     }

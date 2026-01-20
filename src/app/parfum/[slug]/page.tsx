@@ -31,6 +31,14 @@ export default function ProductPage() {
   const { settings } = useSettingsStore()
 
   useEffect(() => {
+    let isMounted = true
+
+    const isAbortError = (error: unknown): boolean => {
+      if (!error) return false
+      const message = (error as { message?: string }).message || String(error)
+      return message.includes('AbortError') || message.includes('aborted') || message.includes('signal')
+    }
+
     const fetchProduct = async () => {
       try {
         // Récupérer le produit par slug
@@ -40,8 +48,12 @@ export default function ProductPage() {
           .eq('slug', slug)
           .single()
 
+        if (!isMounted) return
+
         if (error || !data) {
-          console.error('Error fetching product:', error)
+          if (!isAbortError(error)) {
+            console.error('Error fetching product:', error)
+          }
           setLoading(false)
           return
         }
@@ -78,6 +90,8 @@ export default function ProductPage() {
         setPriceBySize(parsedPriceBySize)
         setSelectedSize(mappedProduct.size[1] || mappedProduct.size[0] || '')
 
+        if (!isMounted) return
+
         // Récupérer les produits similaires
         const { data: relatedData } = await supabase
           .from('products')
@@ -85,6 +99,8 @@ export default function ProductPage() {
           .eq('category', data.category)
           .neq('id', data.id)
           .limit(4)
+
+        if (!isMounted) return
 
         if (relatedData) {
           const mappedRelated: Product[] = relatedData.map((p: any) => ({
@@ -112,14 +128,20 @@ export default function ProductPage() {
           setRelatedProducts(mappedRelated)
         }
       } catch (err) {
-        console.error('Error:', err)
+        if (!isAbortError(err)) {
+          console.error('Error:', err)
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     if (slug) {
       fetchProduct()
+    }
+
+    return () => {
+      isMounted = false
     }
   }, [slug])
 

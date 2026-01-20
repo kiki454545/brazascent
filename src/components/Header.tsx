@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,6 +10,62 @@ import { useWishlistStore } from '@/store/wishlist'
 import { useAuthStore } from '@/store/auth'
 import { useSettingsStore } from '@/store/settings'
 import { CartDrawer } from './CartDrawer'
+
+// Composant pour le carrousel d'annonces horizontal infini
+function AnnouncementCarousel() {
+  const { settings } = useSettingsStore()
+
+  // Filtrer uniquement les messages actifs
+  const activeMessages = useMemo(() => {
+    return settings.announcementMessages?.filter(m => m.enabled) || []
+  }, [settings.announcementMessages])
+
+  if (activeMessages.length === 0) {
+    return (
+      <span>Livraison offerte dès {settings.freeShippingThreshold}€ d&apos;achat</span>
+    )
+  }
+
+  // Durée de l'animation basée sur la vitesse (en secondes)
+  const duration = (settings.announcementSpeed || 4) * 15
+
+  // Dupliquer les messages plusieurs fois pour remplir l'écran
+  const repeatedMessages = [
+    ...activeMessages, ...activeMessages, ...activeMessages,
+    ...activeMessages, ...activeMessages, ...activeMessages
+  ]
+
+  return (
+    <div className="relative overflow-hidden w-full">
+      <div className="flex">
+        {/* Première bande */}
+        <div
+          className="flex shrink-0 animate-marquee-smooth"
+          style={{ animationDuration: `${duration}s` }}
+        >
+          {repeatedMessages.map((message, index) => (
+            <span key={`a-${index}`} className="mx-8 inline-flex items-center gap-2 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C9A962]" />
+              {message.text}
+            </span>
+          ))}
+        </div>
+        {/* Deuxième bande identique */}
+        <div
+          className="flex shrink-0 animate-marquee-smooth"
+          style={{ animationDuration: `${duration}s` }}
+        >
+          {repeatedMessages.map((message, index) => (
+            <span key={`b-${index}`} className="mx-8 inline-flex items-center gap-2 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C9A962]" />
+              {message.text}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const navigation = [
   { name: 'Parfums', href: '/parfums' },
@@ -64,11 +120,11 @@ export function Header() {
             : 'bg-transparent'
         }`}
       >
-        {/* Top bar */}
+        {/* Top bar - Carrousel d'annonces */}
         <div className={`text-center py-2 text-xs tracking-[0.2em] uppercase transition-colors duration-500 ${
           isScrolled ? 'bg-[#19110B] text-white' : 'bg-[#19110B]/90 text-white'
         }`}>
-          Livraison offerte dès {settings.freeShippingThreshold}€ d&apos;achat
+          <AnnouncementCarousel />
         </div>
 
         {/* Main header */}

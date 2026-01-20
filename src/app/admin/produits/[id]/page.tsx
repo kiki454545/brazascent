@@ -17,6 +17,16 @@ import {
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
+// Helper pour ignorer les AbortError
+const isAbortError = (error: unknown): boolean => {
+  if (!error) return false
+  const err = error as { name?: string; message?: string }
+  return err.name === 'AbortError' ||
+         err.message?.includes('AbortError') ||
+         err.message?.includes('signal is aborted') ||
+         false
+}
+
 interface ProductForm {
   name: string
   slug: string
@@ -127,8 +137,10 @@ export default function EditProductPage() {
         })
       }
     } catch (err) {
-      console.error('Error fetching product:', err)
-      setError('Produit non trouvé')
+      if (!isAbortError(err)) {
+        console.error('Error fetching product:', err)
+        setError('Produit non trouvé')
+      }
     } finally {
       setFetching(false)
     }
@@ -192,8 +204,10 @@ export default function EditProductPage() {
 
       router.push('/admin/produits')
     } catch (err) {
-      console.error('Error updating product:', err)
-      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour')
+      if (!isAbortError(err)) {
+        console.error('Error updating product:', err)
+        setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour')
+      }
     } finally {
       setLoading(false)
     }
@@ -249,8 +263,10 @@ export default function EditProductPage() {
 
       setForm({ ...form, images: [...form.images, ...uploadedUrls] })
     } catch (err) {
-      console.error('Error uploading images:', err)
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'upload')
+      if (!isAbortError(err)) {
+        console.error('Error uploading images:', err)
+        setError(err instanceof Error ? err.message : 'Erreur lors de l\'upload')
+      }
     } finally {
       setUploading(false)
       if (fileInputRef.current) {

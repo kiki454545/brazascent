@@ -38,35 +38,46 @@ export default function AdminDashboard() {
   useEffect(() => {
     let isMounted = true
 
+    const isAbortError = (error: unknown): boolean => {
+      if (!error) return false
+      const message = (error as { message?: string }).message || String(error)
+      return message.includes('AbortError') || message.includes('aborted') || message.includes('signal')
+    }
+
     const fetchStats = async () => {
       try {
-        const { data: orders, error: ordersError } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        const { count: usersCount } = await supabase
-          .from('user_profiles')
-          .select('*', { count: 'exact', head: true })
+        const [ordersRes, usersRes, productsRes] = await Promise.all([
+          supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('user_profiles')
+            .select('*', { count: 'exact', head: true }),
+          supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+        ])
 
         if (!isMounted) return
 
-        if (!ordersError && orders) {
-          const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0)
+        const orders = ordersRes.data || []
+        const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0)
 
-          setStats({
-            totalOrders: orders.length,
-            totalRevenue,
-            totalUsers: usersCount || 0,
-            totalProducts: 12,
-            recentOrders: orders.slice(0, 5),
-            ordersChange: 12.5,
-            revenueChange: 8.2
-          })
-        }
+        setStats({
+          totalOrders: orders.length,
+          totalRevenue,
+          totalUsers: usersRes.count || 0,
+          totalProducts: productsRes.count || 0,
+          recentOrders: orders.slice(0, 5),
+          ordersChange: 12.5,
+          revenueChange: 8.2
+        })
       } catch (error) {
         if (!isMounted) return
-        console.error('Error fetching stats:', error)
+        if (!isAbortError(error)) {
+          console.error('Error fetching stats:', error)
+        }
       } finally {
         if (isMounted) setLoading(false)
       }

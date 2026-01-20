@@ -16,6 +16,16 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
+// Helper pour ignorer les AbortError
+const isAbortError = (error: unknown): boolean => {
+  if (!error) return false
+  const err = error as { name?: string; message?: string }
+  return err.name === 'AbortError' ||
+         err.message?.includes('AbortError') ||
+         err.message?.includes('signal is aborted') ||
+         false
+}
+
 interface Pack {
   id: string
   name: string
@@ -96,10 +106,15 @@ export default function AdminPacksPage() {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        if (!isAbortError(error)) throw error
+        return
+      }
       setPacks(data || [])
     } catch (error) {
-      console.error('Error fetching packs:', error)
+      if (!isAbortError(error)) {
+        console.error('Error fetching packs:', error)
+      }
     } finally {
       setLoading(false)
     }
@@ -112,10 +127,15 @@ export default function AdminPacksPage() {
         .select('id, name, images, price, sizes, price_by_size')
         .order('name')
 
-      if (error) throw error
+      if (error) {
+        if (!isAbortError(error)) throw error
+        return
+      }
       setProducts(data || [])
     } catch (error) {
-      console.error('Error fetching products:', error)
+      if (!isAbortError(error)) {
+        console.error('Error fetching products:', error)
+      }
     }
   }
 
@@ -150,8 +170,10 @@ export default function AdminPacksPage() {
 
       setForm(prev => ({ ...prev, image: publicUrl }))
     } catch (error) {
-      console.error('Error uploading image:', error)
-      setError('Erreur lors du téléchargement de l\'image')
+      if (!isAbortError(error)) {
+        console.error('Error uploading image:', error)
+        setError('Erreur lors du téléchargement de l\'image')
+      }
     } finally {
       setUploading(false)
     }
@@ -250,8 +272,10 @@ export default function AdminPacksPage() {
       setShowModal(false)
       fetchPacks()
     } catch (error: any) {
-      console.error('Save error:', error)
-      setError(error.message)
+      if (!isAbortError(error)) {
+        console.error('Save error:', error)
+        setError(error.message)
+      }
     } finally {
       setSaving(false)
     }
@@ -266,10 +290,15 @@ export default function AdminPacksPage() {
         .delete()
         .eq('id', pack.id)
 
-      if (error) throw error
+      if (error) {
+        if (!isAbortError(error)) throw error
+        return
+      }
       fetchPacks()
     } catch (error) {
-      console.error('Error deleting pack:', error)
+      if (!isAbortError(error)) {
+        console.error('Error deleting pack:', error)
+      }
     }
   }
 

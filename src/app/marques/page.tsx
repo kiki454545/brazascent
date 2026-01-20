@@ -25,6 +25,12 @@ export default function MarquesPage() {
     // Forcer loading à true au démarrage
     setLoading(true)
 
+    const isAbortError = (error: unknown): boolean => {
+      if (!error) return false
+      const message = (error as { message?: string }).message || String(error)
+      return message.includes('AbortError') || message.includes('aborted') || message.includes('signal')
+    }
+
     const fetchBrands = async () => {
       try {
         const { data, error } = await supabase
@@ -35,13 +41,15 @@ export default function MarquesPage() {
         if (!isMounted) return
 
         if (error) {
-          console.error('Error fetching brands:', error)
+          if (!isAbortError(error)) {
+            console.error('Error fetching brands:', error)
+          }
           setBrands([])
         } else {
           setBrands(data || [])
         }
       } catch (err) {
-        if (isMounted) {
+        if (isMounted && !isAbortError(err)) {
           console.error('Error:', err)
           setBrands([])
         }

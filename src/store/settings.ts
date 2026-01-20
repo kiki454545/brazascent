@@ -1,6 +1,12 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 
+interface AnnouncementMessage {
+  id: string
+  text: string
+  enabled: boolean
+}
+
 interface Settings {
   storeName: string
   storeEmail: string
@@ -15,6 +21,8 @@ interface Settings {
   enableEmailConfirmation: boolean
   maintenanceMode: boolean
   notificationEmails: string[]
+  announcementMessages: AnnouncementMessage[]
+  announcementSpeed: number
 }
 
 interface SettingsStore {
@@ -36,7 +44,12 @@ const defaultSettings: Settings = {
   enableNotifications: true,
   enableEmailConfirmation: false,
   maintenanceMode: false,
-  notificationEmails: []
+  notificationEmails: [],
+  announcementMessages: [
+    { id: '1', text: 'Livraison offerte dès 65€ d\'achat', enabled: true },
+    { id: '2', text: 'Échantillons offerts dès 120€ d\'achat', enabled: true }
+  ],
+  announcementSpeed: 4
 }
 
 // Helper pour ignorer les AbortError
@@ -97,6 +110,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
             loadedSettings.enableEmailConfirmation = notifications.enableEmailConfirmation as boolean ?? defaultSettings.enableEmailConfirmation
             loadedSettings.maintenanceMode = notifications.maintenanceMode as boolean ?? defaultSettings.maintenanceMode
             loadedSettings.notificationEmails = (notifications.notificationEmails as string[]) ?? defaultSettings.notificationEmails
+          } else if (row.key === 'announcements') {
+            const announcements = row.value as Record<string, unknown>
+            loadedSettings.announcementMessages = (announcements.messages as AnnouncementMessage[]) ?? defaultSettings.announcementMessages
+            loadedSettings.announcementSpeed = (announcements.speed as number) ?? defaultSettings.announcementSpeed
           }
         })
 

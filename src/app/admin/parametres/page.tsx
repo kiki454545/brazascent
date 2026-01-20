@@ -15,9 +15,27 @@ import {
   Mail,
   Plus,
   X,
-  Trash2
+  Trash2,
+  Megaphone,
+  GripVertical
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+
+// Helper pour ignorer les AbortError
+const isAbortError = (error: unknown): boolean => {
+  if (!error) return false
+  const err = error as { name?: string; message?: string }
+  return err.name === 'AbortError' ||
+         err.message?.includes('AbortError') ||
+         err.message?.includes('signal is aborted') ||
+         false
+}
+
+interface AnnouncementMessage {
+  id: string
+  text: string
+  enabled: boolean
+}
 
 interface Settings {
   storeName: string
@@ -33,6 +51,8 @@ interface Settings {
   enableEmailConfirmation: boolean
   maintenanceMode: boolean
   notificationEmails: string[]
+  announcementMessages: AnnouncementMessage[]
+  announcementSpeed: number
 }
 
 const defaultSettings: Settings = {
@@ -48,7 +68,12 @@ const defaultSettings: Settings = {
   enableNotifications: true,
   enableEmailConfirmation: false,
   maintenanceMode: false,
-  notificationEmails: []
+  notificationEmails: [],
+  announcementMessages: [
+    { id: '1', text: 'Livraison offerte dès 65€ d\'achat', enabled: true },
+    { id: '2', text: 'Échantillons offerts dès 120€ d\'achat', enabled: true }
+  ],
+  announcementSpeed: 4
 }
 
 export default function AdminSettingsPage() {
@@ -63,6 +88,7 @@ export default function AdminSettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [newEmail, setNewEmail] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
+  const [newAnnouncement, setNewAnnouncement] = useState('')
 
   // Charger les paramètres depuis Supabase
   useEffect(() => {
@@ -76,7 +102,9 @@ export default function AdminSettingsPage() {
         .select('key, value')
 
       if (error) {
-        console.error('Error fetching settings:', error)
+        if (!isAbortError(error)) {
+          console.error('Error fetching settings:', error)
+        }
         // Utiliser les paramètres par défaut si la table n'existe pas
         setLoading(false)
         return
@@ -106,6 +134,10 @@ export default function AdminSettingsPage() {
             loadedSettings.enableEmailConfirmation = notifications.enableEmailConfirmation as boolean ?? defaultSettings.enableEmailConfirmation
             loadedSettings.maintenanceMode = notifications.maintenanceMode as boolean ?? defaultSettings.maintenanceMode
             loadedSettings.notificationEmails = (notifications.notificationEmails as string[]) ?? defaultSettings.notificationEmails
+          } else if (row.key === 'announcements') {
+            const announcements = row.value as Record<string, unknown>
+            loadedSettings.announcementMessages = (announcements.messages as AnnouncementMessage[]) ?? defaultSettings.announcementMessages
+            loadedSettings.announcementSpeed = (announcements.speed as number) ?? defaultSettings.announcementSpeed
           }
         })
 
@@ -114,7 +146,9 @@ export default function AdminSettingsPage() {
         setOriginalSettings(mergedSettings)
       }
     } catch (err) {
-      console.error('Error:', err)
+      if (!isAbortError(err)) {
+        console.error('Error:', err)
+      }
     } finally {
       setLoading(false)
     }
@@ -190,6 +224,13 @@ export default function AdminSettingsPage() {
             maintenanceMode: settings.maintenanceMode,
             notificationEmails: settings.notificationEmails
           }
+        },
+        {
+          key: 'announcements',
+          value: {
+            messages: settings.announcementMessages,
+            speed: settings.announcementSpeed
+          }
         }
       ]
 
@@ -210,8 +251,10 @@ export default function AdminSettingsPage() {
       setOriginalSettings(settings)
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
-      console.error('Error saving settings:', err)
-      setError('Erreur lors de la sauvegarde. Vérifiez que la table settings existe dans Supabase.')
+      if (!isAbortError(err)) {
+        console.error('Error saving settings:', err)
+        setError('Erreur lors de la sauvegarde. Vérifiez que la table settings existe dans Supabase.')
+      }
     } finally {
       setSaving(false)
     }
@@ -255,6 +298,48 @@ export default function AdminSettingsPage() {
     setSettings({
       ...settings,
       notificationEmails: settings.notificationEmails.filter(email => email !== emailToRemove)
+    })
+  }
+
+  // Fonctions pour gérer les annonces
+  const addAnnouncement = () => {
+    if (!newAnnouncement.trim()) return
+
+    const newMessage: AnnouncementMessage = {
+      id: Date.now().toString(),
+      text: newAnnouncement.trim(),
+      enabled: true
+    }
+
+    setSettings({
+      ...settings,
+      announcementMessages: [...settings.announcementMessages, newMessage]
+    })
+    setNewAnnouncement('')
+  }
+
+  const removeAnnouncement = (id: string) => {
+    setSettings({
+      ...settings,
+      announcementMessages: settings.announcementMessages.filter(m => m.id !== id)
+    })
+  }
+
+  const toggleAnnouncement = (id: string) => {
+    setSettings({
+      ...settings,
+      announcementMessages: settings.announcementMessages.map(m =>
+        m.id === id ? { ...m, enabled: !m.enabled } : m
+      )
+    })
+  }
+
+  const updateAnnouncementText = (id: string, text: string) => {
+    setSettings({
+      ...settings,
+      announcementMessages: settings.announcementMessages.map(m =>
+        m.id === id ? { ...m, text } : m
+      )
     })
   }
 
@@ -450,7 +535,108 @@ export default function AdminSettingsPage() {
         </div>
       </motion.div>
 
-      
+      {/* Bandeau d'annonces */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-white rounded-xl shadow-sm p-6"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-amber-50 rounded-lg">
+            <Megaphone className="w-5 h-5 text-amber-500" />
+          </div>
+          <div>
+            <h2 className="text-lg font-medium">Bandeau d&apos;annonces</h2>
+            <p className="text-sm text-gray-500">Messages affichés dans la barre en haut du site</p>
+          </div>
+        </div>
+
+        {/* Vitesse de rotation */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Vitesse de rotation (secondes)
+          </label>
+          <div className="flex items-center gap-4">
+            <input
+              type="range"
+              min="2"
+              max="10"
+              value={settings.announcementSpeed}
+              onChange={(e) => setSettings({ ...settings, announcementSpeed: parseInt(e.target.value) })}
+              className="flex-1 accent-[#C9A962]"
+            />
+            <span className="w-12 text-center font-medium">{settings.announcementSpeed}s</span>
+          </div>
+        </div>
+
+        {/* Liste des messages */}
+        <div className="space-y-3 mb-4">
+          {settings.announcementMessages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                message.enabled ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100'
+              }`}
+            >
+              <GripVertical className="w-4 h-4 text-gray-300 cursor-grab" />
+              <input
+                type="checkbox"
+                checked={message.enabled}
+                onChange={() => toggleAnnouncement(message.id)}
+                className="w-4 h-4 rounded border-gray-300 accent-[#C9A962]"
+              />
+              <input
+                type="text"
+                value={message.text}
+                onChange={(e) => updateAnnouncementText(message.id, e.target.value)}
+                className={`flex-1 px-3 py-1.5 border rounded focus:outline-none focus:border-[#C9A962] text-sm ${
+                  message.enabled ? '' : 'text-gray-400'
+                }`}
+              />
+              <button
+                onClick={() => removeAnnouncement(message.id)}
+                className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                title="Supprimer"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Ajouter un nouveau message */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newAnnouncement}
+            onChange={(e) => setNewAnnouncement(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addAnnouncement()
+              }
+            }}
+            placeholder="Nouveau message d'annonce..."
+            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+          />
+          <button
+            onClick={addAnnouncement}
+            disabled={!newAnnouncement.trim()}
+            className="px-4 py-2 bg-[#19110B] text-white rounded-lg hover:bg-[#C9A962] transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Plus className="w-4 h-4" />
+            Ajouter
+          </button>
+        </div>
+
+        {settings.announcementMessages.length === 0 && (
+          <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg mt-4">
+            Aucun message d&apos;annonce. Ajoutez-en pour afficher des promotions ou informations importantes.
+          </p>
+        )}
+      </motion.div>
+
       {/* Notifications */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

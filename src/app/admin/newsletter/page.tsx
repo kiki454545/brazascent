@@ -19,6 +19,16 @@ import {
 import { supabase } from '@/lib/supabase'
 import { ConfirmModal } from '@/components/ConfirmModal'
 
+// Helper pour ignorer les AbortError
+const isAbortError = (error: unknown): boolean => {
+  if (!error) return false
+  const err = error as { name?: string; message?: string }
+  return err.name === 'AbortError' ||
+         err.message?.includes('AbortError') ||
+         err.message?.includes('signal is aborted') ||
+         false
+}
+
 interface Subscriber {
   id: string
   email: string
@@ -82,7 +92,9 @@ export default function AdminNewsletterPage() {
       if (subscribersRes.data) setSubscribers(subscribersRes.data)
       if (emailsRes.data) setSentEmails(emailsRes.data)
     } catch (error) {
-      console.error('Error fetching data:', error)
+      if (!isAbortError(error)) {
+        console.error('Error fetching data:', error)
+      }
     } finally {
       setLoading(false)
     }
@@ -105,7 +117,9 @@ export default function AdminNewsletterPage() {
         setSubscribers(subscribers.filter(s => s.id !== deleteModal.subscriberId))
       }
     } catch (error) {
-      console.error('Error deleting subscriber:', error)
+      if (!isAbortError(error)) {
+        console.error('Error deleting subscriber:', error)
+      }
     } finally {
       setDeleteModal({ isOpen: false, subscriberId: null, email: '' })
     }
@@ -127,7 +141,9 @@ export default function AdminNewsletterPage() {
         ))
       }
     } catch (error) {
-      console.error('Error updating subscriber:', error)
+      if (!isAbortError(error)) {
+        console.error('Error updating subscriber:', error)
+      }
     }
   }
 
@@ -194,9 +210,11 @@ export default function AdminNewsletterPage() {
         throw new Error(result.error || 'Erreur lors de l\'envoi')
       }
     } catch (error) {
-      console.error('Error sending newsletter:', error)
-      setSendStatus('error')
-      setSendMessage('Erreur lors de l\'envoi. Veuillez réessayer.')
+      if (!isAbortError(error)) {
+        console.error('Error sending newsletter:', error)
+        setSendStatus('error')
+        setSendMessage('Erreur lors de l\'envoi. Veuillez réessayer.')
+      }
     } finally {
       setSending(false)
     }

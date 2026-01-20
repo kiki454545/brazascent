@@ -64,6 +64,14 @@ export default function PackDetailPage() {
   const { settings } = useSettingsStore()
 
   useEffect(() => {
+    let isMounted = true
+
+    const isAbortError = (error: unknown): boolean => {
+      if (!error) return false
+      const message = (error as { message?: string }).message || String(error)
+      return message.includes('AbortError') || message.includes('aborted') || message.includes('signal')
+    }
+
     const fetchPack = async () => {
       try {
         // Récupérer le pack par slug
@@ -74,8 +82,12 @@ export default function PackDetailPage() {
           .eq('is_active', true)
           .single()
 
+        if (!isMounted) return
+
         if (packError || !packData) {
-          console.error('Error fetching pack:', packError)
+          if (!isAbortError(packError)) {
+            console.error('Error fetching pack:', packError)
+          }
           setLoading(false)
           return
         }
@@ -93,6 +105,8 @@ export default function PackDetailPage() {
             .from('products')
             .select('*')
             .in('id', packData.product_ids)
+
+          if (!isMounted) return
 
           if (!productsError && productsData) {
             const mappedProducts: Product[] = productsData.map((p: ProductData) => {
@@ -132,14 +146,20 @@ export default function PackDetailPage() {
           }
         }
       } catch (err) {
-        console.error('Error:', err)
+        if (!isAbortError(err)) {
+          console.error('Error:', err)
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     if (slug) {
       fetchPack()
+    }
+
+    return () => {
+      isMounted = false
     }
   }, [slug])
 

@@ -34,6 +34,12 @@ export default function BrandPage() {
     setBrand(null)
     setProducts([])
 
+    const isAbortError = (error: unknown): boolean => {
+      if (!error) return false
+      const message = (error as { message?: string }).message || String(error)
+      return message.includes('AbortError') || message.includes('aborted') || message.includes('signal')
+    }
+
     const fetchBrandAndProducts = async () => {
       try {
         const { data: brandData, error: brandError } = await supabase
@@ -45,7 +51,9 @@ export default function BrandPage() {
         if (!isMounted) return
 
         if (brandError || !brandData) {
-          console.error('Error fetching brand:', brandError)
+          if (!isAbortError(brandError)) {
+            console.error('Error fetching brand:', brandError)
+          }
           setLoading(false)
           return
         }
@@ -62,7 +70,9 @@ export default function BrandPage() {
         if (!isMounted) return
 
         if (productsError) {
-          console.error('Error fetching products:', productsError)
+          if (!isAbortError(productsError)) {
+            console.error('Error fetching products:', productsError)
+          }
         } else if (productsData) {
           const mappedProducts: Product[] = productsData.map((p: any) => {
             const priceBySize = typeof p.price_by_size === 'string'
@@ -100,7 +110,9 @@ export default function BrandPage() {
         }
       } catch (err) {
         if (!isMounted) return
-        console.error('Error:', err)
+        if (!isAbortError(err)) {
+          console.error('Error:', err)
+        }
       } finally {
         if (isMounted) setLoading(false)
       }

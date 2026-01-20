@@ -4,6 +4,8 @@ import "./globals.css"
 import { AuthProvider } from "@/components/AuthProvider"
 import { SettingsProvider } from "@/components/SettingsProvider"
 import { MainLayout } from "@/components/MainLayout"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
+import { GlobalErrorHandler } from "@/components/GlobalErrorHandler"
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -39,11 +41,15 @@ export default function RootLayout({
   return (
     <html lang="fr" data-scroll-behavior="smooth">
       <body className={`${cormorant.variable} ${montserrat.variable} antialiased`}>
-        <AuthProvider>
-          <SettingsProvider>
-            <MainLayout>{children}</MainLayout>
-          </SettingsProvider>
-        </AuthProvider>
+        <GlobalErrorHandler>
+          <ErrorBoundary>
+            <AuthProvider>
+              <SettingsProvider>
+                <MainLayout>{children}</MainLayout>
+              </SettingsProvider>
+            </AuthProvider>
+          </ErrorBoundary>
+        </GlobalErrorHandler>
       </body>
     </html>
   )

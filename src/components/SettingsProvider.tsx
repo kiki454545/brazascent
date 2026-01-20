@@ -42,7 +42,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     // Éviter les double-appels en React 18 Strict Mode
     if (!fetchedRef.current) {
       fetchedRef.current = true
-      fetchSettings()
+      fetchSettings().catch(() => {
+        // Ignorer les erreurs (AbortError, etc.)
+      })
     }
   }, [fetchSettings])
 

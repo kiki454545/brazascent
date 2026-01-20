@@ -142,3 +142,18 @@ html {
 .animate-reveal {
   animation: revealText 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+/* Marquee animation pour le bandeau d'annonces */
+@keyframes marquee-smooth {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee-smooth {
+  animation: marquee-smooth linear infinite;
+  will-change: transform;
+}

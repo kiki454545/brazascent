@@ -18,6 +18,16 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
+// Helper pour ignorer les AbortError
+const isAbortError = (error: unknown): boolean => {
+  if (!error) return false
+  const err = error as { name?: string; message?: string }
+  return err.name === 'AbortError' ||
+         err.message?.includes('AbortError') ||
+         err.message?.includes('signal is aborted') ||
+         false
+}
+
 interface User {
   id: string
   email: string
@@ -65,11 +75,20 @@ export default function AdminUsersPage() {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (!error && data) {
+      if (error) {
+        if (!isAbortError(error)) {
+          console.error('Error fetching users:', error)
+        }
+        return
+      }
+
+      if (data) {
         setUsers(data)
       }
     } catch (error) {
-      console.error('Error fetching users:', error)
+      if (!isAbortError(error)) {
+        console.error('Error fetching users:', error)
+      }
     } finally {
       setLoading(false)
     }
@@ -84,8 +103,10 @@ export default function AdminUsersPage() {
         .select()
 
       if (error) {
-        console.error('Error updating user:', error)
-        alert(`Erreur: ${error.message}`)
+        if (!isAbortError(error)) {
+          console.error('Error updating user:', error)
+          alert(`Erreur: ${error.message}`)
+        }
       } else {
         console.log('Update successful:', data)
         setUsers(users.map(user =>
@@ -93,8 +114,10 @@ export default function AdminUsersPage() {
         ))
       }
     } catch (error) {
-      console.error('Error updating user:', error)
-      alert('Erreur lors de la mise à jour')
+      if (!isAbortError(error)) {
+        console.error('Error updating user:', error)
+        alert('Erreur lors de la mise à jour')
+      }
     }
     setActionMenu(null)
   }

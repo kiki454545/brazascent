@@ -8,7 +8,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isInitialized) {
-      initialize()
+      initialize().catch(() => {
+        // Ignorer les erreurs d'initialisation (AbortError, etc.)
+      })
     }
   }, [initialize, isInitialized])
 

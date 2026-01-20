@@ -30,7 +30,9 @@ export default function ComptePage() {
 
   useEffect(() => {
     if (!isInitialized) {
-      initialize()
+      initialize().catch(() => {
+        // Ignorer les erreurs d'initialisation (AbortError, etc.)
+      })
     }
   }, [isInitialized, initialize])
 

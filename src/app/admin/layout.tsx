@@ -43,7 +43,9 @@ export default function AdminLayout({
   useEffect(() => {
     setMounted(true)
     if (!isInitialized) {
-      initialize()
+      initialize().catch(() => {
+        // Ignorer les erreurs d'initialisation (AbortError, etc.)
+      })
     }
   }, [isInitialized, initialize])
 

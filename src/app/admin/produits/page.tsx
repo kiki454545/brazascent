@@ -65,6 +65,15 @@ export default function AdminProductsPage() {
   useEffect(() => {
     let isMounted = true
 
+    const isAbortError = (error: unknown): boolean => {
+      if (!error) return false
+      const err = error as { name?: string; message?: string }
+      return err.name === 'AbortError' ||
+             err.message?.includes('AbortError') ||
+             err.message?.includes('signal is aborted') ||
+             false
+    }
+
     const fetchProducts = async () => {
       try {
         const { data, error } = await supabase
@@ -75,7 +84,10 @@ export default function AdminProductsPage() {
         if (!isMounted) return
 
         if (error) {
-          console.error('Error fetching products from Supabase:', error)
+          // Ignorer les AbortError
+          if (!isAbortError(error)) {
+            console.error('Error fetching products from Supabase:', error)
+          }
           setProducts([])
         } else if (data) {
           setProducts(data)
@@ -85,7 +97,10 @@ export default function AdminProductsPage() {
         }
       } catch (error) {
         if (!isMounted) return
-        console.error('Error fetching products:', error)
+        // Ignorer les AbortError
+        if (!isAbortError(error)) {
+          console.error('Error fetching products:', error)
+        }
       } finally {
         if (isMounted) setLoading(false)
       }

@@ -4,11 +4,18 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
   global: {
     fetch: (url, options = {}) => {
+      // Créer une nouvelle copie des options sans le signal d'annulation
+      const { signal, ...restOptions } = options as RequestInit
       return fetch(url, {
-        ...options,
-        // Ne pas utiliser de signal d'annulation pour éviter les AbortError
+        ...restOptions,
+        // Ignorer le signal pour éviter les AbortError
       })
     }
   }
