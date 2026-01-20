@@ -22,7 +22,7 @@ import {
   Archive,
   AlertCircle
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseFetch } from '@/lib/supabase'
 
 interface Order {
   id: string
@@ -96,36 +96,21 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     let isMounted = true
 
-    const isAbortError = (error: unknown): boolean => {
-      if (!error) return false
-      const err = error as { name?: string; message?: string }
-      return err.name === 'AbortError' ||
-             err.message?.includes('AbortError') ||
-             err.message?.includes('signal is aborted') ||
-             false
-    }
-
     const fetchOrders = async () => {
       try {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .order('created_at', { ascending: false })
+        const { data, error } = await supabaseFetch<Order[]>('orders', {
+          order: { column: 'created_at', ascending: false }
+        })
 
         if (!isMounted) return
 
         if (error) {
-          if (!isAbortError(error)) {
-            console.error('Error fetching orders:', error)
-          }
+          console.error('Error fetching orders:', error)
         } else if (data) {
           setOrders(data)
         }
       } catch (error) {
-        if (!isMounted) return
-        if (!isAbortError(error)) {
-          console.error('Error fetching orders:', error)
-        }
+        if (isMounted) console.error('Error fetching orders:', error)
       } finally {
         if (isMounted) setLoading(false)
       }

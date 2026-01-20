@@ -29,6 +29,71 @@ export const isAbortError = (error: unknown): boolean => {
   return message.includes('AbortError') || message.includes('aborted')
 }
 
+// Helper pour faire des requêtes REST directes à Supabase sans AbortError
+// Utilisé pour contourner le problème d'AbortController de React 19
+export async function supabaseFetch<T = any>(
+  table: string,
+  options: {
+    method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
+    select?: string
+    filters?: Record<string, string>
+    order?: { column: string; ascending?: boolean }
+    body?: object
+    single?: boolean
+  } = {}
+): Promise<{ data: T | null; error: any }> {
+  const { method = 'GET', select = '*', filters = {}, order, body, single } = options
+
+  try {
+    // Construire l'URL avec les filtres
+    const params = new URLSearchParams()
+    params.set('select', select)
+    for (const [key, value] of Object.entries(filters)) {
+      params.set(key, value)
+    }
+    if (order) {
+      params.set('order', `${order.column}.${order.ascending ? 'asc' : 'desc'}`)
+    }
+
+    const url = `${supabaseUrl}/rest/v1/${table}?${params.toString()}`
+
+    const headers: Record<string, string> = {
+      'apikey': supabaseAnonKey,
+      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+    }
+
+    if (single) {
+      headers['Accept'] = 'application/vnd.pgrst.object+json'
+    }
+
+    if (method === 'POST' || method === 'PATCH') {
+      headers['Prefer'] = 'return=representation'
+    }
+
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      return { data: null, error: { message: errorText, status: response.status } }
+    }
+
+    // Pour DELETE sans retour
+    if (method === 'DELETE' && response.status === 204) {
+      return { data: null, error: null }
+    }
+
+    const data = await response.json()
+    return { data: single && Array.isArray(data) ? data[0] : data, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
 // Types pour la base de données
 export type Database = {
   public: {

@@ -11,7 +11,7 @@ import {
   ArrowUpRight,
   ArrowDownRight
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabaseFetch } from '@/lib/supabase'
 
 interface DashboardStats {
   totalOrders: number
@@ -38,25 +38,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     let isMounted = true
 
-    const isAbortError = (error: unknown): boolean => {
-      if (!error) return false
-      const message = (error as { message?: string }).message || String(error)
-      return message.includes('AbortError') || message.includes('aborted') || message.includes('signal')
-    }
-
     const fetchStats = async () => {
       try {
         const [ordersRes, usersRes, productsRes] = await Promise.all([
-          supabase
-            .from('orders')
-            .select('*')
-            .order('created_at', { ascending: false }),
-          supabase
-            .from('user_profiles')
-            .select('*', { count: 'exact', head: true }),
-          supabase
-            .from('products')
-            .select('*', { count: 'exact', head: true })
+          supabaseFetch<any[]>('orders', { order: { column: 'created_at', ascending: false } }),
+          supabaseFetch<any[]>('user_profiles'),
+          supabaseFetch<any[]>('products')
         ])
 
         if (!isMounted) return
@@ -67,17 +54,14 @@ export default function AdminDashboard() {
         setStats({
           totalOrders: orders.length,
           totalRevenue,
-          totalUsers: usersRes.count || 0,
-          totalProducts: productsRes.count || 0,
+          totalUsers: usersRes.data?.length || 0,
+          totalProducts: productsRes.data?.length || 0,
           recentOrders: orders.slice(0, 5),
           ordersChange: 12.5,
           revenueChange: 8.2
         })
       } catch (error) {
-        if (!isMounted) return
-        if (!isAbortError(error)) {
-          console.error('Error fetching stats:', error)
-        }
+        if (isMounted) console.error('Error fetching stats:', error)
       } finally {
         if (isMounted) setLoading(false)
       }

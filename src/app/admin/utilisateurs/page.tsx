@@ -16,17 +16,7 @@ import {
   Eye,
   XCircle
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-
-// Helper pour ignorer les AbortError
-const isAbortError = (error: unknown): boolean => {
-  if (!error) return false
-  const err = error as { name?: string; message?: string }
-  return err.name === 'AbortError' ||
-         err.message?.includes('AbortError') ||
-         err.message?.includes('signal is aborted') ||
-         false
-}
+import { supabase, supabaseFetch } from '@/lib/supabase'
 
 interface User {
   id: string
@@ -70,15 +60,12 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const { data, error } = await supabaseFetch<User[]>('user_profiles', {
+        order: { column: 'created_at', ascending: false }
+      })
 
       if (error) {
-        if (!isAbortError(error)) {
-          console.error('Error fetching users:', error)
-        }
+        console.error('Error fetching users:', error)
         return
       }
 
@@ -86,9 +73,7 @@ export default function AdminUsersPage() {
         setUsers(data)
       }
     } catch (error) {
-      if (!isAbortError(error)) {
-        console.error('Error fetching users:', error)
-      }
+      console.error('Error fetching users:', error)
     } finally {
       setLoading(false)
     }
@@ -103,21 +88,16 @@ export default function AdminUsersPage() {
         .select()
 
       if (error) {
-        if (!isAbortError(error)) {
-          console.error('Error updating user:', error)
-          alert(`Erreur: ${error.message}`)
-        }
+        console.error('Error updating user:', error)
+        alert(`Erreur: ${error.message}`)
       } else {
-        console.log('Update successful:', data)
         setUsers(users.map(user =>
           user.id === userId ? { ...user, is_admin: !currentStatus } : user
         ))
       }
     } catch (error) {
-      if (!isAbortError(error)) {
-        console.error('Error updating user:', error)
-        alert('Erreur lors de la mise à jour')
-      }
+      console.error('Error updating user:', error)
+      alert('Erreur lors de la mise à jour')
     }
     setActionMenu(null)
   }

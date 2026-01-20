@@ -13,18 +13,8 @@ import {
   Save,
   Loader2
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseFetch } from '@/lib/supabase'
 import { ImageUpload } from '@/components/ImageUpload'
-
-// Helper pour ignorer les AbortError
-const isAbortError = (error: unknown): boolean => {
-  if (!error) return false
-  const err = error as { name?: string; message?: string }
-  return err.name === 'AbortError' ||
-         err.message?.includes('AbortError') ||
-         err.message?.includes('signal is aborted') ||
-         false
-}
 
 interface Brand {
   id: string
@@ -66,22 +56,17 @@ export default function AdminBrandsPage() {
 
   const fetchBrands = async () => {
     try {
-      const { data, error } = await supabase
-        .from('brands')
-        .select('*')
-        .order('name', { ascending: true })
+      const { data, error } = await supabaseFetch<Brand[]>('brands', {
+        order: { column: 'name', ascending: true }
+      })
 
       if (error) {
-        if (!isAbortError(error)) {
-          console.error('Error fetching brands:', error)
-        }
+        console.error('Error fetching brands:', error)
       } else if (data) {
         setBrands(data)
       }
     } catch (err) {
-      if (!isAbortError(err)) {
-        console.error('Error:', err)
-      }
+      console.error('Error:', err)
     } finally {
       setLoading(false)
     }

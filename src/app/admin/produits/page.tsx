@@ -14,7 +14,7 @@ import {
   ChevronUp,
   ChevronDown
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseFetch } from '@/lib/supabase'
 
 interface Product {
   id: string
@@ -65,29 +65,16 @@ export default function AdminProductsPage() {
   useEffect(() => {
     let isMounted = true
 
-    const isAbortError = (error: unknown): boolean => {
-      if (!error) return false
-      const err = error as { name?: string; message?: string }
-      return err.name === 'AbortError' ||
-             err.message?.includes('AbortError') ||
-             err.message?.includes('signal is aborted') ||
-             false
-    }
-
     const fetchProducts = async () => {
       try {
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .order('display_order', { ascending: true })
+        const { data, error } = await supabaseFetch<Product[]>('products', {
+          order: { column: 'display_order', ascending: true }
+        })
 
         if (!isMounted) return
 
         if (error) {
-          // Ignorer les AbortError
-          if (!isAbortError(error)) {
-            console.error('Error fetching products from Supabase:', error)
-          }
+          console.error('Error fetching products:', error)
           setProducts([])
         } else if (data) {
           setProducts(data)
@@ -96,11 +83,7 @@ export default function AdminProductsPage() {
           setProducts([])
         }
       } catch (error) {
-        if (!isMounted) return
-        // Ignorer les AbortError
-        if (!isAbortError(error)) {
-          console.error('Error fetching products:', error)
-        }
+        if (isMounted) console.error('Error fetching products:', error)
       } finally {
         if (isMounted) setLoading(false)
       }
@@ -114,10 +97,9 @@ export default function AdminProductsPage() {
   }, [])
 
   const refetchProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('display_order', { ascending: true })
+    const { data, error } = await supabaseFetch<Product[]>('products', {
+      order: { column: 'display_order', ascending: true }
+    })
 
     if (!error && data) {
       setProducts(data)
