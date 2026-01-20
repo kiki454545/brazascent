@@ -61,7 +61,12 @@ export default function ProductPage() {
           return
         }
 
-        // Mapper vers le format Product
+        // Parser le prix par taille
+        const parsedPriceBySize = typeof data.price_by_size === 'string'
+          ? JSON.parse(data.price_by_size)
+          : (data.price_by_size || {})
+
+        // Mapper vers le format Product (inclure priceBySize pour le panier)
         const mappedProduct: Product = {
           id: data.id,
           name: data.name,
@@ -70,6 +75,7 @@ export default function ProductPage() {
           shortDescription: data.short_description || '',
           price: data.price,
           originalPrice: data.original_price,
+          priceBySize: parsedPriceBySize,
           images: data.images || [],
           size: data.sizes || [],
           category: data.category || 'unisexe',
@@ -91,10 +97,6 @@ export default function ProductPage() {
         setUnlimitedStock(data.unlimited_stock ?? false)
         // Si stock est explicitement 0, c'est une rupture. Si null/undefined, utiliser 1 par défaut
         setGlobalStock(data.stock !== null && data.stock !== undefined ? data.stock : 1)
-        console.log('Stock from DB:', data.stock, 'unlimited:', data.unlimited_stock)
-        const parsedPriceBySize = typeof data.price_by_size === 'string'
-          ? JSON.parse(data.price_by_size)
-          : (data.price_by_size || {})
         setPriceBySize(parsedPriceBySize)
         setSelectedSize(mappedProduct.size[1] || mappedProduct.size[0] || '')
 
