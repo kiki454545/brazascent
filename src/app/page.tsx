@@ -364,6 +364,12 @@ export default function HomePage() {
                 Découvrir la sélection
               </Link>
               <Link
+                href="/packs"
+                className="px-10 py-4 border border-[#C9A962] bg-[#C9A962]/10 text-[#C9A962] text-sm tracking-[0.2em] uppercase font-medium hover:bg-[#C9A962] hover:text-white transition-colors"
+              >
+                Découvrir les packs
+              </Link>
+              <Link
                 href="#comment-ca-marche"
                 className="px-10 py-4 border border-white text-sm tracking-[0.2em] uppercase font-medium hover:bg-white hover:text-[#19110B] transition-colors"
               >
@@ -731,8 +737,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="https://snapchat.com/t/eOoOvNcf"
-                target="_blank"
+                href="/contact"
                 className="btn-luxury px-10 py-4 bg-[#C9A962] text-[#19110B] text-sm tracking-[0.2em] uppercase font-medium hover:bg-[#E8D5A3] transition-colors"
               >
                 Me contacter
