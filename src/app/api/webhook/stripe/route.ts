@@ -214,6 +214,8 @@ export async function POST(request: NextRequest) {
       const rawItems = metadata.items ? JSON.parse(metadata.items) : []
       const userId = metadata.userId || null
       const shippingMethod = metadata.shippingMethod || 'standard'
+      const promoCode = metadata.promoCodeCode || null
+      const promoDiscount = metadata.promoCodeDiscount ? parseFloat(metadata.promoCodeDiscount) : null
 
       // Récupérer les infos produits depuis la BDD pour avoir les noms et images
       const productIds = rawItems.map((item: { id: string }) => item.id)
@@ -266,6 +268,8 @@ export async function POST(request: NextRequest) {
           status: 'confirmed',
           subtotal: subtotal,
           shipping: shippingCost,
+          discount: promoDiscount,
+          promo_code: promoCode,
           total: session.amount_total ? session.amount_total / 100 : subtotal + shippingCost,
           shipping_address: shippingData,
           payment_method: 'stripe',

@@ -31,6 +31,8 @@ interface Order {
   items: any[]
   subtotal: number
   shipping: number
+  discount: number | null
+  promo_code: string | null
   total: number
   status: string
   shipping_method: string
@@ -586,6 +588,11 @@ export default function AdminOrdersPage() {
                     {/* Prix et actions */}
                     <div className="text-right flex-shrink-0">
                       <p className="text-xl font-semibold">{order.total?.toLocaleString('fr-FR')} €</p>
+                      {order.promo_code && (
+                        <p className="text-xs text-green-600 font-medium">
+                          Code: {order.promo_code} (-{order.discount} €)
+                        </p>
+                      )}
                       <p className="text-sm text-gray-500">
                         {new Date(order.created_at).toLocaleDateString('fr-FR', {
                           day: '2-digit',
@@ -884,6 +891,17 @@ export default function AdminOrdersPage() {
                     </span>
                     <span>{selectedOrder.shipping === 0 ? 'Gratuit' : `${selectedOrder.shipping} €`}</span>
                   </div>
+                  {selectedOrder.promo_code && (
+                    <div className="flex justify-between py-2 text-green-600">
+                      <span className="flex items-center gap-2">
+                        Code promo
+                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded font-mono">
+                          {selectedOrder.promo_code}
+                        </span>
+                      </span>
+                      <span>-{selectedOrder.discount?.toLocaleString('fr-FR')} €</span>
+                    </div>
+                  )}
                   <div className="flex justify-between py-2 text-lg font-semibold">
                     <span>Total</span>
                     <span>{selectedOrder.total?.toLocaleString('fr-FR')} €</span>
