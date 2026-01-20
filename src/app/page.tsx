@@ -36,7 +36,7 @@ async function fetchWithRetry<T>(
   return { data: null, error: lastError }
 }
 
-// Composant Carrousel Draggable amélioré
+// Composant Carrousel Draggable avec inertie/momentum
 function DraggableCarousel({ products }: { products: Product[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const isDown = useRef(false)
@@ -45,12 +45,47 @@ function DraggableCarousel({ products }: { products: Product[] }) {
   const scrollLeftStart = useRef(0)
   const dragThreshold = 8
 
+  // Pour l'effet d'inertie
+  const velocity = useRef(0)
+  const lastX = useRef(0)
+  const lastTime = useRef(0)
+  const animationFrame = useRef<number | null>(null)
+
+  // Fonction pour appliquer l'inertie
+  const applyMomentum = () => {
+    if (!containerRef.current) return
+
+    // Friction pour ralentir progressivement
+    velocity.current *= 0.95
+
+    // Arrêter si la vélocité est très faible
+    if (Math.abs(velocity.current) < 0.5) {
+      velocity.current = 0
+      return
+    }
+
+    containerRef.current.scrollLeft += velocity.current
+    animationFrame.current = requestAnimationFrame(applyMomentum)
+  }
+
+  // Arrêter l'animation en cours
+  const stopMomentum = () => {
+    if (animationFrame.current) {
+      cancelAnimationFrame(animationFrame.current)
+      animationFrame.current = null
+    }
+    velocity.current = 0
+  }
+
   // Mouse events
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return
+    stopMomentum()
     isDown.current = true
     hasDragged.current = false
     startX.current = e.pageX
+    lastX.current = e.pageX
+    lastTime.current = Date.now()
     scrollLeftStart.current = containerRef.current.scrollLeft
   }
 
@@ -58,6 +93,8 @@ function DraggableCarousel({ products }: { products: Product[] }) {
     if (!isDown.current || !containerRef.current) return
     const x = e.pageX
     const diff = startX.current - x
+    const now = Date.now()
+    const dt = now - lastTime.current
 
     if (Math.abs(diff) > dragThreshold) {
       hasDragged.current = true
@@ -66,33 +103,48 @@ function DraggableCarousel({ products }: { products: Product[] }) {
 
     if (hasDragged.current) {
       e.preventDefault()
+      // Calculer la vélocité basée sur le mouvement récent
+      if (dt > 0) {
+        velocity.current = (lastX.current - x) / dt * 15
+      }
+      lastX.current = x
+      lastTime.current = now
       containerRef.current.scrollLeft = scrollLeftStart.current + diff
     }
   }
 
   const handleMouseUp = () => {
+    if (!isDown.current) return
     isDown.current = false
     if (containerRef.current) {
       containerRef.current.style.cursor = 'grab'
+    }
+    // Lancer l'effet d'inertie si on a draggé
+    if (hasDragged.current && Math.abs(velocity.current) > 1) {
+      applyMomentum()
     }
     setTimeout(() => { hasDragged.current = false }, 100)
   }
 
   const handleMouseLeave = () => {
-    isDown.current = false
-    if (containerRef.current) {
-      containerRef.current.style.cursor = 'grab'
+    if (isDown.current) {
+      handleMouseUp()
     }
   }
 
-  // Touch events
+  // Touch events avec inertie
   const touchStartX = useRef(0)
   const touchScrollLeft = useRef(0)
   const hasTouchDragged = useRef(false)
+  const touchLastX = useRef(0)
+  const touchLastTime = useRef(0)
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!containerRef.current) return
+    stopMomentum()
     touchStartX.current = e.touches[0].pageX
+    touchLastX.current = e.touches[0].pageX
+    touchLastTime.current = Date.now()
     touchScrollLeft.current = containerRef.current.scrollLeft
     hasTouchDragged.current = false
   }
@@ -101,17 +153,29 @@ function DraggableCarousel({ products }: { products: Product[] }) {
     if (!containerRef.current) return
     const x = e.touches[0].pageX
     const diff = touchStartX.current - x
+    const now = Date.now()
+    const dt = now - touchLastTime.current
 
     if (Math.abs(diff) > dragThreshold) {
       hasTouchDragged.current = true
     }
 
     if (hasTouchDragged.current) {
+      // Calculer la vélocité
+      if (dt > 0) {
+        velocity.current = (touchLastX.current - x) / dt * 15
+      }
+      touchLastX.current = x
+      touchLastTime.current = now
       containerRef.current.scrollLeft = touchScrollLeft.current + diff
     }
   }
 
   const handleTouchEnd = () => {
+    // Lancer l'effet d'inertie si on a draggé
+    if (hasTouchDragged.current && Math.abs(velocity.current) > 1) {
+      applyMomentum()
+    }
     setTimeout(() => { hasTouchDragged.current = false }, 100)
   }
 
@@ -122,6 +186,15 @@ function DraggableCarousel({ products }: { products: Product[] }) {
       e.stopPropagation()
     }
   }
+
+  // Cleanup animation on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrame.current) {
+        cancelAnimationFrame(animationFrame.current)
+      }
+    }
+  }, [])
 
   return (
     <div
