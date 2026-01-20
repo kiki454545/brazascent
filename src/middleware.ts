@@ -42,7 +42,7 @@ export function middleware(request: NextRequest) {
   return response
 }
 
-// Configuration: appliquer le middleware à toutes les routes
+// Configuration: appliquer le middleware à toutes les routes sauf webhooks
 export const config = {
   matcher: [
     /*
@@ -51,7 +51,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
+     * - api/webhook (webhooks Stripe - éviter les redirections)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

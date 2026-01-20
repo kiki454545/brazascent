@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  // Désactiver le trailing slash pour éviter les redirections 307 sur les webhooks
+  trailingSlash: false,
   images: {
     remotePatterns: [
       {
