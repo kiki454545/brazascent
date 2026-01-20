@@ -9,15 +9,6 @@ import { ProductCard } from '@/components/ProductCard'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 
-// Helper pour ignorer les AbortError
-const isAbortError = (error: any): boolean => {
-  if (!error) return false
-  const message = error.message || ''
-  return error.name === 'AbortError' ||
-         message.includes('AbortError') ||
-         message.includes('signal is aborted')
-}
-
 // Composant Carrousel Draggable amélioré
 function DraggableCarousel({ products }: { products: Product[] }) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -202,43 +193,37 @@ export default function HomePage() {
 
     const fetchProducts = async () => {
       try {
-        // Fetch bestsellers - essayer d'abord avec display_order, sinon created_at
-        let bestsellersRes = await supabase
+        // Fetch bestsellers (produits avec is_bestseller = true)
+        const { data: bestsellersData, error: bestsellersError } = await supabase
           .from('products')
           .select('*')
           .eq('is_active', true)
           .eq('is_bestseller', true)
           .order('created_at', { ascending: false })
-          .limit(10)
 
-        if (!isMounted) return
-
-        if (bestsellersRes.data && bestsellersRes.data.length > 0) {
-          setBestsellers(bestsellersRes.data.map(mapProduct))
-        } else if (bestsellersRes.error && !isAbortError(bestsellersRes.error)) {
-          console.error('Error fetching bestsellers:', bestsellersRes.error)
+        if (isMounted && bestsellersData) {
+          setBestsellers(bestsellersData.map(mapProduct))
+        }
+        if (bestsellersError) {
+          console.error('Bestsellers error:', bestsellersError)
         }
 
-        // Fetch new products
-        let newProductsRes = await supabase
+        // Fetch new products (produits avec is_new = true)
+        const { data: newData, error: newError } = await supabase
           .from('products')
           .select('*')
           .eq('is_active', true)
           .eq('is_new', true)
           .order('created_at', { ascending: false })
-          .limit(10)
 
-        if (!isMounted) return
-
-        if (newProductsRes.data && newProductsRes.data.length > 0) {
-          setNewProducts(newProductsRes.data.map(mapProduct))
-        } else if (newProductsRes.error && !isAbortError(newProductsRes.error)) {
-          console.error('Error fetching new products:', newProductsRes.error)
+        if (isMounted && newData) {
+          setNewProducts(newData.map(mapProduct))
+        }
+        if (newError) {
+          console.error('New products error:', newError)
         }
       } catch (err: any) {
-        // Ignorer les erreurs d'annulation (composant démonté)
-        if (isAbortError(err)) return
-        if (isMounted) console.error('Error:', err)
+        console.error('Fetch error:', err)
       } finally {
         if (isMounted) setLoading(false)
       }
