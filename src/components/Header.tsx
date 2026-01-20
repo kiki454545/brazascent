@@ -183,15 +183,34 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Bloquer le scroll quand le menu est ouvert
+  // Bloquer le scroll quand le menu ou la recherche est ouvert
   useEffect(() => {
     if (isMenuOpen || isSearchOpen) {
+      // Sauvegarder la position actuelle du scroll
+      const scrollY = window.scrollY
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.left = '0'
+      document.body.style.right = '0'
       document.body.style.overflow = 'hidden'
     } else {
-      document.body.style.overflow = 'unset'
+      // Restaurer la position du scroll
+      const scrollY = document.body.style.top
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.left = ''
+      document.body.style.right = ''
+      document.body.style.overflow = ''
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1)
+      }
     }
     return () => {
-      document.body.style.overflow = 'unset'
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.left = ''
+      document.body.style.right = ''
+      document.body.style.overflow = ''
     }
   }, [isMenuOpen, isSearchOpen])
 
@@ -443,7 +462,7 @@ export function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[60] bg-white overflow-y-auto"
+            className="fixed inset-0 z-[60] bg-white overflow-y-auto overscroll-contain touch-pan-y"
           >
             {/* Search header */}
             <div className="flex items-center justify-between px-6 lg:px-12 h-16 lg:h-20 border-b">
