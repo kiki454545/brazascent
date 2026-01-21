@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const parseResult = newsletterSchema.safeParse(body)
 
     if (!parseResult.success) {
-      const errorMessage = parseResult.error.errors[0]?.message || 'Données invalides'
+      const errorMessage = parseResult.error.issues[0]?.message || 'Données invalides'
       return NextResponse.json(
         { error: errorMessage },
         { status: 400 }
