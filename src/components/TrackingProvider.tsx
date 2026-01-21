@@ -23,7 +23,7 @@ function getSessionId(): string {
 
 export function TrackingProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { items, getCartTotal } = useCartStore()
+  const { items, getTotal } = useCartStore()
   const lastPathRef = useRef<string>('')
   const pageStartTimeRef = useRef<number>(Date.now())
   const sessionStartRef = useRef<number>(Date.now())
@@ -94,13 +94,13 @@ export function TrackingProvider({ children }: { children: React.ReactNode }) {
     const timeout = setTimeout(() => {
       track('cart', {
         items: cartItems,
-        subtotal: getCartTotal(),
+        subtotal: getTotal(),
         sessionId,
       })
     }, 2000)
 
     return () => clearTimeout(timeout)
-  }, [items, getCartTotal, track])
+  }, [items, getTotal, track])
 
   // Tracker la fin de session (beforeunload)
   useEffect(() => {
