@@ -14,7 +14,9 @@ import {
   RefreshCw,
   ChevronDown,
   ExternalLink,
-  Search
+  Search,
+  Calendar,
+  BarChart3
 } from 'lucide-react'
 
 interface Visitor {
@@ -45,10 +47,27 @@ interface PageView {
 
 interface Stats {
   visitorsToday: number
+  visitsToday?: number
   pageviewsToday: number
   activeCarts: number
   totalCartValue: number
   totalVisitors: number
+}
+
+interface DailyStats {
+  id: string
+  date: string
+  unique_visitors: number
+  total_visits: number
+  total_page_views: number
+  new_visitors: number
+  returning_visitors: number
+  total_cart_value: number
+  abandoned_carts: number
+  converted_carts: number
+  top_pages: { url: string; views: number }[]
+  device_breakdown: Record<string, number>
+  browser_breakdown: Record<string, number>
 }
 
 interface TopPage {
@@ -61,33 +80,37 @@ export default function AdminVisiteursPage() {
   const [pageviews, setPageviews] = useState<PageView[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [topPages, setTopPages] = useState<TopPage[]>([])
+  const [dailyHistory, setDailyHistory] = useState<DailyStats[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [activeTab, setActiveTab] = useState<'visitors' | 'pageviews'>('visitors')
+  const [activeTab, setActiveTab] = useState<'visitors' | 'pageviews' | 'history'>('visitors')
   const [daysFilter, setDaysFilter] = useState(7)
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedVisitor, setExpandedVisitor] = useState<string | null>(null)
 
   const fetchData = async () => {
     try {
-      const [visitorsRes, pageviewsRes, statsRes, topPagesRes] = await Promise.all([
+      const [visitorsRes, pageviewsRes, statsRes, topPagesRes, historyRes] = await Promise.all([
         fetch(`/api/tracking?type=visitors&days=${daysFilter}`),
         fetch(`/api/tracking?type=pageviews&days=${daysFilter}`),
         fetch('/api/tracking?type=stats'),
         fetch(`/api/tracking?type=top_pages&days=${daysFilter}`),
+        fetch('/api/tracking?type=daily_history&days=30'),
       ])
 
-      const [visitorsData, pageviewsData, statsData, topPagesData] = await Promise.all([
+      const [visitorsData, pageviewsData, statsData, topPagesData, historyData] = await Promise.all([
         visitorsRes.json(),
         pageviewsRes.json(),
         statsRes.json(),
         topPagesRes.json(),
+        historyRes.json(),
       ])
 
       setVisitors(visitorsData.visitors || [])
       setPageviews(pageviewsData.pageviews || [])
       setStats(statsData.stats || null)
       setTopPages(topPagesData.topPages || [])
+      setDailyHistory(historyData.history || [])
     } catch (error) {
       console.error('Error fetching tracking data:', error)
     } finally {
@@ -178,15 +201,27 @@ export default function AdminVisiteursPage() {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-white rounded-xl shadow-sm p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                 <Users className="w-5 h-5" />
               </div>
-              <span className="text-sm text-gray-500">Visiteurs aujourd&apos;hui</span>
+              <span className="text-sm text-gray-500">Visiteurs uniques</span>
             </div>
             <p className="text-2xl font-semibold">{stats.visitorsToday}</p>
+            <p className="text-xs text-gray-400">aujourd&apos;hui</p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <span className="text-sm text-gray-500">Visites totales</span>
+            </div>
+            <p className="text-2xl font-semibold">{stats.visitsToday || 0}</p>
+            <p className="text-xs text-gray-400">aujourd&apos;hui</p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-4">
@@ -194,19 +229,21 @@ export default function AdminVisiteursPage() {
               <div className="p-2 bg-green-100 text-green-600 rounded-lg">
                 <Eye className="w-5 h-5" />
               </div>
-              <span className="text-sm text-gray-500">Pages vues aujourd&apos;hui</span>
+              <span className="text-sm text-gray-500">Pages vues</span>
             </div>
             <p className="text-2xl font-semibold">{stats.pageviewsToday}</p>
+            <p className="text-xs text-gray-400">aujourd&apos;hui</p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
-                <TrendingUp className="w-5 h-5" />
+                <BarChart3 className="w-5 h-5" />
               </div>
               <span className="text-sm text-gray-500">Total visiteurs</span>
             </div>
             <p className="text-2xl font-semibold">{stats.totalVisitors}</p>
+            <p className="text-xs text-gray-400">depuis le début</p>
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-4">
@@ -217,7 +254,7 @@ export default function AdminVisiteursPage() {
               <span className="text-sm text-gray-500">Paniers actifs</span>
             </div>
             <p className="text-2xl font-semibold">{stats.activeCarts}</p>
-            <p className="text-sm text-gray-500">{stats.totalCartValue.toFixed(2)} €</p>
+            <p className="text-xs text-gray-400">{stats.totalCartValue.toFixed(2)} €</p>
           </div>
         </div>
       )}
@@ -269,6 +306,18 @@ export default function AdminVisiteursPage() {
             <Eye className="w-5 h-5" />
             Pages vues ({pageviews.length})
             {activeTab === 'pageviews' && (
+              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]" />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-colors relative ${
+              activeTab === 'history' ? 'text-[#C9A962]' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Calendar className="w-5 h-5" />
+            Historique ({dailyHistory.length})
+            {activeTab === 'history' && (
               <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]" />
             )}
           </button>
@@ -399,6 +448,105 @@ export default function AdminVisiteursPage() {
               <div className="p-12 text-center">
                 <Eye className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">Aucune page vue</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* History List */}
+        {activeTab === 'history' && (
+          <div className="divide-y max-h-[600px] overflow-auto">
+            {dailyHistory.length > 0 ? (
+              dailyHistory.map((day) => (
+                <div key={day.id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-[#C9A962]/10 text-[#C9A962] rounded-lg">
+                      <Calendar className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">
+                        {new Date(day.date).toLocaleDateString('fr-FR', {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </p>
+                      <div className="flex flex-wrap gap-4 mt-2 text-sm">
+                        <span className="flex items-center gap-1 text-blue-600">
+                          <Users className="w-4 h-4" />
+                          {day.unique_visitors} visiteurs uniques
+                        </span>
+                        <span className="flex items-center gap-1 text-indigo-600">
+                          <TrendingUp className="w-4 h-4" />
+                          {day.total_visits} visites
+                        </span>
+                        <span className="flex items-center gap-1 text-green-600">
+                          <Eye className="w-4 h-4" />
+                          {day.total_page_views} pages vues
+                        </span>
+                      </div>
+                      {(day.new_visitors > 0 || day.returning_visitors > 0) && (
+                        <div className="flex gap-4 mt-1 text-xs text-gray-500">
+                          <span>{day.new_visitors} nouveaux</span>
+                          <span>{day.returning_visitors} récurrents</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      {day.total_cart_value > 0 && (
+                        <p className="text-sm font-medium text-[#C9A962]">
+                          {day.total_cart_value.toFixed(2)} € en paniers
+                        </p>
+                      )}
+                      {(day.abandoned_carts > 0 || day.converted_carts > 0) && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {day.converted_carts > 0 && (
+                            <span className="text-green-600">{day.converted_carts} convertis</span>
+                          )}
+                          {day.abandoned_carts > 0 && (
+                            <span className="text-orange-600 ml-2">{day.abandoned_carts} abandonnés</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Device breakdown */}
+                  {day.device_breakdown && Object.keys(day.device_breakdown).length > 0 && (
+                    <div className="mt-3 pt-3 border-t flex flex-wrap gap-2">
+                      {Object.entries(day.device_breakdown).map(([device, count]) => (
+                        <span
+                          key={device}
+                          className="px-2 py-1 bg-gray-100 rounded text-xs flex items-center gap-1"
+                        >
+                          {device === 'mobile' ? <Smartphone className="w-3 h-3" /> :
+                           device === 'tablet' ? <Tablet className="w-3 h-3" /> :
+                           <Monitor className="w-3 h-3" />}
+                          {count}
+                        </span>
+                      ))}
+                      {day.browser_breakdown && Object.entries(day.browser_breakdown).slice(0, 3).map(([browser, count]) => (
+                        <span
+                          key={browser}
+                          className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs"
+                        >
+                          {browser}: {count}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="p-12 text-center">
+                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">Aucun historique disponible</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Les statistiques journalières seront archivées chaque nuit à minuit.
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Assurez-vous d&apos;avoir exécuté le SQL pour créer les tables daily_stats et daily_visits.
+                </p>
               </div>
             )}
           </div>

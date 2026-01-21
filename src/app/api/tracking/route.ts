@@ -84,7 +84,10 @@ export async function POST(request: NextRequest) {
 
     switch (action) {
       case 'visit': {
-        // Enregistrer ou mettre à jour le visiteur
+        // Obtenir la date du jour (format YYYY-MM-DD)
+        const today = new Date().toISOString().split('T')[0]
+
+        // 1. Enregistrer ou mettre à jour le visiteur global (pour l'historique total)
         const { data: existingVisitor } = await supabaseAdmin
           .from('visitors')
           .select('id, visit_count')
@@ -92,7 +95,6 @@ export async function POST(request: NextRequest) {
           .single()
 
         if (existingVisitor) {
-          // Mettre à jour le visiteur existant
           await supabaseAdmin
             .from('visitors')
             .update({
@@ -102,7 +104,6 @@ export async function POST(request: NextRequest) {
             })
             .eq('visitor_id', visitorId)
         } else {
-          // Créer un nouveau visiteur
           await supabaseAdmin
             .from('visitors')
             .insert({
@@ -116,6 +117,39 @@ export async function POST(request: NextRequest) {
             })
         }
 
+        // 2. Enregistrer dans daily_visits (incrémente les visites pour la même IP/jour)
+        const { data: existingDailyVisit } = await supabaseAdmin
+          .from('daily_visits')
+          .select('id, visit_count')
+          .eq('date', today)
+          .eq('ip_address', ip)
+          .single()
+
+        if (existingDailyVisit) {
+          // Même IP aujourd'hui → incrémenter le compteur de visites
+          await supabaseAdmin
+            .from('daily_visits')
+            .update({
+              visit_count: existingDailyVisit.visit_count + 1,
+              last_visit_time: new Date().toISOString(),
+              pages_viewed: (existingDailyVisit as { pages_viewed?: number }).pages_viewed || 0,
+            })
+            .eq('id', existingDailyVisit.id)
+        } else {
+          // Nouvelle IP pour aujourd'hui → créer une entrée
+          await supabaseAdmin
+            .from('daily_visits')
+            .insert({
+              date: today,
+              ip_address: ip,
+              visitor_id: visitorId,
+              visit_count: 1,
+              device_type: device,
+              browser,
+              os,
+            })
+        }
+
         return NextResponse.json({
           success: true,
           visitorId,
@@ -125,6 +159,7 @@ export async function POST(request: NextRequest) {
 
       case 'pageview': {
         const { pageUrl, pageTitle, referrer, sessionId, timeOnPage, scrollDepth } = data
+        const today = new Date().toISOString().split('T')[0]
 
         await supabaseAdmin
           .from('page_views')
@@ -137,6 +172,24 @@ export async function POST(request: NextRequest) {
             time_on_page: timeOnPage,
             scroll_depth: scrollDepth,
           })
+
+        // Incrémenter pages_viewed dans daily_visits
+        const { data: dailyVisit } = await supabaseAdmin
+          .from('daily_visits')
+          .select('id, pages_viewed')
+          .eq('date', today)
+          .eq('ip_address', ip)
+          .single()
+
+        if (dailyVisit) {
+          await supabaseAdmin
+            .from('daily_visits')
+            .update({
+              pages_viewed: (dailyVisit.pages_viewed || 0) + 1,
+              last_visit_time: new Date().toISOString(),
+            })
+            .eq('id', dailyVisit.id)
+        }
 
         // Mettre à jour la session
         if (sessionId) {
@@ -283,29 +336,52 @@ export async function GET(request: NextRequest) {
 
         if (error) throw error
 
-        return NextResponse.json({ carts })
+        // Enrichir les paniers avec les infos utilisateur si email présent
+        const enrichedCarts = await Promise.all(
+          (carts || []).map(async (cart) => {
+            if (cart.user_email) {
+              const { data: userProfile } = await supabaseAdmin
+                .from('user_profiles')
+                .select('id, first_name, last_name, email')
+                .eq('email', cart.user_email)
+                .single()
+
+              if (userProfile) {
+                return {
+                  ...cart,
+                  user_id: userProfile.id,
+                  user_name: userProfile.first_name && userProfile.last_name
+                    ? `${userProfile.first_name} ${userProfile.last_name}`
+                    : userProfile.first_name || userProfile.email.split('@')[0],
+                }
+              }
+            }
+            return cart
+          })
+        )
+
+        return NextResponse.json({ carts: enrichedCarts })
       }
 
       case 'stats': {
-        // Stats globales
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
+        // Stats globales - utiliser daily_visits pour le jour actuel
+        const todayStr = new Date().toISOString().split('T')[0]
 
         const [
-          { count: visitorsToday },
+          { data: dailyVisitsToday },
           { count: pageviewsToday },
           { data: activeCarts },
           { count: totalVisitors },
         ] = await Promise.all([
+          // Visiteurs uniques aujourd'hui depuis daily_visits
           supabaseAdmin
-            .from('visitors')
-            .select('*', { count: 'exact', head: true })
-            .eq('is_bot', false)
-            .gte('last_visit', today.toISOString()),
+            .from('daily_visits')
+            .select('ip_address, visit_count, pages_viewed')
+            .eq('date', todayStr),
           supabaseAdmin
             .from('page_views')
             .select('*', { count: 'exact', head: true })
-            .gte('created_at', today.toISOString()),
+            .gte('created_at', `${todayStr}T00:00:00`),
           supabaseAdmin
             .from('active_carts')
             .select('subtotal, item_count')
@@ -318,12 +394,17 @@ export async function GET(request: NextRequest) {
             .eq('is_bot', false),
         ])
 
+        // Calculer les stats depuis daily_visits
+        const uniqueVisitorsToday = dailyVisitsToday?.length || 0
+        const totalVisitsToday = dailyVisitsToday?.reduce((sum, v) => sum + (v.visit_count || 0), 0) || 0
+
         const totalCartValue = activeCarts?.reduce((sum, cart) => sum + (cart.subtotal || 0), 0) || 0
         const totalCartItems = activeCarts?.reduce((sum, cart) => sum + (cart.item_count || 0), 0) || 0
 
         return NextResponse.json({
           stats: {
-            visitorsToday: visitorsToday || 0,
+            visitorsToday: uniqueVisitorsToday,
+            visitsToday: totalVisitsToday,
             pageviewsToday: pageviewsToday || 0,
             activeCarts: activeCarts?.length || 0,
             totalCartValue,
@@ -331,6 +412,36 @@ export async function GET(request: NextRequest) {
             totalVisitors: totalVisitors || 0,
           }
         })
+      }
+
+      case 'daily_history': {
+        // Récupérer l'historique des stats quotidiennes (table daily_stats)
+        const days = parseInt(searchParams.get('days') || '30')
+
+        const { data: history, error } = await supabaseAdmin
+          .from('daily_stats')
+          .select('*')
+          .order('date', { ascending: false })
+          .limit(days)
+
+        if (error) throw error
+
+        return NextResponse.json({ history: history || [] })
+      }
+
+      case 'today_details': {
+        // Détails des visites d'aujourd'hui depuis daily_visits
+        const todayStr = new Date().toISOString().split('T')[0]
+
+        const { data: visits, error } = await supabaseAdmin
+          .from('daily_visits')
+          .select('*')
+          .eq('date', todayStr)
+          .order('last_visit_time', { ascending: false })
+
+        if (error) throw error
+
+        return NextResponse.json({ visits: visits || [] })
       }
 
       case 'top_pages': {

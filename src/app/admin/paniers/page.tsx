@@ -36,6 +36,8 @@ interface ActiveCart {
   abandoned_at: string | null
   converted_at: string | null
   user_email: string | null
+  user_id?: string
+  user_name?: string
   created_at: string
 }
 
@@ -233,6 +235,18 @@ export default function AdminPaniersPage() {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
+                        {cart.user_name ? (
+                          <span className="flex items-center gap-1 font-medium text-[#C9A962]">
+                            <User className="w-4 h-4" />
+                            {cart.user_name}
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 font-medium text-gray-500">
+                            <User className="w-4 h-4" />
+                            Visiteur anonyme
+                          </span>
+                        )}
+                        <span className="text-gray-400">•</span>
                         <span className="font-medium">
                           {cart.item_count} article{cart.item_count > 1 ? 's' : ''}
                         </span>
@@ -310,11 +324,22 @@ export default function AdminPaniersPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="mt-4 pt-4 border-t flex gap-2">
+                      <div className="mt-4 pt-4 border-t flex flex-wrap gap-2">
+                        {cart.user_id && (
+                          <a
+                            href={`/admin/utilisateurs?user=${cart.user_id}`}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#19110B] text-white rounded-lg hover:bg-[#2a1d14] transition-colors text-sm"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Voir le profil
+                          </a>
+                        )}
                         {cart.user_email && (
                           <a
                             href={`mailto:${cart.user_email}?subject=Votre panier vous attend !&body=Bonjour,%0A%0ANous avons remarqué que vous avez laissé des articles dans votre panier. Besoin d'aide pour finaliser votre commande ?%0A%0ACordialement,%0ABraza Scent`}
                             className="flex items-center gap-2 px-4 py-2 bg-[#C9A962] text-white rounded-lg hover:bg-[#b8944d] transition-colors text-sm"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <Mail className="w-4 h-4" />
                             Envoyer un rappel

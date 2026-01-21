@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   Search,
@@ -29,6 +30,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
+  const searchParams = useSearchParams()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -38,6 +40,17 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers()
   }, [])
+
+  // Ouvrir automatiquement le modal si un user ID est passé en paramètre
+  useEffect(() => {
+    const userId = searchParams.get('user')
+    if (userId && users.length > 0) {
+      const user = users.find(u => u.id === userId)
+      if (user) {
+        setSelectedUser(user)
+      }
+    }
+  }, [searchParams, users])
 
   // Fermer le menu quand on clique ailleurs
   useEffect(() => {
