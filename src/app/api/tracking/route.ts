@@ -37,7 +37,7 @@ const trackingDataSchema = z.object({
     userEmail: z.string().email().max(255).optional().nullable(),
     // Pour end_session
     duration: z.number().min(0).max(86400).optional(),
-  }).optional(),
+  }).default({}),
 })
 
 // Liste des user agents de bots connus
