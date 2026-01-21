@@ -13,6 +13,7 @@ const supabaseAdmin = createClient(
 const validatePromoSchema = z.object({
   code: z.string().min(1, 'Code promo requis').max(50),
   orderTotal: z.number().min(0).optional(),
+  productIds: z.array(z.string()).optional(), // IDs des produits pour vérifier les packs sans promo
 })
 
 export async function POST(request: NextRequest) {
@@ -45,7 +46,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { code, orderTotal } = parseResult.data
+    const { code, orderTotal, productIds } = parseResult.data
+
+    // Vérifier si le panier contient des packs qui n'autorisent pas les codes promo
+    if (productIds && productIds.length > 0) {
+      const { data: packs } = await supabaseAdmin
+        .from('packs')
+        .select('id, name, promo_allowed')
+        .in('id', productIds)
+        .eq('promo_allowed', false)
+
+      if (packs && packs.length > 0) {
+        const packNames = packs.map(p => p.name).join(', ')
+        return NextResponse.json(
+          { error: `Les codes promo ne sont pas utilisables sur : ${packNames}` },
+          { status: 400 }
+        )
+      }
+    }
 
     // Rechercher le code promo
     const { data: promoCode, error: fetchError } = await supabaseAdmin

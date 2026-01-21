@@ -28,6 +28,7 @@ interface Pack {
   product_selections: ProductSelection[] | null
   tag: string | null
   is_active: boolean
+  promo_allowed: boolean
   created_at: string
 }
 
@@ -56,6 +57,7 @@ interface PackForm {
   product_selections: ProductSelection[]
   tag: string
   is_active: boolean
+  promo_allowed: boolean
 }
 
 const emptyForm: PackForm = {
@@ -68,7 +70,8 @@ const emptyForm: PackForm = {
   product_ids: [],
   product_selections: [],
   tag: '',
-  is_active: true
+  is_active: true,
+  promo_allowed: true
 }
 
 export default function AdminPacksPage() {
@@ -193,7 +196,8 @@ export default function AdminPacksPage() {
       product_ids: pack.product_ids || [],
       product_selections: selections,
       tag: pack.tag || '',
-      is_active: pack.is_active ?? true
+      is_active: pack.is_active ?? true,
+      promo_allowed: pack.promo_allowed ?? true
     })
     setError(null)
     setShowModal(true)
@@ -228,7 +232,8 @@ export default function AdminPacksPage() {
         product_ids: form.product_ids,
         product_selections: form.product_selections,
         tag: form.tag || null,
-        is_active: form.is_active
+        is_active: form.is_active,
+        promo_allowed: form.promo_allowed
       }
 
       console.log('Saving pack data:', packData)
@@ -400,6 +405,11 @@ export default function AdminPacksPage() {
               {!pack.is_active && (
                 <span className="absolute top-2 right-2 px-2 py-1 bg-red-500 text-white text-xs rounded">
                   Inactif
+                </span>
+              )}
+              {pack.promo_allowed === false && (
+                <span className="absolute bottom-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs rounded">
+                  Sans promo
                 </span>
               )}
             </div>
@@ -708,6 +718,23 @@ export default function AdminPacksPage() {
                 />
                 <label htmlFor="is_active" className="text-sm">Pack actif (visible sur le site)</label>
               </div>
+
+              {/* Promo Allowed */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="promo_allowed"
+                  checked={form.promo_allowed}
+                  onChange={(e) => setForm(prev => ({ ...prev, promo_allowed: e.target.checked }))}
+                  className="w-4 h-4 text-[#C9A962] rounded focus:ring-[#C9A962]"
+                />
+                <label htmlFor="promo_allowed" className="text-sm">Codes promo autorisés sur ce pack</label>
+              </div>
+              {!form.promo_allowed && (
+                <p className="text-xs text-amber-600 ml-6">
+                  Un avertissement sera affiché sur la page du pack indiquant que les codes promo ne sont pas utilisables.
+                </p>
+              )}
 
               {/* Submit */}
               <div className="flex gap-3 pt-4 border-t">

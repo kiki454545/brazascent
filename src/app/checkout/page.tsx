@@ -200,6 +200,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           code: promoCode.trim(),
           orderTotal: subtotal,
+          productIds: items.map(item => item.product.id),
         }),
       })
 

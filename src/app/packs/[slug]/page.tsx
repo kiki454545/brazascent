@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ChevronRight, Truck, Gift, Loader2, Package } from 'lucide-react'
+import { ChevronRight, Truck, Gift, Loader2, Package, Info } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cart'
 import { useSettingsStore } from '@/store/settings'
@@ -29,6 +29,7 @@ interface Pack {
   product_selections: ProductSelection[] | null
   tag: string | null
   is_active: boolean
+  promo_allowed: boolean
 }
 
 interface ProductData {
@@ -347,6 +348,16 @@ export default function PackDetailPage() {
                     Valeur totale : {pack.original_price} € — Vous économisez {pack.original_price - pack.price} €
                   </p>
                 )}
+              </div>
+            )}
+
+            {/* Avertissement si codes promo non autorisés */}
+            {pack.promo_allowed === false && (
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+                <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-amber-700">
+                  Les codes promo ne sont pas utilisables sur ce coffret.
+                </p>
               </div>
             )}
 

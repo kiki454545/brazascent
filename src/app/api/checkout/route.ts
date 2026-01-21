@@ -261,7 +261,20 @@ export async function POST(request: NextRequest) {
     // SÉCURITÉ: Vérifier et recalculer le code promo côté serveur
     let verifiedPromoCode: VerifiedPromoCode | null = null
     if (promoCode?.id) {
-      verifiedPromoCode = await verifyPromoCode(promoCode.id, subtotal)
+      // Vérifier si le panier contient des packs qui n'autorisent pas les codes promo
+      const productIds = items.map(item => item.product.id)
+      const { data: packsWithoutPromo } = await supabase
+        .from('packs')
+        .select('id, name')
+        .in('id', productIds)
+        .eq('promo_allowed', false)
+
+      if (packsWithoutPromo && packsWithoutPromo.length > 0) {
+        // Ignorer le code promo si des packs n'autorisent pas les promos
+        verifiedPromoCode = null
+      } else {
+        verifiedPromoCode = await verifyPromoCode(promoCode.id, subtotal)
+      }
       // Si le code promo fourni est invalide, on continue sans réduction (pas d'erreur)
     }
 
