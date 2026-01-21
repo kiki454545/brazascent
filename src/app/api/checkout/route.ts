@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { stripe, formatAmountForStripe } from '@/lib/stripe'
 import { z } from 'zod'
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 
 // Client Supabase côté serveur avec service role
 const supabase = createClient(
@@ -218,6 +219,24 @@ async function verifyProductPrices(
 
 export async function POST(request: NextRequest) {
   try {
+    // SÉCURITÉ: Rate limiting pour éviter les abus
+    const clientIP = getClientIP(request)
+    const rateLimit = checkRateLimit(`checkout:${clientIP}`, RATE_LIMITS.CHECKOUT)
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Trop de tentatives. Veuillez réessayer dans quelques minutes.' },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': rateLimit.limit.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': rateLimit.resetAt.toString(),
+          }
+        }
+      )
+    }
+
     // SÉCURITÉ: Valider toutes les entrées avec Zod
     const rawBody = await request.json()
     const parseResult = checkoutSchema.safeParse(rawBody)

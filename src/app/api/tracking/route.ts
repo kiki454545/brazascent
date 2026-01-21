@@ -1,12 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { z } from 'zod'
 
 // Client Supabase avec service role pour bypass RLS
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+// SÉCURITÉ: Schémas de validation Zod
+const cartItemSchema = z.object({
+  product: z.object({
+    id: z.string(),
+    name: z.string().max(255),
+    price: z.number().min(0).max(99999),
+    images: z.array(z.string()).optional(),
+  }),
+  size: z.string().max(50).optional(),
+  quantity: z.number().int().min(1).max(100),
+})
+
+const trackingDataSchema = z.object({
+  action: z.enum(['visit', 'pageview', 'cart', 'cart_converted', 'end_session']),
+  data: z.object({
+    // Pour pageview
+    pageUrl: z.string().max(500).optional(),
+    pageTitle: z.string().max(255).optional(),
+    referrer: z.string().max(500).optional(),
+    sessionId: z.string().max(64).optional(),
+    timeOnPage: z.number().min(0).max(86400).optional(),
+    scrollDepth: z.number().min(0).max(100).optional(),
+    // Pour cart
+    items: z.array(cartItemSchema).max(50).optional(),
+    subtotal: z.number().min(0).max(999999).optional(),
+    userEmail: z.string().email().max(255).optional().nullable(),
+    // Pour end_session
+    duration: z.number().min(0).max(86400).optional(),
+  }).optional(),
+})
 
 // Liste des user agents de bots connus
 const BOT_PATTERNS = [
@@ -67,7 +99,15 @@ function generateSessionId(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { action, data } = body
+
+    // SÉCURITÉ: Validation Zod des entrées
+    const parseResult = trackingDataSchema.safeParse(body)
+    if (!parseResult.success) {
+      // Ignorer silencieusement les données invalides (ne pas exposer les erreurs)
+      return NextResponse.json({ success: true, ignored: true })
+    }
+
+    const { action, data } = parseResult.data
 
     // Récupérer l'IP depuis les headers
     const forwardedFor = request.headers.get('x-forwarded-for')

@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { z } from 'zod'
+
+// SÉCURITÉ: Validation stricte des entrées
+const newsletterSchema = z.object({
+  subject: z.string().min(1, 'Sujet requis').max(255, 'Sujet trop long'),
+  content: z.string().min(1, 'Contenu requis').max(50000, 'Contenu trop long'),
+  recipients: z.array(z.string().email('Email invalide')).min(1, 'Au moins un destinataire').max(1000, 'Maximum 1000 destinataires par envoi'),
+})
 
 // Créer un client Supabase avec la clé service pour bypasser RLS
 const supabaseAdmin = createClient(
@@ -42,14 +50,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { subject, content, recipients } = await request.json()
+    // SÉCURITÉ: Validation Zod des entrées
+    const body = await request.json()
+    const parseResult = newsletterSchema.safeParse(body)
 
-    if (!subject || !content || !recipients || recipients.length === 0) {
+    if (!parseResult.success) {
+      const errorMessage = parseResult.error.errors[0]?.message || 'Données invalides'
       return NextResponse.json(
-        { error: 'Données manquantes' },
+        { error: errorMessage },
         { status: 400 }
       )
     }
+
+    const { subject, content, recipients } = parseResult.data
 
     // Option 1: Utiliser Resend (recommandé)
     // Si vous avez une clé API Resend
