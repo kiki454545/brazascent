@@ -102,7 +102,7 @@ export default function AdminPaniersPage() {
   const isAbandoned = (cart: ActiveCart) => {
     if (cart.abandoned_at) return true
     const diff = Date.now() - new Date(cart.last_activity).getTime()
-    return diff > 2 * 60 * 60 * 1000 // Plus de 2 heures
+    return diff > 24 * 60 * 60 * 1000 // Plus de 24 heures
   }
 
   const filteredCarts = carts.filter(cart => {
