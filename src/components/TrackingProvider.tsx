@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { useCartStore } from '@/store/cart'
+import { useAuthStore } from '@/store/auth'
 
 // Générer un ID de session unique
 function generateSessionId(): string {
@@ -24,6 +25,7 @@ function getSessionId(): string {
 export function TrackingProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { items, getTotal } = useCartStore()
+  const { user } = useAuthStore()
   const lastPathRef = useRef<string>('')
   const pageStartTimeRef = useRef<number>(Date.now())
   const sessionStartRef = useRef<number>(Date.now())
@@ -96,11 +98,12 @@ export function TrackingProvider({ children }: { children: React.ReactNode }) {
         items: cartItems,
         subtotal: getTotal(),
         sessionId,
+        userEmail: user?.email || null,
       })
     }, 2000)
 
     return () => clearTimeout(timeout)
-  }, [items, getTotal, track])
+  }, [items, getTotal, track, user])
 
   // Tracker la fin de session (beforeunload)
   useEffect(() => {
