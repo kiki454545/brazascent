@@ -223,15 +223,14 @@ export async function POST(request: NextRequest) {
     const clientIP = getClientIP(request)
     const rateLimit = checkRateLimit(`checkout:${clientIP}`, RATE_LIMITS.CHECKOUT)
 
-    if (!rateLimit.allowed) {
+    if (!rateLimit.success) {
       return NextResponse.json(
         { error: 'Trop de tentatives. Veuillez réessayer dans quelques minutes.' },
         {
           status: 429,
           headers: {
-            'X-RateLimit-Limit': rateLimit.limit.toString(),
             'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-            'X-RateLimit-Reset': rateLimit.resetAt.toString(),
+            'X-RateLimit-Reset': rateLimit.resetIn.toString(),
           }
         }
       )
