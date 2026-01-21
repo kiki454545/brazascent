@@ -342,7 +342,7 @@ export async function GET(request: NextRequest) {
             if (cart.user_email) {
               const { data: userProfile } = await supabaseAdmin
                 .from('user_profiles')
-                .select('id, first_name, last_name, email')
+                .select('id, first_name, last_name, email, phone, is_admin, created_at')
                 .eq('email', cart.user_email)
                 .single()
 
@@ -353,6 +353,7 @@ export async function GET(request: NextRequest) {
                   user_name: userProfile.first_name && userProfile.last_name
                     ? `${userProfile.first_name} ${userProfile.last_name}`
                     : userProfile.first_name || userProfile.email.split('@')[0],
+                  user_profile: userProfile,
                 }
               }
             }

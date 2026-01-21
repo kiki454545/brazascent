@@ -13,7 +13,12 @@ import {
   User,
   Mail,
   ChevronDown,
-  ExternalLink
+  ExternalLink,
+  Eye,
+  Phone,
+  Calendar,
+  XCircle,
+  Shield
 } from 'lucide-react'
 
 interface CartItem {
@@ -23,6 +28,16 @@ interface CartItem {
   quantity: number
   price: number
   image?: string
+}
+
+interface UserProfile {
+  id: string
+  email: string
+  first_name: string | null
+  last_name: string | null
+  phone: string | null
+  is_admin: boolean
+  created_at: string
 }
 
 interface ActiveCart {
@@ -38,6 +53,7 @@ interface ActiveCart {
   user_email: string | null
   user_id?: string
   user_name?: string
+  user_profile?: UserProfile
   created_at: string
 }
 
@@ -47,6 +63,7 @@ export default function AdminPaniersPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [expandedCart, setExpandedCart] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'active' | 'abandoned'>('all')
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
 
   const fetchCarts = async () => {
     try {
@@ -325,15 +342,17 @@ export default function AdminPaniersPage() {
 
                       {/* Actions */}
                       <div className="mt-4 pt-4 border-t flex flex-wrap gap-2">
-                        {cart.user_id && (
-                          <a
-                            href={`/admin/utilisateurs?user=${cart.user_id}`}
+                        {cart.user_profile && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedUser(cart.user_profile!)
+                            }}
                             className="flex items-center gap-2 px-4 py-2 bg-[#19110B] text-white rounded-lg hover:bg-[#2a1d14] transition-colors text-sm"
-                            onClick={(e) => e.stopPropagation()}
                           >
-                            <ExternalLink className="w-4 h-4" />
+                            <Eye className="w-4 h-4" />
                             Voir le profil
-                          </a>
+                          </button>
                         )}
                         {cart.user_email && (
                           <a
@@ -366,6 +385,92 @@ export default function AdminPaniersPage() {
           </div>
         )}
       </div>
+
+      {/* User detail modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl max-w-md w-full"
+          >
+            <div className="p-6 border-b">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Détails utilisateur</h2>
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 bg-[#C9A962] rounded-full flex items-center justify-center text-white text-2xl font-medium">
+                  {selectedUser.first_name?.[0] || selectedUser.email[0].toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-xl font-medium">
+                    {selectedUser.first_name || selectedUser.last_name
+                      ? `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`
+                      : 'Non renseigné'}
+                  </p>
+                  {selectedUser.is_admin && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-800 text-xs rounded-full">
+                      <Shield className="w-3 h-3" />
+                      Administrateur
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Mail className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">Email</p>
+                    <p className="font-medium">{selectedUser.email}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Phone className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">Téléphone</p>
+                    <p className="font-medium">{selectedUser.phone || 'Non renseigné'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Calendar className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">Date d&apos;inscription</p>
+                    <p className="font-medium">
+                      {new Date(selectedUser.created_at).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t">
+                <a
+                  href={`/admin/utilisateurs?user=${selectedUser.id}`}
+                  className="flex items-center justify-center gap-2 w-full py-2 bg-[#19110B] text-white rounded-lg hover:bg-[#2a1d14] transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Voir dans Utilisateurs
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }
