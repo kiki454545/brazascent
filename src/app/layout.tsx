@@ -6,6 +6,7 @@ import { SettingsProvider } from "@/components/SettingsProvider"
 import { MainLayout } from "@/components/MainLayout"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { GlobalErrorHandler } from "@/components/GlobalErrorHandler"
+import { TrackingProvider } from "@/components/TrackingProvider"
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
@@ -82,7 +83,9 @@ export default function RootLayout({
           <ErrorBoundary>
             <AuthProvider>
               <SettingsProvider>
-                <MainLayout>{children}</MainLayout>
+                <TrackingProvider>
+                  <MainLayout>{children}</MainLayout>
+                </TrackingProvider>
               </SettingsProvider>
             </AuthProvider>
           </ErrorBoundary>

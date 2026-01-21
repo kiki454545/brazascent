@@ -16,12 +16,16 @@ import {
   Mail,
   Gift,
   MessageSquare,
-  Tag
+  Tag,
+  Eye,
+  ShoppingBag
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 
 const adminNav = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'Visiteurs', href: '/admin/visiteurs', icon: Eye },
+  { name: 'Paniers', href: '/admin/paniers', icon: ShoppingBag },
   { name: 'Produits', href: '/admin/produits', icon: Package },
   { name: 'Packs', href: '/admin/packs', icon: Gift },
   { name: 'Marques', href: '/admin/marques', icon: Building2 },

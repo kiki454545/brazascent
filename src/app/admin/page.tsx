@@ -49,14 +49,16 @@ export default function AdminDashboard() {
         if (!isMounted) return
 
         const orders = ordersRes.data || []
-        const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0)
+        // Exclure les commandes annulées des stats
+        const validOrders = orders.filter((order: any) => order.status !== 'cancelled')
+        const totalRevenue = validOrders.reduce((sum: number, order: any) => sum + (order.total || 0), 0)
 
         setStats({
-          totalOrders: orders.length,
+          totalOrders: validOrders.length,
           totalRevenue,
           totalUsers: usersRes.data?.length || 0,
           totalProducts: productsRes.data?.length || 0,
-          recentOrders: orders.slice(0, 5),
+          recentOrders: orders.slice(0, 5), // Garder les commandes annulées dans les récentes pour info
           ordersChange: 12.5,
           revenueChange: 8.2
         })
