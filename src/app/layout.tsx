@@ -24,26 +24,26 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: {
-    default: "Braza Scent | Décants & Échantillons de Parfums de Luxe",
+    default: "Braza Scent | Boutique de Parfums de Luxe",
     template: "%s | Braza Scent",
   },
-  description: "Décantage haut de gamme : décants et échantillons de parfums de niche et collection privée en format voyage. Découvrez des fragrances d'exception à moindre coût avec Brazascent. Livraison rapide et paiement sécurisé.",
-  keywords: "décant parfum, échantillon parfum, parfum de niche, collection privée, parfum luxe, format voyage, Braza Scent, brazascent, parfumerie haut de gamme",
+  description: "Boutique en ligne de parfums haut de gamme. Découvrez notre sélection de fragrances de niche disponibles en formats 2ml, 5ml et 10ml. Testez les plus grandes maisons de parfumerie sans vous ruiner. Livraison rapide en France.",
+  keywords: "parfum, boutique parfum, décant parfum, échantillon parfum, parfum de niche, 2ml, 5ml, 10ml, parfum luxe, Braza Scent, brazascent, parfumerie",
   authors: [{ name: "Braza Scent" }],
   creator: "Braza Scent",
   publisher: "Braza Scent",
   metadataBase: new URL("https://brazascent.com"),
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Braza Scent | Décants & Échantillons de Parfums de Luxe",
-    description: "Décantage haut de gamme : décants et échantillons de parfums de niche et collection privée en format voyage. Découvrez des fragrances d'exception à moindre coût avec Brazascent.",
+    title: "Braza Scent | Boutique de Parfums de Luxe",
+    description: "Boutique en ligne de parfums haut de gamme. Découvrez notre sélection de fragrances de niche disponibles en formats 2ml, 5ml et 10ml. Testez les plus grandes maisons sans vous ruiner.",
     type: "website",
     locale: "fr_FR",
     siteName: "Braza Scent",
@@ -51,8 +51,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Braza Scent | Décants & Échantillons de Parfums de Luxe",
-    description: "Décantage haut de gamme : décants et échantillons de parfums de niche et collection privée en format voyage.",
+    title: "Braza Scent | Boutique de Parfums de Luxe",
+    description: "Boutique en ligne de parfums haut de gamme. Fragrances de niche en formats 2ml, 5ml et 10ml.",
   },
   robots: {
     index: true,

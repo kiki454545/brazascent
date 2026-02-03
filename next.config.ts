@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   // Désactiver le trailing slash pour éviter les redirections 307 sur les webhooks
   trailingSlash: false,
   images: {
+    // Désactiver l'optimisation Vercel pour éviter les erreurs 402 (quota dépassé)
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
