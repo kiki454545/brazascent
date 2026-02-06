@@ -298,7 +298,7 @@ export default function PackDetailPage() {
                     {pack.original_price} €
                   </span>
                   <span className="text-sm text-[#C9A962] font-medium">
-                    Économisez {pack.original_price - pack.price} €
+                    Économisez {(pack.original_price - pack.price).toFixed(2)} €
                   </span>
                 </>
               )}
@@ -345,7 +345,7 @@ export default function PackDetailPage() {
                 </div>
                 {pack.original_price && (
                   <p className="text-sm text-gray-500 mt-2">
-                    Valeur totale : {pack.original_price} € — Vous économisez {pack.original_price - pack.price} €
+                    Valeur totale : {pack.original_price} € — Vous économisez {(pack.original_price - pack.price).toFixed(2)} €
                   </p>
                 )}
               </div>
