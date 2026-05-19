@@ -347,7 +347,7 @@ export async function POST(request: NextRequest) {
     // Créer la session Stripe Checkout
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sessionConfig: any = {
-      payment_method_types: ['card'],
+      automatic_payment_methods: { enabled: true },
       line_items: lineItems,
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
