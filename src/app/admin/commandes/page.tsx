@@ -887,7 +887,13 @@ export default function AdminOrdersPage() {
                   </div>
                   <div className="flex justify-between py-2">
                     <span className="text-gray-600">
-                      Livraison ({selectedOrder.shipping_method === 'express' ? 'Express' : 'Standard'})
+                      {selectedOrder.shipping_method
+                        ? (selectedOrder.shipping_method === 'standard'
+                            ? 'Livraison (Standard)'
+                            : selectedOrder.shipping_method === 'express'
+                              ? 'Livraison (Express)'
+                              : selectedOrder.shipping_method)
+                        : 'Livraison'}
                     </span>
                     <span>{selectedOrder.shipping === 0 ? 'Gratuit' : `${selectedOrder.shipping} €`}</span>
                   </div>

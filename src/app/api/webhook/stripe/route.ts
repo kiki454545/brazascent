@@ -18,7 +18,7 @@ async function sendOrderConfirmationEmail(
   subtotal: number,
   shippingCost: number,
   total: number,
-  shippingMethod: string
+  shippingMethodTitle: string
 ) {
   if (!process.env.RESEND_API_KEY) {
     console.log('RESEND_API_KEY non configurée, email non envoyé')
@@ -106,7 +106,7 @@ async function sendOrderConfirmationEmail(
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #666;">
-                    Livraison ${shippingMethod === 'express' ? '(Express)' : '(Standard)'}
+                    ${shippingMethodTitle}
                   </td>
                   <td style="padding: 8px 0; text-align: right;">
                     ${shippingCost === 0 ? 'Offerte' : shippingCost.toFixed(2) + ' €'}
@@ -213,7 +213,8 @@ export async function POST(request: NextRequest) {
       // Format items: {id, s (size), q (quantity), p (price)}
       const rawItems = metadata.items ? JSON.parse(metadata.items) : []
       const userId = metadata.userId || null
-      const shippingMethod = metadata.shippingMethod || 'standard'
+      const shippingMethodId = metadata.shippingMethodId || null
+      const shippingMethodTitle = metadata.shippingMethodTitle || 'Livraison'
       const promoCode = metadata.promoCodeCode || null
       const promoDiscount = metadata.promoCodeDiscount ? parseFloat(metadata.promoCodeDiscount) : null
 
@@ -226,39 +227,12 @@ export async function POST(request: NextRequest) {
 
       const productMap = new Map(products?.map(p => [p.id, p]) || [])
 
-      // Récupérer les paramètres de livraison depuis l'admin
-      let shippingSettings = {
-        freeShippingThreshold: 150,
-        standardShippingPrice: 5,
-        expressShippingPrice: 14.90,
-      }
-      try {
-        const { data: settingsData } = await supabaseAdmin
-          .from('settings')
-          .select('value')
-          .eq('key', 'shipping')
-          .single()
-        if (settingsData?.value) {
-          const sv = settingsData.value as typeof shippingSettings
-          shippingSettings = {
-            freeShippingThreshold: sv.freeShippingThreshold ?? 150,
-            standardShippingPrice: sv.standardShippingPrice ?? 5,
-            expressShippingPrice: sv.expressShippingPrice ?? 14.90,
-          }
-        }
-      } catch {
-        // Utiliser les valeurs par défaut si erreur
-      }
-
-      // Calculer le sous-total avec les prix vérifiés
+      // Sous-total (prix vérifiés stockés en metadata par /api/checkout)
       const subtotal = rawItems.reduce((sum: number, item: { p: number; q: number }) =>
         sum + item.p * item.q, 0
       )
-      const shippingCost = subtotal >= shippingSettings.freeShippingThreshold
-        ? 0
-        : shippingMethod === 'express'
-          ? shippingSettings.expressShippingPrice
-          : shippingSettings.standardShippingPrice
+      // Frais de livraison déjà calculés et stockés en metadata côté checkout
+      const shippingCost = metadata.shippingCost ? parseFloat(metadata.shippingCost) : 0
 
       // Créer la commande dans Supabase
       const { data: order, error: orderError } = await supabaseAdmin
@@ -272,6 +246,8 @@ export async function POST(request: NextRequest) {
           promo_code: promoCode,
           total: session.amount_total ? session.amount_total / 100 : subtotal + shippingCost,
           shipping_address: shippingData,
+          shipping_method: shippingMethodTitle,
+          shipping_method_id: shippingMethodId,
           payment_method: 'stripe',
           payment_status: 'completed',
           stripe_session_id: session.id,
@@ -337,7 +313,7 @@ export async function POST(request: NextRequest) {
           subtotal,
           shippingCost,
           total,
-          shippingMethod
+          shippingMethodTitle
         )
       }
     } catch (error) {

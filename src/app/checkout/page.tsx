@@ -43,11 +43,16 @@ interface SavedAddress {
   is_default: boolean
 }
 
-interface ShippingSettings {
-  freeShippingThreshold: number
-  standardShippingPrice: number
-  expressShippingPrice: number
-  enableExpressShipping: boolean
+interface ShippingMethod {
+  id: string
+  title: string
+  description: string | null
+  description_2: string | null
+  price: number
+  image_url: string | null
+  badge: string | null
+  free_threshold: number | null
+  sort_order: number
 }
 
 interface AppliedPromoCode {
@@ -86,7 +91,8 @@ export default function CheckoutPage() {
     country: 'France',
   })
 
-  const [shippingMethod, setShippingMethod] = useState<'standard' | 'express'>('standard')
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
+  const [shippingMethodId, setShippingMethodId] = useState<string | null>(null)
   const [acceptTerms, setAcceptTerms] = useState(false)
 
   // Code promo
@@ -96,36 +102,22 @@ export default function CheckoutPage() {
   const [promoError, setPromoError] = useState<string | null>(null)
   const [validatingPromo, setValidatingPromo] = useState(false)
 
-  // Paramètres de livraison depuis l'admin
-  const [shippingSettings, setShippingSettings] = useState<ShippingSettings>({
-    freeShippingThreshold: 150,
-    standardShippingPrice: 9.90,
-    expressShippingPrice: 14.90,
-    enableExpressShipping: true,
-  })
-
-  // Charger les paramètres de livraison
+  // Charger les méthodes de livraison depuis la BDD
   useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchMethods = async () => {
       try {
-        const response = await fetch('/api/settings')
+        const response = await fetch('/api/shipping-methods')
         const data = await response.json()
-        if (data.shipping) {
-          setShippingSettings({
-            freeShippingThreshold: data.shipping.freeShippingThreshold ?? 150,
-            standardShippingPrice: data.shipping.standardShippingPrice ?? 9.90,
-            expressShippingPrice: data.shipping.expressShippingPrice ?? 14.90,
-            enableExpressShipping: data.shipping.enableExpressShipping ?? true,
-          })
-          if (!data.shipping.enableExpressShipping && shippingMethod === 'express') {
-            setShippingMethod('standard')
-          }
+        const methods: ShippingMethod[] = data.methods || []
+        setShippingMethods(methods)
+        if (methods.length > 0) {
+          setShippingMethodId(prev => prev ?? methods[0].id)
         }
       } catch (err) {
-        console.error('Error fetching shipping settings:', err)
+        console.error('Error fetching shipping methods:', err)
       }
     }
-    fetchSettings()
+    fetchMethods()
   }, [])
 
   // Charger les adresses sauvegardées si l'utilisateur est connecté
@@ -181,9 +173,12 @@ export default function CheckoutPage() {
   }, [profile])
 
   const subtotal = getTotal()
-  const shippingCost = shippingMethod === 'express'
-    ? shippingSettings.expressShippingPrice
-    : (subtotal >= shippingSettings.freeShippingThreshold ? 0 : shippingSettings.standardShippingPrice)
+  const selectedMethod = shippingMethods.find(m => m.id === shippingMethodId) ?? null
+  const shippingCost = selectedMethod
+    ? (selectedMethod.free_threshold !== null && subtotal >= selectedMethod.free_threshold
+        ? 0
+        : Number(selectedMethod.price))
+    : 0
   const total = subtotal + shippingCost - promoDiscount
 
   // Valider le code promo
@@ -284,6 +279,11 @@ export default function CheckoutPage() {
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!shippingMethodId) {
+      setError('Veuillez sélectionner un mode de livraison')
+      return
+    }
+    setError(null)
     setCurrentStep('payment')
   }
 
@@ -310,7 +310,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items,
           shippingAddress: finalAddress,
-          shippingMethod,
+          shippingMethodId,
           userId: user?.id,
           promoCode: appliedPromoCode ? {
             id: appliedPromoCode.id,
@@ -635,61 +635,70 @@ export default function CheckoutPage() {
 
                 <form onSubmit={handleShippingSubmit} className="space-y-6">
                   <div className="space-y-4">
-                    <label
-                      className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
-                        shippingMethod === 'standard'
-                          ? 'border-[#C9A962] bg-[#F9F6F1]'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="radio"
-                          name="shipping"
-                          value="standard"
-                          checked={shippingMethod === 'standard'}
-                          onChange={() => setShippingMethod('standard')}
-                          className="w-5 h-5 accent-[#C9A962]"
-                        />
-                        <div>
-                          <p className="font-medium">Livraison Standard</p>
-                          <p className="text-sm text-gray-500">3-5 jours ouvrés</p>
-                        </div>
-                      </div>
-                      <span className="font-medium">
-                        {subtotal >= shippingSettings.freeShippingThreshold ? (
-                          <span className="text-green-600">Offerte</span>
-                        ) : (
-                          `${shippingSettings.standardShippingPrice.toLocaleString('fr-FR')} €`
-                        )}
-                      </span>
-                    </label>
-
-                    {shippingSettings.enableExpressShipping && (
-                      <label
-                        className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
-                          shippingMethod === 'express'
-                            ? 'border-[#C9A962] bg-[#F9F6F1]'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <input
-                            type="radio"
-                            name="shipping"
-                            value="express"
-                            checked={shippingMethod === 'express'}
-                            onChange={() => setShippingMethod('express')}
-                            className="w-5 h-5 accent-[#C9A962]"
-                          />
-                          <div>
-                            <p className="font-medium">Livraison Express</p>
-                            <p className="text-sm text-gray-500">1-2 jours ouvrés</p>
-                          </div>
-                        </div>
-                        <span className="font-medium">{shippingSettings.expressShippingPrice.toLocaleString('fr-FR')} €</span>
-                      </label>
+                    {shippingMethods.length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        Aucun mode de livraison disponible
+                      </p>
                     )}
+                    {shippingMethods.map((method) => {
+                      const isSelected = shippingMethodId === method.id
+                      const isFree =
+                        method.free_threshold !== null &&
+                        subtotal >= method.free_threshold
+                      const priceLabel = isFree ? (
+                        <span className="text-green-600">Offerte</span>
+                      ) : (
+                        `${Number(method.price).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+                      )
+
+                      return (
+                        <label
+                          key={method.id}
+                          className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'border-[#C9A962] bg-[#F9F6F1]'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <input
+                              type="radio"
+                              name="shipping"
+                              value={method.id}
+                              checked={isSelected}
+                              onChange={() => setShippingMethodId(method.id)}
+                              className="w-5 h-5 accent-[#C9A962]"
+                            />
+                            {method.image_url && (
+                              <div className="w-12 h-12 relative flex-shrink-0">
+                                <Image
+                                  src={method.image_url}
+                                  alt={method.title}
+                                  fill
+                                  sizes="48px"
+                                  className="object-contain"
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium">{method.title}</p>
+                              {method.description && (
+                                <p className="text-sm text-gray-500">{method.description}</p>
+                              )}
+                              {method.description_2 && (
+                                <p className="text-sm text-gray-500">{method.description_2}</p>
+                              )}
+                              {method.badge && (
+                                <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-[#F9F6F1] border border-[#C9A962]/30 rounded">
+                                  {method.badge}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="font-medium">{priceLabel}</span>
+                        </label>
+                      )
+                    })}
                   </div>
 
                   {/* Adresse récap */}

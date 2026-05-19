@@ -40,7 +40,7 @@ const cartItemSchema = z.object({
 const checkoutSchema = z.object({
   items: z.array(cartItemSchema).min(1, 'Le panier est vide'),
   shippingAddress: shippingAddressSchema,
-  shippingMethod: z.enum(['standard', 'express']),
+  shippingMethodId: z.string().uuid('Mode de livraison invalide'),
   userId: z.string().uuid().optional(),
   promoCode: z.object({
     id: z.string().uuid(),
@@ -53,11 +53,12 @@ const checkoutSchema = z.object({
 // TYPES
 // =====================================================
 
-interface ShippingSettings {
-  freeShippingThreshold: number
-  standardShippingPrice: number
-  expressShippingPrice: number
-  enableExpressShipping: boolean
+interface ShippingMethod {
+  id: string
+  title: string
+  price: number
+  free_threshold: number | null
+  enabled: boolean
 }
 
 interface VerifiedPromoCode {
@@ -73,35 +74,19 @@ interface VerifiedPromoCode {
 // FONCTIONS UTILITAIRES
 // =====================================================
 
-// Récupérer les paramètres de livraison depuis Supabase
-async function getShippingSettings(): Promise<ShippingSettings> {
-  const defaultSettings: ShippingSettings = {
-    freeShippingThreshold: 150,
-    standardShippingPrice: 5,
-    expressShippingPrice: 14.90,
-    enableExpressShipping: true,
-  }
-
+// Récupérer une méthode de livraison depuis Supabase
+async function getShippingMethod(id: string): Promise<ShippingMethod | null> {
   try {
     const { data, error } = await supabase
-      .from('settings')
-      .select('value')
-      .eq('key', 'shipping')
+      .from('shipping_methods')
+      .select('id, title, price, free_threshold, enabled')
+      .eq('id', id)
       .single()
 
-    if (error || !data) {
-      return defaultSettings
-    }
-
-    const shippingValue = data.value as ShippingSettings
-    return {
-      freeShippingThreshold: shippingValue.freeShippingThreshold ?? defaultSettings.freeShippingThreshold,
-      standardShippingPrice: shippingValue.standardShippingPrice ?? defaultSettings.standardShippingPrice,
-      expressShippingPrice: shippingValue.expressShippingPrice ?? defaultSettings.expressShippingPrice,
-      enableExpressShipping: shippingValue.enableExpressShipping ?? defaultSettings.enableExpressShipping,
-    }
+    if (error || !data) return null
+    return data as ShippingMethod
   } catch {
-    return defaultSettings
+    return null
   }
 }
 
@@ -248,7 +233,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { items, shippingAddress, shippingMethod, userId, promoCode } = parseResult.data
+    const { items, shippingAddress, shippingMethodId, userId, promoCode } = parseResult.data
 
     // SÉCURITÉ: Vérifier les prix des produits côté serveur
     const { valid, verifiedItems } = await verifyProductPrices(items)
@@ -259,22 +244,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Récupérer les paramètres de livraison depuis l'admin
-    const shippingSettings = await getShippingSettings()
-
-    // Vérifier si la livraison express est autorisée
-    if (shippingMethod === 'express' && !shippingSettings.enableExpressShipping) {
+    // SÉCURITÉ: Charger la méthode de livraison depuis la BDD (jamais confiance au prix client)
+    const shippingMethod = await getShippingMethod(shippingMethodId)
+    if (!shippingMethod || !shippingMethod.enabled) {
       return NextResponse.json(
-        { error: 'La livraison express n\'est pas disponible' },
+        { error: 'Mode de livraison invalide ou indisponible' },
         { status: 400 }
       )
     }
 
     // SÉCURITÉ: Calculer le sous-total avec les prix vérifiés côté serveur
     const subtotal = verifiedItems.reduce((sum, item) => sum + item.serverPrice * item.quantity, 0)
-    const shippingCost = shippingMethod === 'express'
-      ? shippingSettings.expressShippingPrice
-      : (subtotal >= shippingSettings.freeShippingThreshold ? 0 : shippingSettings.standardShippingPrice)
+    const shippingCost =
+      shippingMethod.free_threshold !== null && subtotal >= shippingMethod.free_threshold
+        ? 0
+        : shippingMethod.price
 
     // SÉCURITÉ: Vérifier et recalculer le code promo côté serveur
     let verifiedPromoCode: VerifiedPromoCode | null = null
@@ -316,8 +300,8 @@ export async function POST(request: NextRequest) {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: shippingMethod === 'express' ? 'Livraison Express' : 'Livraison Standard',
-            description: shippingMethod === 'express' ? '1-2 jours ouvrés' : '3-5 jours ouvrés',
+            name: shippingMethod.title,
+            description: 'Frais de livraison',
             images: [],
           },
           unit_amount: formatAmountForStripe(shippingCost),
@@ -355,7 +339,9 @@ export async function POST(request: NextRequest) {
       customer_email: shippingAddress.email,
       metadata: {
         userId: userId || '',
-        shippingMethod,
+        shippingMethodId: shippingMethod.id,
+        shippingMethodTitle: shippingMethod.title,
+        shippingCost: shippingCost.toString(),
         shipping: JSON.stringify({
           name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
           email: shippingAddress.email,

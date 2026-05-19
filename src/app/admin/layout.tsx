@@ -18,7 +18,8 @@ import {
   MessageSquare,
   Tag,
   Eye,
-  ShoppingBag
+  ShoppingBag,
+  Truck
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 
@@ -30,6 +31,7 @@ const adminNav = [
   { name: 'Packs', href: '/admin/packs', icon: Gift },
   { name: 'Marques', href: '/admin/marques', icon: Building2 },
   { name: 'Commandes', href: '/admin/commandes', icon: ShoppingCart },
+  { name: 'Livraisons', href: '/admin/livraisons', icon: Truck },
   { name: 'Codes Promo', href: '/admin/promo', icon: Tag },
   { name: 'Tickets', href: '/admin/tickets', icon: MessageSquare },
   { name: 'Newsletter', href: '/admin/newsletter', icon: Mail },
