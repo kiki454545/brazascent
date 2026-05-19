@@ -10,6 +10,7 @@ import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
+import { AccountSidebar } from '@/components/AccountSidebar'
 
 export default function FavorisPage() {
   const { items: wishlistIds, removeItem, clearWishlist } = useWishlistStore()
@@ -80,7 +81,7 @@ export default function FavorisPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-32 pb-24 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -93,16 +94,16 @@ export default function FavorisPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Heart className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+            <Heart className="w-20 h-20 text-muted-foreground/50 mx-auto mb-6" />
             <h1 className="text-3xl font-light tracking-[0.15em] uppercase mb-4">
               Votre liste de favoris est vide
             </h1>
-            <p className="text-gray-500 mb-8">
+            <p className="text-muted-foreground mb-8">
               Explorez nos parfums et ajoutez vos préférés à votre liste
             </p>
             <Link
               href="/parfums"
-              className="inline-flex items-center gap-3 px-8 py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
             >
               Découvrir nos parfums
               <ArrowRight className="w-4 h-4" />
@@ -114,34 +115,39 @@ export default function FavorisPage() {
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-24">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
+    <div className="min-h-screen pt-32 pb-24 bg-background">
+      <div className="px-6 sm:px-10 lg:px-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-3xl lg:text-4xl font-light tracking-[0.15em] uppercase mb-4">
-              Mes Favoris
-            </h1>
-            <p className="text-gray-500">
-              {wishlistProducts.length} parfum{wishlistProducts.length > 1 ? 's' : ''} dans votre liste
-            </p>
+          <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-light tracking-[0.15em] uppercase mb-2">
+                Mes Favoris
+              </h1>
+              <p className="text-muted-foreground">
+                {wishlistProducts.length} parfum{wishlistProducts.length > 1 ? 's' : ''} dans votre liste
+              </p>
+            </div>
+            {wishlistProducts.length > 0 && (
+              <button
+                onClick={clearWishlist}
+                className="text-sm text-muted-foreground hover:text-red-600 transition-colors"
+              >
+                Vider la liste
+              </button>
+            )}
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end mb-8">
-            <button
-              onClick={clearWishlist}
-              className="text-sm text-gray-500 hover:text-red-600 transition-colors"
-            >
-              Vider la liste
-            </button>
-          </div>
-
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-1">
+              <AccountSidebar />
+            </div>
+            <div className="lg:col-span-3">
           {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
             {wishlistProducts.map((product, index) => (
               <motion.div
                 key={product.id}
@@ -151,7 +157,7 @@ export default function FavorisPage() {
                 className="group"
               >
                 {/* Image */}
-                <div className="relative aspect-[3/4] bg-[#F9F6F1] mb-4 overflow-hidden">
+                <div className="relative aspect-[3/4] bg-cream mb-4 overflow-hidden">
                   <Link href={`/parfum/${product.slug}`}>
                     <Image
                       src={product.images[0]}
@@ -173,12 +179,12 @@ export default function FavorisPage() {
                   {/* Tags */}
                   <div className="absolute top-4 left-4 flex flex-col gap-2">
                     {product.new && (
-                      <span className="px-3 py-1 bg-[#C9A962] text-white text-xs tracking-wider uppercase">
+                      <span className="px-3 py-1 bg-primary text-white text-xs tracking-wider uppercase">
                         Nouveau
                       </span>
                     )}
                     {product.bestseller && (
-                      <span className="px-3 py-1 bg-[#19110B] text-white text-xs tracking-wider uppercase">
+                      <span className="px-3 py-1 bg-foreground text-background text-xs tracking-wider uppercase">
                         Bestseller
                       </span>
                     )}
@@ -187,7 +193,7 @@ export default function FavorisPage() {
                   {/* Add to cart button */}
                   <button
                     onClick={() => handleAddToCart(product)}
-                    className="absolute bottom-4 left-4 right-4 py-3 bg-white text-sm tracking-[0.1em] uppercase opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#19110B] hover:text-white"
+                    className="absolute bottom-4 left-4 right-4 py-3 bg-white text-sm tracking-[0.1em] uppercase opacity-0 group-hover:opacity-100 transition-opacity hover:bg-foreground hover:text-background"
                   >
                     <span className="flex items-center justify-center gap-2">
                       <ShoppingBag className="w-4 h-4" />
@@ -198,10 +204,10 @@ export default function FavorisPage() {
 
                 {/* Info */}
                 <Link href={`/parfum/${product.slug}`}>
-                  <p className="text-xs text-[#C9A962] tracking-[0.2em] uppercase mb-1">
+                  <p className="text-xs text-primary tracking-[0.2em] uppercase mb-1">
                     {product.brand}
                   </p>
-                  <h3 className="text-lg font-light tracking-[0.1em] uppercase mb-2 group-hover:text-[#C9A962] transition-colors">
+                  <h3 className="text-lg font-light tracking-[0.1em] uppercase mb-2 group-hover:text-primary transition-colors">
                     {product.name}
                   </h3>
                   <p className="text-lg">{product.price} €</p>
@@ -212,19 +218,21 @@ export default function FavorisPage() {
 
           {/* Info message */}
           {!user && (
-            <div className="mt-12 p-6 bg-[#F9F6F1] text-center">
-              <p className="text-sm text-gray-600 mb-4">
+            <div className="mt-12 p-6 bg-cream text-center">
+              <p className="text-sm text-muted-foreground mb-4">
                 Connectez-vous pour sauvegarder vos favoris et les retrouver sur tous vos appareils
               </p>
               <Link
                 href="/compte"
-                className="inline-flex items-center gap-2 text-sm text-[#C9A962] hover:underline"
+                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
               >
                 Se connecter
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           )}
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>

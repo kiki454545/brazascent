@@ -351,12 +351,12 @@ export default function CheckoutPage() {
   const finalAddress = getFinalAddress()
 
   return (
-    <div className="min-h-screen pt-32 pb-24 bg-[#F9F6F1]">
-      <div className="max-w-6xl mx-auto px-6">
+    <div className="min-h-screen pt-32 pb-24 bg-background">
+      <div className="px-6 sm:px-10 lg:px-20">
         {/* Back link */}
         <Link
           href="/panier"
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#C9A962] transition-colors mb-8"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
           Retour au panier
@@ -372,10 +372,10 @@ export default function CheckoutPage() {
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full text-sm ${
                       currentStep === step.id
-                        ? 'bg-[#19110B] text-white'
+                        ? 'bg-foreground text-background'
                         : steps.findIndex((s) => s.id === currentStep) > index
-                        ? 'bg-[#C9A962] text-white'
-                        : 'bg-gray-200 text-gray-500'
+                        ? 'bg-primary text-white'
+                        : 'bg-muted text-muted-foreground'
                     }`}
                   >
                     {steps.findIndex((s) => s.id === currentStep) > index ? (
@@ -386,13 +386,13 @@ export default function CheckoutPage() {
                   </div>
                   <span
                     className={`ml-2 text-sm ${
-                      currentStep === step.id ? 'font-medium' : 'text-gray-500'
+                      currentStep === step.id ? 'font-medium' : 'text-muted-foreground'
                     }`}
                   >
                     {step.label}
                   </span>
                   {index < steps.length - 1 && (
-                    <ChevronDown className="w-4 h-4 mx-4 text-gray-300 rotate-[-90deg]" />
+                    <ChevronDown className="w-4 h-4 mx-4 text-muted-foreground/50 rotate-[-90deg]" />
                   )}
                 </div>
               ))}
@@ -410,7 +410,7 @@ export default function CheckoutPage() {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white p-8 shadow-sm"
+                className="bg-cream p-8 shadow-sm"
               >
                 <h2 className="text-xl tracking-[0.1em] uppercase mb-6">
                   Informations de livraison
@@ -420,7 +420,7 @@ export default function CheckoutPage() {
                   {/* Adresses sauvegardées */}
                   {user && !loadingAddresses && savedAddresses.length > 0 && (
                     <div className="space-y-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground/80 mb-2">
                         Adresse de livraison
                       </label>
 
@@ -431,8 +431,8 @@ export default function CheckoutPage() {
                             key={address.id}
                             className={`flex items-start gap-4 p-4 border cursor-pointer transition-colors ${
                               !useNewAddress && selectedAddressId === address.id
-                                ? 'border-[#C9A962] bg-[#F9F6F1]'
-                                : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-primary bg-cream'
+                                : 'border-border hover:border-border'
                             }`}
                           >
                             <input
@@ -447,16 +447,16 @@ export default function CheckoutPage() {
                             />
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <MapPin className="w-4 h-4 text-[#C9A962]" />
+                                <MapPin className="w-4 h-4 text-primary" />
                                 <span className="font-medium">{address.label}</span>
                                 {address.is_default && (
-                                  <span className="px-2 py-0.5 bg-[#C9A962] text-white text-xs uppercase">
+                                  <span className="px-2 py-0.5 bg-primary text-white text-xs uppercase">
                                     Par défaut
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600">{address.street}</p>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-muted-foreground">{address.street}</p>
+                              <p className="text-sm text-muted-foreground">
                                 {address.postal_code} {address.city}, {address.country}
                               </p>
                             </div>
@@ -467,8 +467,8 @@ export default function CheckoutPage() {
                         <label
                           className={`flex items-center gap-4 p-4 border cursor-pointer transition-colors ${
                             useNewAddress
-                              ? 'border-[#C9A962] bg-[#F9F6F1]'
-                              : 'border-gray-200 hover:border-gray-300'
+                              ? 'border-primary bg-cream'
+                              : 'border-border hover:border-border'
                           }`}
                         >
                           <input
@@ -479,7 +479,7 @@ export default function CheckoutPage() {
                             className="w-5 h-5 accent-[#C9A962]"
                           />
                           <div className="flex items-center gap-2">
-                            <Plus className="w-4 h-4 text-[#C9A962]" />
+                            <Plus className="w-4 h-4 text-primary" />
                             <span className="font-medium">Utiliser une nouvelle adresse</span>
                           </div>
                         </label>
@@ -492,13 +492,13 @@ export default function CheckoutPage() {
                     <>
                       {user && savedAddresses.length > 0 && (
                         <div className="border-t pt-6 mt-6">
-                          <h3 className="text-sm font-medium text-gray-700 mb-4">Nouvelle adresse</h3>
+                          <h3 className="text-sm font-medium text-foreground/80 mb-4">Nouvelle adresse</h3>
                         </div>
                       )}
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm text-gray-600 mb-2">Prénom *</label>
+                          <label className="block text-sm text-muted-foreground mb-2">Prénom *</label>
                           <input
                             type="text"
                             value={shippingAddress.firstName}
@@ -506,11 +506,11 @@ export default function CheckoutPage() {
                               setShippingAddress({ ...shippingAddress, firstName: e.target.value })
                             }
                             required
-                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-600 mb-2">Nom *</label>
+                          <label className="block text-sm text-muted-foreground mb-2">Nom *</label>
                           <input
                             type="text"
                             value={shippingAddress.lastName}
@@ -518,13 +518,13 @@ export default function CheckoutPage() {
                               setShippingAddress({ ...shippingAddress, lastName: e.target.value })
                             }
                             required
-                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-sm text-gray-600 mb-2">Email *</label>
+                        <label className="block text-sm text-muted-foreground mb-2">Email *</label>
                         <input
                           type="email"
                           value={shippingAddress.email}
@@ -532,12 +532,12 @@ export default function CheckoutPage() {
                             setShippingAddress({ ...shippingAddress, email: e.target.value })
                           }
                           required
-                          className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm text-gray-600 mb-2">Adresse *</label>
+                        <label className="block text-sm text-muted-foreground mb-2">Adresse *</label>
                         <input
                           type="text"
                           value={shippingAddress.street}
@@ -546,13 +546,13 @@ export default function CheckoutPage() {
                           }
                           required
                           placeholder="123 rue Example"
-                          className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
                         />
                       </div>
 
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                         <div>
-                          <label className="block text-sm text-gray-600 mb-2">Code postal *</label>
+                          <label className="block text-sm text-muted-foreground mb-2">Code postal *</label>
                           <input
                             type="text"
                             value={shippingAddress.postalCode}
@@ -560,11 +560,11 @@ export default function CheckoutPage() {
                               setShippingAddress({ ...shippingAddress, postalCode: e.target.value })
                             }
                             required
-                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-600 mb-2">Ville *</label>
+                          <label className="block text-sm text-muted-foreground mb-2">Ville *</label>
                           <input
                             type="text"
                             value={shippingAddress.city}
@@ -572,17 +572,17 @@ export default function CheckoutPage() {
                               setShippingAddress({ ...shippingAddress, city: e.target.value })
                             }
                             required
-                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
                           />
                         </div>
                         <div className="col-span-2 sm:col-span-1">
-                          <label className="block text-sm text-gray-600 mb-2">Pays *</label>
+                          <label className="block text-sm text-muted-foreground mb-2">Pays *</label>
                           <select
                             value={shippingAddress.country}
                             onChange={(e) =>
                               setShippingAddress({ ...shippingAddress, country: e.target.value })
                             }
-                            className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
                           >
                             <option value="France">France</option>
                             <option value="Belgique">Belgique</option>
@@ -596,8 +596,8 @@ export default function CheckoutPage() {
 
                   {/* Téléphone - Toujours visible */}
                   <div className={user && savedAddresses.length > 0 && !useNewAddress ? 'border-t pt-6' : ''}>
-                    <label className="block text-sm text-gray-600 mb-2">
-                      Téléphone * <span className="text-gray-400">(requis pour la livraison)</span>
+                    <label className="block text-sm text-muted-foreground mb-2">
+                      Téléphone * <span className="text-muted-foreground/60">(requis pour la livraison)</span>
                     </label>
                     <input
                       type="tel"
@@ -607,16 +607,16 @@ export default function CheckoutPage() {
                       }
                       required
                       placeholder="+33 6 00 00 00 00"
-                      className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] focus:outline-none"
+                      className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Le transporteur peut vous contacter pour la livraison
                     </p>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                    className="w-full py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
                   >
                     Continuer vers la livraison
                   </button>
@@ -629,14 +629,14 @@ export default function CheckoutPage() {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white p-8 shadow-sm"
+                className="bg-cream p-8 shadow-sm"
               >
                 <h2 className="text-xl tracking-[0.1em] uppercase mb-6">Mode de livraison</h2>
 
                 <form onSubmit={handleShippingSubmit} className="space-y-6">
                   <div className="space-y-4">
                     {shippingMethods.length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4">
+                      <p className="text-sm text-muted-foreground text-center py-4">
                         Aucun mode de livraison disponible
                       </p>
                     )}
@@ -656,8 +656,8 @@ export default function CheckoutPage() {
                           key={method.id}
                           className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
                             isSelected
-                              ? 'border-[#C9A962] bg-[#F9F6F1]'
-                              : 'border-gray-200 hover:border-gray-300'
+                              ? 'border-primary bg-cream'
+                              : 'border-border hover:border-border'
                           }`}
                         >
                           <div className="flex items-center gap-4">
@@ -683,13 +683,13 @@ export default function CheckoutPage() {
                             <div>
                               <p className="font-medium">{method.title}</p>
                               {method.description && (
-                                <p className="text-sm text-gray-500">{method.description}</p>
+                                <p className="text-sm text-muted-foreground">{method.description}</p>
                               )}
                               {method.description_2 && (
-                                <p className="text-sm text-gray-500">{method.description_2}</p>
+                                <p className="text-sm text-muted-foreground">{method.description_2}</p>
                               )}
                               {method.badge && (
-                                <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-[#F9F6F1] border border-[#C9A962]/30 rounded">
+                                <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-cream border border-primary/30 rounded">
                                   {method.badge}
                                 </span>
                               )}
@@ -702,13 +702,13 @@ export default function CheckoutPage() {
                   </div>
 
                   {/* Adresse récap */}
-                  <div className="p-4 bg-gray-50 border">
+                  <div className="p-4 bg-muted border">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-500">Adresse de livraison</span>
+                      <span className="text-sm text-muted-foreground">Adresse de livraison</span>
                       <button
                         type="button"
                         onClick={() => setCurrentStep('information')}
-                        className="text-sm text-[#C9A962] hover:underline"
+                        className="text-sm text-primary hover:underline"
                       >
                         Modifier
                       </button>
@@ -720,7 +720,7 @@ export default function CheckoutPage() {
                     <p className="text-sm">
                       {finalAddress.postalCode} {finalAddress.city}, {finalAddress.country}
                     </p>
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-sm text-muted-foreground mt-2">
                       Tél: {finalAddress.phone}
                     </p>
                   </div>
@@ -729,13 +729,13 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => setCurrentStep('information')}
-                      className="px-6 py-4 border border-gray-300 text-sm tracking-[0.15em] uppercase hover:bg-gray-50 transition-colors"
+                      className="px-6 py-4 border border-border text-sm tracking-[0.15em] uppercase hover:bg-muted transition-colors"
                     >
                       Retour
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                      className="flex-1 py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
                     >
                       Continuer vers le paiement
                     </button>
@@ -749,35 +749,35 @@ export default function CheckoutPage() {
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white p-8 shadow-sm"
+                className="bg-cream p-8 shadow-sm"
               >
                 <h2 className="text-xl tracking-[0.1em] uppercase mb-6">Paiement</h2>
 
                 <form onSubmit={handlePaymentSubmit} className="space-y-6">
                   {/* Stripe info */}
-                  <div className="p-4 bg-[#F9F6F1] border border-[#C9A962]/30 rounded-lg">
+                  <div className="p-4 bg-cream border border-primary/30 rounded-lg">
                     <div className="flex items-center gap-3 mb-2">
-                      <CreditCard className="w-5 h-5 text-[#C9A962]" />
+                      <CreditCard className="w-5 h-5 text-primary" />
                       <span className="font-medium">Paiement sécurisé par Stripe</span>
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Vous serez redirigé vers la page de paiement sécurisée Stripe pour finaliser votre commande.
                     </p>
                     <div className="flex gap-2 mt-3">
-                      <div className="px-2 py-1 bg-white rounded text-xs font-bold text-gray-600">VISA</div>
-                      <div className="px-2 py-1 bg-white rounded text-xs font-bold text-gray-600">Mastercard</div>
-                      <div className="px-2 py-1 bg-white rounded text-xs font-bold text-gray-600">CB</div>
+                      <div className="px-2 py-1 bg-background rounded text-xs font-bold text-muted-foreground">VISA</div>
+                      <div className="px-2 py-1 bg-background rounded text-xs font-bold text-muted-foreground">Mastercard</div>
+                      <div className="px-2 py-1 bg-background rounded text-xs font-bold text-muted-foreground">CB</div>
                     </div>
                   </div>
 
                   {/* Récap adresse */}
-                  <div className="p-4 bg-gray-50 border">
+                  <div className="p-4 bg-muted border">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-500">Adresse de livraison</span>
+                      <span className="text-sm text-muted-foreground">Adresse de livraison</span>
                       <button
                         type="button"
                         onClick={() => setCurrentStep('information')}
-                        className="text-sm text-[#C9A962] hover:underline"
+                        className="text-sm text-primary hover:underline"
                       >
                         Modifier
                       </button>
@@ -789,7 +789,7 @@ export default function CheckoutPage() {
                     <p className="text-sm">
                       {finalAddress.postalCode} {finalAddress.city}, {finalAddress.country}
                     </p>
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-sm text-muted-foreground mt-2">
                       Tél: {finalAddress.phone}
                     </p>
                   </div>
@@ -802,13 +802,13 @@ export default function CheckoutPage() {
                       onChange={(e) => setAcceptTerms(e.target.checked)}
                       className="w-5 h-5 mt-0.5 accent-[#C9A962]"
                     />
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       J&apos;accepte les{' '}
-                      <Link href="/cgv" className="text-[#C9A962] hover:underline">
+                      <Link href="/cgv" className="text-primary hover:underline">
                         conditions générales de vente
                       </Link>{' '}
                       et la{' '}
-                      <Link href="/confidentialite" className="text-[#C9A962] hover:underline">
+                      <Link href="/confidentialite" className="text-primary hover:underline">
                         politique de confidentialité
                       </Link>
                     </span>
@@ -818,14 +818,14 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={() => setCurrentStep('shipping')}
-                      className="px-6 py-4 border border-gray-300 text-sm tracking-[0.15em] uppercase hover:bg-gray-50 transition-colors"
+                      className="px-6 py-4 border border-border text-sm tracking-[0.15em] uppercase hover:bg-muted transition-colors"
                     >
                       Retour
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-1 py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors disabled:opacity-50"
+                      className="flex-1 py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors disabled:opacity-50"
                     >
                       {isLoading ? 'Redirection vers Stripe...' : `Payer ${total.toLocaleString('fr-FR')} €`}
                     </button>
@@ -835,7 +835,7 @@ export default function CheckoutPage() {
             )}
 
             {/* Security badges */}
-            <div className="mt-8 flex items-center justify-center gap-8 text-gray-400">
+            <div className="mt-8 flex items-center justify-center gap-8 text-muted-foreground/60">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5" />
                 <span className="text-sm">Paiement sécurisé</span>
@@ -849,14 +849,14 @@ export default function CheckoutPage() {
 
           {/* Order summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white p-6 shadow-sm sticky top-32">
+            <div className="bg-cream p-6 shadow-sm sticky top-32">
               <h2 className="text-lg tracking-[0.15em] uppercase mb-6">Récapitulatif</h2>
 
               {/* Items */}
-              <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pt-2 pr-2">
+              <div className="space-y-4 mb-6 pt-2">
                 {items.map((item) => (
                   <div key={`${item.product.id}-${item.selectedSize}`} className="flex gap-4">
-                    <div className="relative w-16 h-16 bg-[#F9F6F1] flex-shrink-0 overflow-visible">
+                    <div className="relative w-16 h-16 bg-cream flex-shrink-0 overflow-visible">
                       <Image
                         src={item.product.images[0]}
                         alt={item.product.name}
@@ -864,13 +864,13 @@ export default function CheckoutPage() {
                         sizes="64px"
                         className="object-cover"
                       />
-                      <span className="absolute -top-2 -right-2 w-5 h-5 bg-[#19110B] text-white text-xs rounded-full flex items-center justify-center z-10">
+                      <span className="absolute -top-2 -right-2 w-5 h-5 bg-foreground text-background text-xs rounded-full flex items-center justify-center z-10">
                         {item.quantity}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{item.product.name}</p>
-                      <p className="text-xs text-gray-500">{item.selectedSize}</p>
+                      <p className="text-xs text-muted-foreground">{item.selectedSize}</p>
                     </div>
                     <p className="text-sm font-medium">
                       {(getItemPrice(item) * item.quantity).toLocaleString('fr-FR')} €
@@ -882,7 +882,7 @@ export default function CheckoutPage() {
               {/* Code promo */}
               <div className="border-t pt-4 mb-4">
                 <p className="text-sm font-medium mb-3 flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-[#C9A962]" />
+                  <Tag className="w-4 h-4 text-primary" />
                   Code promo
                 </p>
                 {appliedPromoCode ? (
@@ -913,12 +913,12 @@ export default function CheckoutPage() {
                           setPromoError(null)
                         }}
                         placeholder="Entrer le code"
-                        className="flex-1 px-3 py-2 border border-gray-300 text-sm focus:border-[#C9A962] focus:outline-none uppercase"
+                        className="flex-1 px-3 py-2 border border-border text-sm focus:border-primary focus:outline-none uppercase"
                       />
                       <button
                         onClick={handleApplyPromoCode}
                         disabled={validatingPromo || !promoCode.trim()}
-                        className="px-4 py-2 bg-[#19110B] text-white text-sm hover:bg-[#C9A962] transition-colors disabled:opacity-50"
+                        className="px-4 py-2 bg-foreground text-background text-sm hover:bg-primary transition-colors disabled:opacity-50"
                       >
                         {validatingPromo ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -937,7 +937,7 @@ export default function CheckoutPage() {
               {/* Totals */}
               <div className="border-t pt-4 space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Sous-total</span>
+                  <span className="text-muted-foreground">Sous-total</span>
                   <span>{subtotal.toLocaleString('fr-FR')} €</span>
                 </div>
                 {promoDiscount > 0 && (
@@ -947,7 +947,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Livraison</span>
+                  <span className="text-muted-foreground">Livraison</span>
                   <span>
                     {shippingCost === 0 ? (
                       <span className="text-green-600">Offerte</span>

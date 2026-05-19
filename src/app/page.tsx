@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { ArrowRight, Sparkles, Award, Star, Truck } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowRight, Sparkles, Award, Star, Truck, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { supabase, isAbortError } from '@/lib/supabase'
 import { Product } from '@/types'
@@ -36,9 +36,20 @@ async function fetchWithRetry<T>(
   return { data: null, error: lastError }
 }
 
+export interface DraggableCarouselHandle {
+  scrollByAmount: (amount: number) => void
+}
+
 // Composant Carrousel Draggable avec inertie/momentum
-function DraggableCarousel({ products }: { products: Product[] }) {
+const DraggableCarousel = forwardRef<DraggableCarouselHandle, { products: Product[] }>(({ products }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Expose scrollByAmount au parent
+  useImperativeHandle(ref, () => ({
+    scrollByAmount: (amount: number) => {
+      containerRef.current?.scrollBy({ left: amount, behavior: 'smooth' })
+    },
+  }))
   const isDown = useRef(false)
   const hasDragged = useRef(false)
   const startX = useRef(0)
@@ -199,7 +210,7 @@ function DraggableCarousel({ products }: { products: Product[] }) {
   return (
     <div
       ref={containerRef}
-      className="flex gap-4 pl-6 lg:pl-12 pr-6 overflow-x-auto scrollbar-hide cursor-grab select-none"
+      className="flex gap-6 sm:gap-8 lg:gap-10 pl-6 sm:pl-10 lg:pl-20 pr-6 sm:pr-10 lg:pr-20 overflow-x-auto scrollbar-hide cursor-grab select-none"
       style={{
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
@@ -223,6 +234,97 @@ function DraggableCarousel({ products }: { products: Product[] }) {
           <ProductCard product={product} index={index} />
         </div>
       ))}
+    </div>
+  )
+})
+DraggableCarousel.displayName = 'DraggableCarousel'
+
+// Slider auto du hero : 5 bestsellers, défile toutes les 5s
+function HeroBestsellersSlider({ products }: { products: Product[] }) {
+  const items = products.slice(0, 5)
+  const [current, setCurrent] = useState(0)
+
+  useEffect(() => {
+    if (items.length <= 1) return
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % items.length)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [items.length])
+
+  if (items.length === 0) {
+    return <div className="w-full h-full bg-cream/10" />
+  }
+
+  const item = items[current]
+  const getPrice = (p: Product) => {
+    if (p.priceBySize) {
+      const prices = Object.values(p.priceBySize).filter(v => v > 0)
+      if (prices.length > 0) return Math.min(...prices)
+    }
+    return p.price
+  }
+
+  return (
+    <div className="relative w-full h-full overflow-hidden">
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.div
+          key={item.id}
+          initial={{ x: '100%' }}
+          animate={{ x: 0 }}
+          exit={{ x: '-100%' }}
+          transition={{ duration: 1, ease: [0.32, 0.72, 0, 1] }}
+          className="absolute inset-0"
+        >
+          <Link href={`/parfum/${item.slug}`} className="block w-full h-full group">
+            <motion.div
+              initial={{ scale: 1 }}
+              animate={{ scale: 1.08 }}
+              transition={{ duration: 6, ease: 'linear' }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={item.images?.[0] || '/images/placeholder.jpg'}
+                alt={item.name}
+                fill
+                priority={current === 0}
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                className="object-cover"
+              />
+            </motion.div>
+            {/* Dégradé bas pour la lisibilité des infos produit */}
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+            {/* Infos produit en overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 text-white">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-primary mb-3">
+                Bestseller
+              </p>
+              <p className="text-xs uppercase tracking-wider text-white/70 mb-1">
+                {item.brand}
+              </p>
+              <h3 className="text-2xl sm:text-3xl font-normal mb-2">{item.name}</h3>
+              <p className="text-sm text-white/90">
+                À partir de {getPrice(item).toFixed(2)} €
+              </p>
+            </div>
+          </Link>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Indicateurs (barres) en bas */}
+      <div className="absolute bottom-6 right-6 sm:bottom-8 sm:right-10 flex gap-1.5 z-10">
+        {items.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            aria-label={`Voir produit ${i + 1}`}
+            className={`h-0.5 transition-all ${
+              i === current ? 'w-10 bg-primary' : 'w-6 bg-white/40 hover:bg-white/70'
+            }`}
+          />
+        ))}
+      </div>
     </div>
   )
 }
@@ -284,6 +386,9 @@ export default function HomePage() {
   const [bestsellers, setBestsellers] = useState<Product[]>([])
   const [newProducts, setNewProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const bestsellersCarouselRef = useRef<DraggableCarouselHandle>(null)
+  const newProductsCarouselRef = useRef<DraggableCarouselHandle>(null)
+  const scrollStep = 320
 
   useEffect(() => {
     let isMounted = true
@@ -384,148 +489,179 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative h-screen overflow-hidden">
-        <div className="absolute inset-0">
+      {/* Hero Section — split 3/5 text · 2/5 slider */}
+      <section className="relative lg:min-h-screen overflow-hidden text-white">
+        {/* Background image global (les 2 colonnes), toujours sombre */}
+        <div className="absolute inset-0 z-0">
           <Image
             src="/images/hero-bg.jpg"
-            alt="Braza Scent - Parfumerie de niche"
+            alt=""
             fill
-            className="object-cover"
             priority
+            sizes="100vw"
+            className="object-cover"
           />
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-black/70" />
         </div>
 
-        <div className="relative h-full flex flex-col items-center justify-center text-white text-center px-4 sm:px-6 pt-20 sm:pt-0">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={stagger}
-          >
-            {/* Kicker */}
-            <motion.div variants={fadeUp} className="mb-4 sm:mb-6">
-              <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 border border-[#C9A962]/50 rounded-full text-[10px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase text-[#C9A962]">
-                Décants premium • Niche • Collection privée
-              </span>
-            </motion.div>
-
-            {/* Main Title */}
-            <motion.h1
-              variants={fadeUp}
-              className="text-[1.65rem] sm:text-4xl md:text-6xl lg:text-7xl font-light tracking-[0.05em] sm:tracking-[0.1em] uppercase mb-4 sm:mb-6 leading-tight"
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-5 lg:min-h-screen pt-24 lg:pt-0">
+          {/* Left : titre + subtitle + CTA */}
+          <div className="lg:col-span-3 relative flex items-center px-6 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-0">
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={stagger}
+              className="max-w-4xl relative z-10 text-white w-full"
             >
-              Découvre des parfums rares<br />
-              <span className="text-[#C9A962]">sans acheter le flacon</span>
-            </motion.h1>
-
-            {/* Subtitle */}
-            <motion.p
-              variants={fadeUp}
-              className="text-sm sm:text-lg md:text-xl font-light max-w-3xl mx-auto mb-6 sm:mb-10 leading-relaxed"
-            >
-              Braza Scent est spécialisé dans le décantage à partir de flacons authentiques :
-              parfumerie de niche, éditions limitées et pièces issues de collections privées.
-            </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-8 sm:mb-12">
-              <Link
-                href="/parfums"
-                className="btn-luxury px-6 sm:px-10 py-3 sm:py-4 bg-white text-[#19110B] text-xs sm:text-sm tracking-[0.15em] sm:tracking-[0.2em] uppercase font-medium hover:bg-[#C9A962] hover:text-white transition-colors"
+              <motion.h1
+                variants={fadeUp}
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal leading-[1.1] sm:leading-[1.05] mb-6 sm:mb-8 tracking-tight"
               >
-                Découvrir la sélection
-              </Link>
-              <Link
-                href="/packs"
-                className="px-6 sm:px-10 py-3 sm:py-4 border border-[#C9A962] bg-[#C9A962]/10 text-[#C9A962] text-xs sm:text-sm tracking-[0.15em] sm:tracking-[0.2em] uppercase font-medium hover:bg-[#C9A962] hover:text-white transition-colors"
-              >
-                Découvrir les packs
-              </Link>
-              <Link
-                href="#comment-ca-marche"
-                className="px-6 sm:px-10 py-3 sm:py-4 border border-white text-xs sm:text-sm tracking-[0.15em] sm:tracking-[0.2em] uppercase font-medium hover:bg-white hover:text-[#19110B] transition-colors"
-              >
-                Comment ça marche ?
-              </Link>
-            </motion.div>
+                Découvrez des parfums rares<br className="hidden sm:block" />
+                <span className="sm:hidden"> </span>
+                <span className="text-primary italic">sans acheter le flacon</span>
+              </motion.h1>
 
-            {/* Trust Badges */}
-            <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-2 sm:gap-3">
-              {['Authenticité garantie', 'Décantage soigné', 'Packaging sécurisé', 'Stock limité'].map((badge) => (
-                <span
-                  key={badge}
-                  className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-[10px] sm:text-xs tracking-wider"
+              <motion.p
+                variants={fadeUp}
+                className="text-sm sm:text-base text-white/90 mb-8 sm:mb-10 leading-relaxed max-w-2xl"
+              >
+                Braza Scent est spécialisé dans le décantage à partir de flacons authentiques :
+                parfumerie de niche, éditions limitées et pièces issues de collections privées.
+              </motion.p>
+
+              <motion.div variants={fadeUp}>
+                <Link
+                  href="/parfums"
+                  className="btn-luxury inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 bg-primary text-primary-foreground text-xs sm:text-sm tracking-[0.2em] uppercase font-medium hover:bg-gold-light transition-colors"
                 >
-                  {badge}
-                </span>
-              ))}
+                  Découvrir la sélection
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </motion.div>
             </motion.div>
-          </motion.div>
+
+            {/* Scroll indicator desktop */}
+            <Link
+              href="#comment-ca-marche"
+              aria-label="Comment ça marche"
+              className="hidden lg:flex absolute bottom-10 left-20 z-10 flex-col items-center gap-3 text-white/70 hover:text-primary transition-colors group"
+            >
+              <span className="text-[11px] tracking-[0.35em] uppercase">Comment ça marche</span>
+              <motion.div
+                animate={{ y: [0, 6, 0] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <ChevronDown className="w-5 h-5" strokeWidth={1.5} />
+              </motion.div>
+            </Link>
+          </div>
+
+          {/* Right : slider auto des 5 bestsellers */}
+          <div className="lg:col-span-2 relative aspect-[3/4] sm:aspect-[16/10] lg:aspect-auto lg:min-h-screen">
+            <HeroBestsellersSlider products={bestsellers} />
+          </div>
         </div>
       </section>
 
-      {/* Pourquoi Braza Scent */}
-      <section className="py-20 lg:py-28 bg-white">
-        <div className="max-w-6xl mx-auto px-6 lg:px-12">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={stagger}
-            className="text-center mb-16"
-          >
-            <motion.span variants={fadeUp} className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
-              Notre approche
-            </motion.span>
-            <motion.h2
-              variants={fadeUp}
-              className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase mb-6"
+      {/* Pourquoi Braza Scent — éditorial split */}
+      <section className="py-20 lg:py-28 bg-background">
+        <div className="px-6 lg:px-12">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16 items-center">
+            {/* Vidéo */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-100px' }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="relative aspect-[9/16] w-[360px] max-w-full mx-auto lg:col-span-2 overflow-hidden bg-black"
             >
-              Pourquoi Braza Scent ?
-            </motion.h2>
-            <motion.div variants={fadeUp} className="w-24 h-px bg-[#C9A962] mx-auto mb-8" />
-            <motion.p
-              variants={fadeUp}
-              className="text-gray-600 max-w-2xl mx-auto leading-relaxed"
-            >
-              Une approche simple : <strong className="text-[#19110B]">authenticité</strong>, <strong className="text-[#19110B]">sélection</strong>, <strong className="text-[#19110B]">soin</strong>.
-              Chaque décant est préparé avec précision pour te faire découvrir le parfum dans les meilleures conditions.
-            </motion.p>
-          </motion.div>
+              <video
+                src="/videos/decantage.mp4"
+                poster="/images/hero-bg.jpg"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* Cartouche or sur la vidéo */}
+              <div className="absolute bottom-6 left-6 lg:bottom-10 lg:left-10 bg-background/95 backdrop-blur px-6 py-4 border-l-2 border-primary">
+                <p className="text-[10px] tracking-[0.3em] uppercase text-primary mb-1">Maison</p>
+                <p className="font-serif text-xl">Braza Scent</p>
+              </div>
+            </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
-          >
-            {[
-              { icon: Sparkles, title: 'Authenticité', desc: 'Décantage à partir de flacons authentiques uniquement.' },
-              { icon: Award, title: 'Qualité', desc: 'Matériel propre, dosage précis, rendu premium.' },
-              { icon: Star, title: 'Rareté', desc: 'Niche, éditions limitées, sélection de collection privée.' },
-              { icon: Truck, title: 'Expédition', desc: 'Packaging sécurisé, préparation rapide.' },
-            ].map((item) => (
-              <motion.div
-                key={item.title}
+            {/* Contenu */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-100px' }}
+              variants={stagger}
+              className="lg:col-span-3"
+            >
+              <motion.span
                 variants={fadeUp}
-                className="text-center p-6 border border-gray-100 hover:border-[#C9A962]/30 transition-colors"
+                className="text-xs tracking-[0.35em] uppercase text-primary mb-4 block"
               >
-                <div className="w-16 h-16 mx-auto mb-6 border border-[#C9A962] rounded-full flex items-center justify-center">
-                  <item.icon className="w-7 h-7 text-[#C9A962]" />
-                </div>
-                <h3 className="text-lg tracking-[0.15em] uppercase mb-3">{item.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
+                Notre approche
+              </motion.span>
+              <motion.h2
+                variants={fadeUp}
+                className="text-3xl md:text-4xl lg:text-5xl font-normal leading-[1.1] mb-6"
+              >
+                L&apos;exigence du <span className="italic text-primary">détail</span>,
+                <br />
+                au service du parfum.
+              </motion.h2>
+              <motion.p
+                variants={fadeUp}
+                className="text-muted-foreground leading-relaxed mb-12 max-w-lg"
+              >
+                Chaque décant est préparé à la main, à partir de flacons authentiques.
+                Une démarche artisanale pour faire découvrir les plus belles fragrances de niche.
+              </motion.p>
+
+              <div className="space-y-8">
+                {[
+                  {
+                    num: '01',
+                    title: 'Authenticité',
+                    desc: 'Décantage exclusivement à partir de flacons originaux, jamais de copies ni de reformulations.',
+                  },
+                  {
+                    num: '02',
+                    title: 'Sélection',
+                    desc: 'Parfumerie de niche, éditions limitées et pièces issues de collections privées.',
+                  },
+                  {
+                    num: '03',
+                    title: 'Soin',
+                    desc: 'Matériel stérile, dosage précis, packaging sécurisé. Chaque commande est préparée comme une pièce unique.',
+                  },
+                ].map((item) => (
+                  <motion.div
+                    key={item.num}
+                    variants={fadeUp}
+                    className="grid grid-cols-[auto_1fr] gap-6 pb-8 border-b border-border last:border-b-0 last:pb-0"
+                  >
+                    <span className="font-serif text-2xl text-primary leading-none">{item.num}</span>
+                    <div>
+                      <h3 className="text-lg tracking-[0.15em] uppercase mb-2">{item.title}</h3>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Best-sellers - Carrousel draggable */}
-      <section className="py-20 lg:py-28 bg-[#F9F6F1] overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+      <section className="py-20 lg:py-28 bg-cream overflow-hidden">
+        <div className="px-6 sm:px-10 lg:px-20">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -534,7 +670,7 @@ export default function HomePage() {
           >
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
               <div>
-                <motion.span variants={fadeUp} className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
+                <motion.span variants={fadeUp} className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
                   Les plus populaires
                 </motion.span>
                 <motion.h2
@@ -543,13 +679,28 @@ export default function HomePage() {
                 >
                   Best-sellers
                 </motion.h2>
-                <motion.div variants={fadeUp} className="w-24 h-px bg-[#C9A962] mt-6" />
+                <motion.div variants={fadeUp} className="w-24 h-px bg-primary mt-6" />
               </div>
-              <motion.div variants={fadeUp} className="flex items-center gap-4">
-                <span className="text-sm text-gray-500 hidden md:block">← Glissez pour découvrir →</span>
+              <motion.div variants={fadeUp} className="flex items-center gap-6">
+                <div className="hidden md:flex items-center gap-2">
+                  <button
+                    onClick={() => bestsellersCarouselRef.current?.scrollByAmount(-scrollStep)}
+                    aria-label="Précédent"
+                    className="w-10 h-10 flex items-center justify-center border border-border hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => bestsellersCarouselRef.current?.scrollByAmount(scrollStep)}
+                    aria-label="Suivant"
+                    className="w-10 h-10 flex items-center justify-center border border-border hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
                 <Link
                   href="/parfums"
-                  className="inline-flex items-center gap-3 text-sm tracking-[0.2em] uppercase hover:text-[#C9A962] transition-colors group"
+                  className="inline-flex items-center gap-3 text-sm tracking-[0.2em] uppercase hover:text-primary transition-colors group"
                 >
                   Voir tout
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
@@ -561,18 +712,18 @@ export default function HomePage() {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : bestsellers.length > 0 ? (
-          <DraggableCarousel products={bestsellers} />
+          <DraggableCarousel ref={bestsellersCarouselRef} products={bestsellers} />
         ) : (
-          <p className="text-center text-gray-500 py-10">Aucun best-seller pour le moment</p>
+          <p className="text-center text-muted-foreground py-10">Aucun best-seller pour le moment</p>
         )}
       </section>
 
       {/* Nouveautés - Carrousel draggable */}
-      <section className="py-20 lg:py-28 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+      <section className="py-20 lg:py-28 bg-background overflow-hidden">
+        <div className="px-6 sm:px-10 lg:px-20">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -581,7 +732,7 @@ export default function HomePage() {
           >
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
               <div>
-                <motion.span variants={fadeUp} className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
+                <motion.span variants={fadeUp} className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
                   Fraîchement arrivés
                 </motion.span>
                 <motion.h2
@@ -590,13 +741,28 @@ export default function HomePage() {
                 >
                   Nouveautés
                 </motion.h2>
-                <motion.div variants={fadeUp} className="w-24 h-px bg-[#C9A962] mt-6" />
+                <motion.div variants={fadeUp} className="w-24 h-px bg-primary mt-6" />
               </div>
-              <motion.div variants={fadeUp} className="flex items-center gap-4">
-                <span className="text-sm text-gray-500 hidden md:block">← Glissez pour découvrir →</span>
+              <motion.div variants={fadeUp} className="flex items-center gap-6">
+                <div className="hidden md:flex items-center gap-2">
+                  <button
+                    onClick={() => newProductsCarouselRef.current?.scrollByAmount(-scrollStep)}
+                    aria-label="Précédent"
+                    className="w-10 h-10 flex items-center justify-center border border-border hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => newProductsCarouselRef.current?.scrollByAmount(scrollStep)}
+                    aria-label="Suivant"
+                    className="w-10 h-10 flex items-center justify-center border border-border hover:border-primary hover:text-primary transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
                 <Link
                   href="/parfums"
-                  className="inline-flex items-center gap-3 text-sm tracking-[0.2em] uppercase hover:text-[#C9A962] transition-colors group"
+                  className="inline-flex items-center gap-3 text-sm tracking-[0.2em] uppercase hover:text-primary transition-colors group"
                 >
                   Voir tout
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
@@ -608,138 +774,154 @@ export default function HomePage() {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : newProducts.length > 0 ? (
-          <DraggableCarousel products={newProducts} />
+          <DraggableCarousel ref={newProductsCarouselRef} products={newProducts} />
         ) : (
-          <p className="text-center text-gray-500 py-10">Aucune nouveauté pour le moment</p>
+          <p className="text-center text-muted-foreground py-10">Aucune nouveauté pour le moment</p>
         )}
       </section>
 
-      {/* Comment ça marche */}
-      <section id="comment-ca-marche" className="py-20 lg:py-28 bg-[#19110B] text-white">
-        <div className="max-w-6xl mx-auto px-6 lg:px-12">
+      {/* Comment ça marche — section unifiée (process + formats + engagement) */}
+      <section id="comment-ca-marche" className="py-20 lg:py-32 bg-cream">
+        <div className="px-6 sm:px-10 lg:px-20">
+          {/* En-tête de section */}
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-100px' }}
             variants={stagger}
-            className="text-center mb-16"
+            className="text-center mb-20"
           >
-            <motion.span variants={fadeUp} className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
-              Simple & rapide
+            <motion.span
+              variants={fadeUp}
+              className="text-xs tracking-[0.35em] uppercase text-primary mb-4 block"
+            >
+              Notre processus
             </motion.span>
             <motion.h2
               variants={fadeUp}
-              className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase mb-6"
+              className="text-4xl md:text-5xl lg:text-6xl font-normal leading-[1.1] mb-6"
             >
-              Comment ça marche ?
+              Comment ça <span className="italic text-primary">marche ?</span>
             </motion.h2>
-            <motion.div variants={fadeUp} className="w-24 h-px bg-[#C9A962] mx-auto" />
+            <motion.p
+              variants={fadeUp}
+              className="text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+            >
+              Décanter, c&apos;est découvrir sans se tromper. Voici comment nous garantissons une
+              expérience parfumée authentique, du flacon original jusqu&apos;à ta porte.
+            </motion.p>
           </motion.div>
 
+          {/* Bloc 1 — Process (4 étapes timeline) */}
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-50px' }}
             variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+            className="mb-24"
           >
-            {[
-              { num: '01', title: 'Choisis ton parfum', desc: 'Sélectionne la fragrance et le format (2/5/10ml).' },
-              { num: '02', title: 'Préparation', desc: 'Décantage propre et précis à partir d\'un flacon authentique.' },
-              { num: '03', title: 'Packaging', desc: 'Emballage soigné et sécurisé pour un transport sans stress.' },
-              { num: '04', title: 'Réception', desc: 'Tu testes sur plusieurs jours et tu profites de la niche.' },
-            ].map((step) => (
-              <motion.div
-                key={step.num}
-                variants={fadeUp}
-                className="text-center"
-              >
-                <div className="w-16 h-16 mx-auto mb-6 border border-[#C9A962] rounded-full flex items-center justify-center">
-                  <span className="text-[#C9A962] text-lg font-light">{step.num}</span>
-                </div>
-                <h3 className="text-lg tracking-[0.15em] uppercase mb-3">{step.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{step.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+            <motion.div variants={fadeUp} className="flex items-center gap-4 mb-12">
+              <span className="text-[10px] tracking-[0.35em] uppercase text-primary">01 · Process</span>
+              <div className="flex-1 h-px bg-border" />
+            </motion.div>
 
-      {/* Formats disponibles */}
-      <section className="py-20 lg:py-28 bg-white">
-        <div className="max-w-4xl mx-auto px-6 lg:px-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 relative">
+              {/* Ligne or de connexion (desktop only) */}
+              <div className="hidden lg:block absolute top-8 left-[12.5%] right-[12.5%] h-px bg-primary/30" aria-hidden />
+
+              {[
+                { num: '01', title: 'Choisis ton parfum', desc: 'Sélectionne la fragrance et le format (2/5/10ml).' },
+                { num: '02', title: 'Préparation', desc: 'Décantage propre et précis à partir d\'un flacon authentique.' },
+                { num: '03', title: 'Packaging', desc: 'Emballage soigné et sécurisé pour un transport sans stress.' },
+                { num: '04', title: 'Réception', desc: 'Tu testes sur plusieurs jours et tu profites de la niche.' },
+              ].map((step) => (
+                <motion.div key={step.num} variants={fadeUp} className="relative text-center">
+                  <div className="w-16 h-16 mx-auto mb-6 bg-cream border border-primary rounded-full flex items-center justify-center relative z-10">
+                    <span className="text-primary text-base font-serif">{step.num}</span>
+                  </div>
+                  <h3 className="text-base tracking-[0.15em] uppercase mb-3">{step.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Bloc 2 — Formats */}
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-50px' }}
             variants={stagger}
+            className="mb-24"
           >
-            <motion.div variants={fadeUp} className="text-center mb-12">
-              <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
-                Nos formats
-              </span>
-              <h2 className="text-3xl md:text-4xl font-light tracking-[0.15em] uppercase mb-6">
-                Décanter, c'est découvrir sans se tromper
-              </h2>
-              <div className="w-24 h-px bg-[#C9A962] mx-auto mb-8" />
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Le décantage te permet de tester une fragrance sur plusieurs jours (peau, météo, tenue)
-                avant d'investir dans un flacon complet.
+            <motion.div variants={fadeUp} className="flex items-center gap-4 mb-12">
+              <span className="text-[10px] tracking-[0.35em] uppercase text-primary">02 · Formats</span>
+              <div className="flex-1 h-px bg-border" />
+            </motion.div>
+
+            <motion.div variants={fadeUp} className="mb-10 max-w-2xl">
+              <p className="text-muted-foreground leading-relaxed">
+                Le décantage te permet de tester une fragrance sur plusieurs jours
+                (peau, météo, tenue) avant d&apos;investir dans un flacon complet.
               </p>
             </motion.div>
 
-            <motion.div variants={fadeUp} className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-8">
+            <motion.div variants={fadeUp} className="grid grid-cols-3 gap-3 sm:gap-6 lg:gap-10">
               {[
-                { size: '2ml', label: 'Test rapide' },
-                { size: '5ml', label: 'Découverte complète' },
-                { size: '10ml', label: 'Vrai usage' },
+                { size: '2ml', label: 'Test rapide', sprays: '≈ 45 sprays' },
+                { size: '5ml', label: 'Découverte complète', sprays: '≈ 110 sprays' },
+                { size: '10ml', label: 'Vrai usage', sprays: '≈ 220 sprays' },
               ].map((format) => (
                 <div
                   key={format.size}
-                  className="p-3 sm:p-6 lg:p-8 border border-gray-200 text-center hover:border-[#C9A962] transition-colors"
+                  className="p-4 sm:p-8 lg:p-10 border border-border bg-background text-center hover:border-primary transition-colors"
                 >
-                  <div className="text-2xl sm:text-3xl lg:text-4xl font-light text-[#C9A962] mb-1 sm:mb-2">{format.size}</div>
-                  <div className="text-[10px] sm:text-sm text-gray-600 tracking-wider uppercase leading-tight">{format.label}</div>
+                  <div className="font-serif text-3xl sm:text-5xl lg:text-6xl text-primary mb-2">
+                    {format.size}
+                  </div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground tracking-[0.2em] uppercase mb-2">
+                    {format.label}
+                  </div>
+                  <div className="text-xs sm:text-sm font-medium">{format.sprays}</div>
                 </div>
               ))}
             </motion.div>
           </motion.div>
-        </div>
-      </section>
 
-      {/* Engagement qualité */}
-      <section className="py-20 lg:py-28 bg-[#F9F6F1]">
-        <div className="max-w-5xl mx-auto px-6 lg:px-12">
+          {/* Bloc 3 — Engagement */}
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-50px' }}
             variants={stagger}
           >
-            <motion.div variants={fadeUp} className="text-center mb-12">
-              <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
-                Notre engagement
-              </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase mb-6">
-                Engagement qualité
-              </h2>
-              <div className="w-24 h-px bg-[#C9A962] mx-auto" />
+            <motion.div variants={fadeUp} className="flex items-center gap-4 mb-12">
+              <span className="text-[10px] tracking-[0.35em] uppercase text-primary">03 · Engagement</span>
+              <div className="flex-1 h-px bg-border" />
             </motion.div>
 
-            <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="p-8 bg-white border border-gray-100">
-                <h3 className="text-xl tracking-[0.15em] uppercase mb-4">Authenticité</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Décantage réalisé à partir de flacons <strong className="text-[#19110B]">authentiques</strong> (niche & collection privée).
+            <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
+              <div className="p-8 lg:p-10 border border-border bg-background">
+                <h3 className="text-base tracking-[0.15em] uppercase mb-4 flex items-center gap-3">
+                  <span className="text-primary font-serif">★</span>
+                  Authenticité
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Décantage réalisé à partir de flacons <strong className="text-foreground">authentiques</strong>
+                  (niche & collection privée). Aucune copie, aucune reformulation.
                 </p>
               </div>
-              <div className="p-8 bg-white border border-gray-100">
-                <h3 className="text-xl tracking-[0.15em] uppercase mb-4">Soin & transparence</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Matériel propre, manipulation soignée, packaging sécurisé, stock mis à jour selon disponibilité.
+              <div className="p-8 lg:p-10 border border-border bg-background">
+                <h3 className="text-base tracking-[0.15em] uppercase mb-4 flex items-center gap-3">
+                  <span className="text-primary font-serif">★</span>
+                  Soin & transparence
+                </h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Matériel stérile, manipulation soignée, packaging sécurisé, stock mis à jour
+                  selon disponibilité réelle.
                 </p>
               </div>
             </motion.div>
@@ -748,8 +930,8 @@ export default function HomePage() {
       </section>
 
       {/* Avis - Carrousel */}
-      <section className="py-20 lg:py-28 bg-white overflow-hidden">
-        <div className="max-w-6xl mx-auto px-6 lg:px-12">
+      <section className="py-20 lg:py-28 bg-background overflow-hidden">
+        <div className="px-6 sm:px-10 lg:px-20">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -757,13 +939,13 @@ export default function HomePage() {
             variants={stagger}
           >
             <motion.div variants={fadeUp} className="text-center mb-12">
-              <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
+              <span className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
                 Témoignages
               </span>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase mb-6">
                 Avis clients
               </h2>
-              <div className="w-24 h-px bg-[#C9A962] mx-auto" />
+              <div className="w-24 h-px bg-primary mx-auto" />
             </motion.div>
           </motion.div>
         </div>
@@ -778,11 +960,11 @@ export default function HomePage() {
             {[...reviews, ...reviews].map((review, index) => (
               <div
                 key={index}
-                className="flex-shrink-0 w-80 p-6 bg-[#F9F6F1] border border-gray-100"
+                className="flex-shrink-0 w-80 p-6 bg-cream border border-border"
               >
-                <div className="text-[#C9A962] text-lg mb-3">★★★★★</div>
-                <p className="text-gray-600 mb-4 italic leading-relaxed text-sm">"{review.text}"</p>
-                <p className="text-sm text-gray-500">{review.name}</p>
+                <div className="text-primary text-lg mb-3">★★★★★</div>
+                <p className="text-muted-foreground mb-4 italic leading-relaxed text-sm">"{review.text}"</p>
+                <p className="text-sm text-muted-foreground">{review.name}</p>
               </div>
             ))}
           </motion.div>
@@ -790,34 +972,36 @@ export default function HomePage() {
       </section>
 
       {/* Contact CTA */}
-      <section className="py-20 lg:py-28 bg-[#19110B] text-white">
-        <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center">
+      <section className="py-20 lg:py-28 bg-cream">
+        <div className="px-6 sm:px-10 lg:px-20 text-center">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeUp}
+            className="max-w-4xl mx-auto"
           >
-            <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
+            <span className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
               Contact
             </span>
-            <h2 className="text-3xl md:text-4xl font-light tracking-[0.15em] uppercase mb-6">
-              Une demande, une recherche, une pièce rare ?
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-normal leading-[1.1] mb-6">
+              Une demande, une recherche,<br className="hidden sm:block" />
+              <span className="italic text-primary">une pièce rare ?</span>
             </h2>
-            <div className="w-24 h-px bg-[#C9A962] mx-auto mb-8" />
-            <p className="text-gray-400 mb-10 max-w-xl mx-auto leading-relaxed">
+            <div className="w-24 h-px bg-primary mx-auto mb-8" />
+            <p className="text-muted-foreground mb-10 max-w-xl mx-auto leading-relaxed">
               Écris-moi pour une recommandation, une disponibilité, ou un conseil (familles olfactives, saisons, tenue).
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/contact"
-                className="btn-luxury px-10 py-4 bg-[#C9A962] text-[#19110B] text-sm tracking-[0.2em] uppercase font-medium hover:bg-[#E8D5A3] transition-colors"
+                className="btn-luxury px-10 py-4 bg-primary text-primary-foreground text-sm tracking-[0.2em] uppercase font-medium hover:bg-gold-light transition-colors"
               >
                 Me contacter
               </Link>
               <Link
                 href="/parfums"
-                className="px-10 py-4 border border-white text-sm tracking-[0.2em] uppercase font-medium hover:bg-white hover:text-[#19110B] transition-colors"
+                className="px-10 py-4 border border-foreground text-foreground text-sm tracking-[0.2em] uppercase font-medium hover:bg-foreground hover:text-background transition-colors"
               >
                 Voir le catalogue
               </Link>
@@ -826,58 +1010,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social Section */}
-      <section className="py-16 bg-[#F9F6F1]">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-8 block">
-            @braza.scent
-          </span>
-
-          <div className="flex justify-center gap-8">
-            <a
-              href="https://snapchat.com/t/eOoOvNcf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-4 group"
-            >
-              <div className="w-16 h-16 rounded-full bg-[#E1D800] flex items-center justify-center group-hover:scale-110 transition-transform">
-                <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 4.791 4.014.255.044.435.27.42.509 0 .075-.015.149-.045.225-.24.569-1.273.988-3.146 1.271-.059.091-.12.375-.164.57-.029.179-.074.36-.134.553-.076.271-.27.405-.555.405h-.03c-.135 0-.313-.031-.538-.074-.36-.075-.765-.135-1.273-.135-.3 0-.599.015-.913.074-.6.104-1.123.464-1.723.884-.853.599-1.826 1.288-3.294 1.288-.06 0-.119-.015-.18-.015h-.149c-1.468 0-2.427-.675-3.279-1.288-.599-.42-1.107-.779-1.707-.884-.314-.045-.629-.074-.928-.074-.54 0-.958.089-1.272.149-.211.043-.391.074-.54.074-.374 0-.523-.224-.583-.42-.061-.192-.09-.389-.135-.567-.046-.181-.105-.494-.166-.57-1.918-.222-2.95-.642-3.189-1.226-.031-.063-.052-.15-.055-.225-.015-.243.165-.465.42-.509 3.264-.54 4.73-3.879 4.791-4.02l.016-.029c.18-.345.224-.645.119-.869-.195-.434-.884-.658-1.332-.809-.121-.029-.24-.074-.346-.119-1.107-.435-1.257-.93-1.197-1.273.09-.479.674-.793 1.168-.793.146 0 .27.029.383.074.42.194.789.3 1.104.3.234 0 .384-.06.465-.105l-.046-.569c-.098-1.626-.225-3.651.307-4.837C7.392 1.077 10.739.807 11.727.807l.419-.015h.06z"/>
-                </svg>
-              </div>
-              <span className="text-sm tracking-[0.15em] uppercase text-gray-600 group-hover:text-[#C9A962] transition-colors">Snapchat</span>
-            </a>
-
-            <a
-              href="https://www.tiktok.com/@braza.scent"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-4 group"
-            >
-              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center group-hover:scale-110 transition-transform">
-                <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                </svg>
-              </div>
-              <span className="text-sm tracking-[0.15em] uppercase text-gray-600 group-hover:text-[#C9A962] transition-colors">TikTok</span>
-            </a>
-
-            <a
-              href="https://api.whatsapp.com/send/?phone=33756939038&text&type=phone_number&app_absent=0&wame_ctl=1"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-4 group"
-            >
-              <div className="w-16 h-16 rounded-full bg-[#25D366] flex items-center justify-center group-hover:scale-110 transition-transform">
-                <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                </svg>
-              </div>
-              <span className="text-sm tracking-[0.15em] uppercase text-gray-600 group-hover:text-[#C9A962] transition-colors">WhatsApp</span>
-            </a>
-          </div>
-        </div>
-      </section>
     </div>
   )
 }

@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cart'
 import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
+import { Benefits } from '@/components/Benefits'
 import { Product } from '@/types'
 
 interface ProductSelection {
@@ -201,7 +202,7 @@ export default function PackDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-32 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#C9A962]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -211,7 +212,7 @@ export default function PackDetailPage() {
       <div className="min-h-screen pt-32 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl mb-4">Pack non trouvé</h1>
-          <Link href="/packs" className="text-[#C9A962] hover:underline">
+          <Link href="/packs" className="text-primary hover:underline">
             Retour aux packs
           </Link>
         </div>
@@ -226,18 +227,18 @@ export default function PackDetailPage() {
   return (
     <div className="min-h-screen pt-28">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4">
-        <nav className="flex items-center gap-2 text-sm text-gray-500">
-          <Link href="/" className="hover:text-[#C9A962]">Accueil</Link>
-          <ChevronRight className="w-4 h-4" />
-          <Link href="/packs" className="hover:text-[#C9A962]">Packs</Link>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-[#19110B]">{pack.name}</span>
+      <div className="px-6 sm:px-10 lg:px-20 py-4">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground overflow-x-auto whitespace-nowrap">
+          <Link href="/" className="hover:text-primary">Accueil</Link>
+          <ChevronRight className="w-4 h-4 flex-shrink-0" />
+          <Link href="/packs" className="hover:text-primary">Packs</Link>
+          <ChevronRight className="w-4 h-4 flex-shrink-0" />
+          <span className="text-foreground truncate">{pack.name}</span>
         </nav>
       </div>
 
       {/* Pack Section */}
-      <section className="max-w-7xl mx-auto px-6 lg:px-12 py-8 lg:py-16">
+      <section className="px-6 sm:px-10 lg:px-20 py-8 lg:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Image */}
           <motion.div
@@ -245,7 +246,7 @@ export default function PackDetailPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="relative aspect-square bg-[#F9F6F1] overflow-hidden">
+            <div className="relative aspect-square bg-cream overflow-hidden">
               <Image
                 src={pack.image}
                 alt={pack.name}
@@ -257,12 +258,12 @@ export default function PackDetailPage() {
               {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
                 {pack.tag && (
-                  <span className="px-3 py-1 bg-[#C9A962] text-white text-xs tracking-[0.15em] uppercase">
+                  <span className="px-3 py-1 bg-primary text-white text-xs tracking-[0.15em] uppercase">
                     {pack.tag}
                   </span>
                 )}
                 {discount > 0 && (
-                  <span className="px-3 py-1 bg-[#19110B] text-white text-xs tracking-[0.15em] uppercase">
+                  <span className="px-3 py-1 bg-foreground text-background text-xs tracking-[0.15em] uppercase">
                     -{discount}%
                   </span>
                 )}
@@ -277,7 +278,7 @@ export default function PackDetailPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             {/* Tag */}
-            <p className="text-sm tracking-[0.2em] uppercase text-[#C9A962] mb-2">
+            <p className="text-sm tracking-[0.2em] uppercase text-primary mb-2">
               Coffret
             </p>
 
@@ -287,17 +288,17 @@ export default function PackDetailPage() {
             </h1>
 
             {/* Description */}
-            <p className="text-gray-600 mb-6">{pack.description}</p>
+            <p className="text-muted-foreground mb-6">{pack.description}</p>
 
             {/* Price */}
             <div className="flex items-center gap-4 mb-8">
               <span className="text-3xl font-light">{pack.price} €</span>
               {pack.original_price && (
                 <>
-                  <span className="text-lg text-gray-400 line-through">
+                  <span className="text-lg text-muted-foreground/60 line-through">
                     {pack.original_price} €
                   </span>
-                  <span className="text-sm text-[#C9A962] font-medium">
+                  <span className="text-sm text-primary font-medium">
                     Économisez {(pack.original_price - pack.price).toFixed(2)} €
                   </span>
                 </>
@@ -308,19 +309,19 @@ export default function PackDetailPage() {
             {packProducts.length > 0 && (
               <div className="mb-8">
                 <p className="text-sm tracking-[0.15em] uppercase mb-3 flex items-center gap-2">
-                  <Package className="w-4 h-4 text-[#C9A962]" />
+                  <Package className="w-4 h-4 text-primary" />
                   Ce coffret contient
                 </p>
-                <div className="border rounded-lg p-4 space-y-3">
+                <div className="border border-border p-4 space-y-3">
                   {packProducts.map((product) => {
                     const { selectedSize, price } = getProductSelectionInfo(product.id, product)
                     return (
                       <Link
                         key={product.id}
                         href={`/parfum/${product.slug}`}
-                        className="flex items-center gap-4 hover:bg-gray-50 p-2 rounded transition-colors"
+                        className="flex items-center gap-4 hover:bg-muted p-2 transition-colors"
                       >
-                        <div className="relative w-16 h-16 bg-[#F9F6F1] rounded overflow-hidden flex-shrink-0">
+                        <div className="relative w-16 h-16 bg-cream overflow-hidden flex-shrink-0">
                           {product.images[0] && (
                             <Image
                               src={product.images[0]}
@@ -332,19 +333,19 @@ export default function PackDetailPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{product.name}</p>
-                          <p className="text-sm text-gray-500">
-                            {selectedSize && <span className="text-[#C9A962]">{selectedSize}</span>}
+                          <p className="text-sm text-muted-foreground">
+                            {selectedSize && <span className="text-primary">{selectedSize}</span>}
                             {selectedSize && ' — '}
                             {price} €
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground/60" />
                       </Link>
                     )
                   })}
                 </div>
                 {pack.original_price && (
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-muted-foreground mt-2">
                     Valeur totale : {pack.original_price} € — Vous économisez {(pack.original_price - pack.price).toFixed(2)} €
                   </p>
                 )}
@@ -353,9 +354,9 @@ export default function PackDetailPage() {
 
             {/* Avertissement si codes promo non autorisés */}
             {pack.promo_allowed === false && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
-                <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-700">
+              <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-start gap-3">
+                <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-amber-700 dark:text-amber-300/90">
                   Les codes promo ne sont pas utilisables sur ce coffret.
                 </p>
               </div>
@@ -365,7 +366,7 @@ export default function PackDetailPage() {
             <div className="mb-8">
               <button
                 onClick={handleAddToCart}
-                className="w-full py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                className="w-full py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
               >
                 Ajouter au panier
               </button>
@@ -374,11 +375,11 @@ export default function PackDetailPage() {
             {/* Services */}
             <div className="border-t border-b py-6 space-y-4">
               <div className="flex items-center gap-4">
-                <Truck className="w-5 h-5 text-[#C9A962]" />
+                <Truck className="w-5 h-5 text-primary" />
                 <span className="text-sm">Livraison offerte dès {settings.freeShippingThreshold}€</span>
               </div>
               <div className="flex items-center gap-4">
-                <Gift className="w-5 h-5 text-[#C9A962]" />
+                <Gift className="w-5 h-5 text-primary" />
                 <span className="text-sm">Emballage cadeau offert</span>
               </div>
             </div>
@@ -388,9 +389,9 @@ export default function PackDetailPage() {
 
       {/* Products in Pack */}
       {packProducts.length > 0 && (
-        <section className="py-24 bg-[#F9F6F1]">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12">
-            <h2 className="text-3xl font-light tracking-[0.15em] uppercase text-center mb-12">
+        <section className="py-16 lg:py-24 bg-cream">
+          <div className="px-6 sm:px-10 lg:px-20">
+            <h2 className="text-2xl sm:text-3xl font-light tracking-[0.15em] uppercase text-center mb-12">
               Découvrez les parfums du coffret
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -401,6 +402,8 @@ export default function PackDetailPage() {
           </div>
         </section>
       )}
+
+      <Benefits />
     </div>
   )
 }

@@ -118,14 +118,14 @@ export default function FAQPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-background">
       {/* Hero */}
-      <section className="bg-[#19110B] text-white py-16 lg:py-24">
+      <section className="bg-black text-white pt-32 lg:pt-40 pb-16 lg:pb-24">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h1 className="text-3xl lg:text-5xl font-light tracking-[0.2em] uppercase mb-4">
             FAQ
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className="text-white text-lg">
             Questions fréquemment posées
           </p>
         </div>
@@ -135,7 +135,7 @@ export default function FAQPage() {
       <section className="max-w-4xl mx-auto px-6 py-16 lg:py-24">
         {faqCategories.map((category, categoryIndex) => (
           <div key={categoryIndex} className="mb-12 last:mb-0">
-            <h2 className="text-xl font-medium tracking-[0.1em] uppercase mb-6 text-[#19110B] border-b border-gray-200 pb-4">
+            <h2 className="text-xl font-medium tracking-[0.1em] uppercase mb-6 text-foreground border-b border-border pb-4">
               {category.title}
             </h2>
             <div className="space-y-4">
@@ -143,16 +143,16 @@ export default function FAQPage() {
                 const itemId = `${categoryIndex}-${itemIndex}`
                 const isOpen = openItems[itemId]
                 return (
-                  <div key={itemId} className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div key={itemId} className="border border-border rounded-lg overflow-hidden">
                     <button
                       onClick={() => toggleItem(itemId)}
-                      className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center justify-between p-5 text-left hover:bg-muted transition-colors"
                     >
-                      <span className="font-medium text-[#19110B] pr-4">{item.question}</span>
-                      <ChevronDown className={`w-5 h-5 text-[#C9A962] flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                      <span className="font-medium text-foreground pr-4">{item.question}</span>
+                      <ChevronDown className={`w-5 h-5 text-primary flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                     </button>
                     <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96' : 'max-h-0'}`}>
-                      <p className="px-5 pb-5 text-gray-600 leading-relaxed">
+                      <p className="px-5 pb-5 text-muted-foreground leading-relaxed">
                         {item.answer}
                       </p>
                     </div>
@@ -164,16 +164,16 @@ export default function FAQPage() {
         ))}
 
         {/* Contact CTA */}
-        <div className="mt-16 bg-[#FAF9F7] rounded-lg p-8 text-center">
-          <h3 className="text-xl font-medium text-[#19110B] mb-3">
+        <div className="mt-16 bg-cream rounded-lg p-8 text-center">
+          <h3 className="text-xl font-medium text-foreground mb-3">
             Vous n'avez pas trouvé la réponse à votre question ?
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             Notre équipe est là pour vous aider
           </p>
           <a
             href="/contact"
-            className="inline-block px-8 py-3 bg-[#C9A962] text-white text-sm tracking-[0.15em] uppercase font-medium hover:bg-[#B8944F] transition-colors"
+            className="inline-block px-8 py-3 bg-primary text-white text-sm tracking-[0.15em] uppercase font-medium hover:bg-gold-light transition-colors"
           >
             Nous contacter
           </a>

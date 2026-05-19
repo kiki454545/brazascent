@@ -40,16 +40,16 @@ export default function PanierPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <ShoppingBag className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+            <ShoppingBag className="w-20 h-20 text-muted-foreground/50 mx-auto mb-6" />
             <h1 className="text-3xl font-light tracking-[0.15em] uppercase mb-4">
               Votre panier est vide
             </h1>
-            <p className="text-gray-500 mb-8">
+            <p className="text-muted-foreground mb-8">
               Découvrez nos parfums et trouvez la fragrance qui vous correspond
             </p>
             <Link
               href="/parfums"
-              className="inline-flex items-center gap-3 px-8 py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
             >
               Découvrir nos parfums
               <ArrowRight className="w-4 h-4" />
@@ -75,12 +75,12 @@ export default function PanierPage() {
           {/* Cart items */}
           <div className="lg:col-span-2">
             <div className="border-b pb-4 mb-6 flex items-center justify-between">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted-foreground">
                 {items.length} article{items.length > 1 ? 's' : ''}
               </span>
               <button
                 onClick={clearCart}
-                className="text-sm text-gray-500 hover:text-[#C9A962] transition-colors"
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >
                 Vider le panier
               </button>
@@ -115,7 +115,7 @@ export default function PanierPage() {
                     {/* Image */}
                     <Link
                       href={`/parfum/${item.product.slug}`}
-                      className="relative w-32 h-32 bg-[#F9F6F1] flex-shrink-0"
+                      className="relative w-32 h-32 bg-cream flex-shrink-0"
                     >
                       <Image
                         src={item.product.images[0]}
@@ -138,13 +138,13 @@ export default function PanierPage() {
                         <div>
                           <Link
                             href={`/parfum/${item.product.slug}`}
-                            className="text-lg font-medium hover:text-[#C9A962] transition-colors"
+                            className="text-lg font-medium hover:text-primary transition-colors"
                           >
                             {item.product.name}
                           </Link>
-                          <p className="text-sm text-gray-500">{item.selectedSize}</p>
+                          <p className="text-sm text-muted-foreground">{item.selectedSize}</p>
                           {item.product.collection && (
-                            <p className="text-xs text-[#C9A962] mt-1">{item.product.collection}</p>
+                            <p className="text-xs text-primary mt-1">{item.product.collection}</p>
                           )}
                           {itemOutOfStock && (
                             <p className="text-sm text-red-600 mt-1 font-medium">Produit indisponible</p>
@@ -155,7 +155,7 @@ export default function PanierPage() {
                           className={`p-2 transition-colors ${
                             itemOutOfStock
                               ? 'text-red-500 hover:text-red-700'
-                              : 'text-gray-400 hover:text-[#19110B]'
+                              : 'text-muted-foreground/60 hover:text-foreground'
                           }`}
                           title={itemOutOfStock ? 'Retirer du panier' : 'Supprimer'}
                         >
@@ -166,12 +166,12 @@ export default function PanierPage() {
                       {!itemOutOfStock && (
                         <div className="mt-4 flex items-center justify-between">
                           {/* Quantity */}
-                          <div className="flex items-center border border-gray-300">
+                          <div className="flex items-center border border-border">
                             <button
                               onClick={() =>
                                 updateQuantity(item.product.id, item.selectedSize, item.quantity - 1)
                               }
-                              className="p-2 hover:bg-gray-100 transition-colors"
+                              className="p-2 hover:bg-muted transition-colors"
                             >
                               <Minus className="w-4 h-4" />
                             </button>
@@ -180,7 +180,7 @@ export default function PanierPage() {
                               onClick={() =>
                                 updateQuantity(item.product.id, item.selectedSize, item.quantity + 1)
                               }
-                              className="p-2 hover:bg-gray-100 transition-colors"
+                              className="p-2 hover:bg-muted transition-colors"
                             >
                               <Plus className="w-4 h-4" />
                             </button>
@@ -205,17 +205,17 @@ export default function PanierPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-[#F9F6F1] p-8"
+              className="bg-cream p-8"
             >
               <h2 className="text-lg tracking-[0.15em] uppercase mb-6">Récapitulatif</h2>
 
               <div className="space-y-4 mb-6">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Sous-total</span>
+                  <span className="text-muted-foreground">Sous-total</span>
                   <span>{subtotal.toLocaleString('fr-FR')} €</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Livraison</span>
+                  <span className="text-muted-foreground">Livraison</span>
                   <span>
                     {shipping === 0 ? (
                       <span className="text-green-600">Offerte</span>
@@ -226,7 +226,7 @@ export default function PanierPage() {
                 </div>
 
                 {subtotal < 150 && (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Plus que {(150 - subtotal).toLocaleString('fr-FR')} € pour la livraison offerte
                   </p>
                 )}
@@ -240,13 +240,13 @@ export default function PanierPage() {
               </div>
 
               {hasOutOfStockItems ? (
-                <div className="block w-full py-4 text-center bg-gray-300 text-gray-500 text-sm tracking-[0.15em] uppercase cursor-not-allowed mb-4">
+                <div className="block w-full py-4 text-center bg-muted text-muted-foreground text-sm tracking-[0.15em] uppercase cursor-not-allowed mb-4">
                   Retirez les produits indisponibles
                 </div>
               ) : (
                 <Link
                   href="/checkout"
-                  className="btn-luxury block w-full py-4 text-center bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors mb-4"
+                  className="btn-luxury block w-full py-4 text-center bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors mb-4"
                 >
                   Passer commande
                 </Link>
@@ -254,23 +254,23 @@ export default function PanierPage() {
 
               <Link
                 href="/parfums"
-                className="block w-full py-3 text-center border border-[#19110B] text-sm tracking-[0.15em] uppercase hover:bg-[#19110B] hover:text-white transition-colors"
+                className="block w-full py-3 text-center border border-foreground text-sm tracking-[0.15em] uppercase hover:bg-foreground hover:text-background transition-colors"
               >
                 Continuer mes achats
               </Link>
 
               {/* Benefits */}
               <div className="mt-8 pt-8 border-t space-y-4">
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Truck className="w-5 h-5 text-[#C9A962]" />
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <Truck className="w-5 h-5 text-primary" />
                   <span>Livraison offerte dès 150€</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Gift className="w-5 h-5 text-[#C9A962]" />
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <Gift className="w-5 h-5 text-primary" />
                   <span>Emballage cadeau offert</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Shield className="w-5 h-5 text-[#C9A962]" />
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <Shield className="w-5 h-5 text-primary" />
                   <span>Paiement sécurisé</span>
                 </div>
               </div>

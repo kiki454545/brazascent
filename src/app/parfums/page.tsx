@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { SlidersHorizontal, X, Search } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
+import { Benefits } from '@/components/Benefits'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 
@@ -162,7 +163,7 @@ export default function ParfumsPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[50vh] min-h-[400px] overflow-hidden">
+      <section className="relative h-[35vh] sm:h-[50vh] min-h-[240px] sm:min-h-[360px] overflow-hidden">
         <Image
           src="/images/parfums-hero.jpg"
           alt="Nos Parfums"
@@ -171,19 +172,20 @@ export default function ParfumsPage() {
           priority
         />
         <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 flex items-center justify-center text-center text-white">
+        <div className="absolute inset-0 flex items-center justify-center text-center text-white px-6 pt-24 sm:pt-0">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            className="max-w-3xl"
           >
-            <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
+            <span className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
               Collection
             </span>
-            <h1 className="text-5xl lg:text-6xl font-light tracking-[0.2em] uppercase mb-4">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-light tracking-[0.15em] sm:tracking-[0.2em] uppercase mb-4">
               Nos Parfums
             </h1>
-            <p className="text-lg font-light max-w-xl mx-auto">
+            <p className="text-sm sm:text-lg font-light max-w-xl mx-auto">
               Découvrez notre sélection de fragrances d&apos;exception
             </p>
           </motion.div>
@@ -191,39 +193,53 @@ export default function ParfumsPage() {
       </section>
 
       {/* Filters & Products */}
-      <section className="py-16 lg:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+      <section className="py-16 lg:py-24 bg-background">
+        <div className="px-6 sm:px-10 lg:px-20">
           {/* Filter bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-12 pb-6 border-b">
-            <div className="flex items-center gap-6">
-              <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="flex items-center gap-2 text-sm tracking-[0.1em] uppercase hover:text-[#C9A962] transition-colors"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                Filtrer
-              </button>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-10 lg:mb-12 pb-6 border-b">
+            <div className="flex items-center justify-between gap-6 flex-wrap">
+              <div className="flex items-center gap-6">
+                <button
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="flex items-center gap-2 text-sm tracking-[0.1em] uppercase hover:text-primary transition-colors"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Filtrer
+                </button>
 
-              <span className="text-sm text-gray-500">
-                {filteredProducts.length} parfum{filteredProducts.length > 1 ? 's' : ''}
-              </span>
+                <span className="text-sm text-muted-foreground">
+                  {filteredProducts.length} parfum{filteredProducts.length > 1 ? 's' : ''}
+                </span>
+              </div>
+
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="lg:hidden text-sm tracking-[0.1em] uppercase bg-transparent border-none focus:outline-none cursor-pointer"
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 w-full lg:w-auto">
               {/* Barre de recherche */}
-              <div className="relative">
+              <div className="relative flex-1 lg:flex-none">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Rechercher..."
-                  className="w-48 sm:w-64 pl-9 pr-3 py-2 text-sm border border-gray-300 focus:border-[#C9A962] focus:outline-none transition-colors"
+                  className="w-full lg:w-64 pl-9 pr-8 py-2 text-sm border border-border focus:border-primary focus:outline-none transition-colors"
                 />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:text-[#C9A962]"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:text-primary"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -233,7 +249,7 @@ export default function ParfumsPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="text-sm tracking-[0.1em] uppercase bg-transparent border-none focus:outline-none cursor-pointer"
+                className="hidden lg:block text-sm tracking-[0.1em] uppercase bg-transparent border-none focus:outline-none cursor-pointer"
               >
                 {sortOptions.map((option) => (
                   <option key={option.id} value={option.id}>
@@ -256,7 +272,7 @@ export default function ParfumsPage() {
                 <span className="text-sm tracking-[0.2em] uppercase">Filtres</span>
                 <button
                   onClick={() => setIsFilterOpen(false)}
-                  className="p-1 hover:text-[#C9A962] transition-colors"
+                  className="p-1 hover:text-primary transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -264,11 +280,11 @@ export default function ParfumsPage() {
 
               {/* Filtre par marque */}
               <div className="mb-6">
-                <span className="text-xs tracking-[0.15em] uppercase text-gray-500 mb-3 block">Marque</span>
+                <span className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-3 block">Marque</span>
                 <select
                   value={selectedBrand}
                   onChange={(e) => setSelectedBrand(e.target.value)}
-                  className="w-full sm:w-64 px-4 py-2.5 border border-gray-300 rounded-none text-sm focus:outline-none focus:border-[#19110B] bg-white"
+                  className="w-full sm:w-64 max-w-full px-4 py-2.5 border border-border rounded-none text-sm focus:outline-none focus:border-foreground bg-background"
                 >
                   <option value="all">Toutes les marques</option>
                   {brands.map((brand) => (
@@ -281,16 +297,16 @@ export default function ParfumsPage() {
 
               {/* Filtre par catégorie */}
               <div>
-                <span className="text-xs tracking-[0.15em] uppercase text-gray-500 mb-3 block">Catégorie</span>
-                <div className="flex flex-wrap gap-3">
+                <span className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-3 block">Catégorie</span>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                   {categories.map((category) => (
                     <button
                       key={category.id}
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`px-5 py-2.5 text-sm tracking-wider border transition-colors ${
+                      className={`px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm tracking-wider border transition-colors ${
                         selectedCategory === category.id
-                          ? 'bg-[#19110B] text-white border-[#19110B]'
-                          : 'border-gray-300 hover:border-[#19110B]'
+                          ? 'bg-foreground text-background border-foreground'
+                          : 'border-border hover:border-foreground'
                       }`}
                     >
                       {category.name}
@@ -304,7 +320,7 @@ export default function ParfumsPage() {
           {/* Products grid */}
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <>
@@ -316,13 +332,15 @@ export default function ParfumsPage() {
 
               {filteredProducts.length === 0 && (
                 <div className="text-center py-20">
-                  <p className="text-gray-500">Aucun parfum ne correspond à vos critères</p>
+                  <p className="text-muted-foreground">Aucun parfum ne correspond à vos critères</p>
                 </div>
               )}
             </>
           )}
         </div>
       </section>
+
+      <Benefits />
     </div>
   )
 }

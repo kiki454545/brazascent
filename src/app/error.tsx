@@ -32,17 +32,17 @@ export default function Error({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center p-8 bg-white rounded-lg shadow-sm max-w-md">
-        <h2 className="text-xl font-medium mb-4">Une erreur est survenue</h2>
-        <p className="text-gray-600 mb-6">
-          Nous nous excusons pour ce desagrement. Veuillez reessayer.
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center p-8 bg-cream border border-border rounded-lg shadow-sm max-w-md">
+        <h2 className="text-xl font-medium mb-4 text-foreground">Une erreur est survenue</h2>
+        <p className="text-muted-foreground mb-6">
+          Nous nous excusons pour ce désagrément. Veuillez réessayer.
         </p>
         <button
           onClick={reset}
-          className="px-6 py-3 bg-[#19110B] text-white text-sm tracking-wider uppercase hover:bg-[#C9A962] transition-colors"
+          className="px-6 py-3 bg-foreground text-background text-sm tracking-wider uppercase hover:bg-primary hover:text-primary-foreground transition-colors"
         >
-          Reessayer
+          Réessayer
         </button>
       </div>
     </div>

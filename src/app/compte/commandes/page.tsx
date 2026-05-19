@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Package, ArrowLeft, ChevronRight, Truck, CheckCircle, Clock, XCircle } from 'lucide-react'
+import { Package, ChevronRight, Truck, CheckCircle, Clock, XCircle } from 'lucide-react'
+import { AccountSidebar } from '@/components/AccountSidebar'
 import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
 
@@ -103,43 +104,40 @@ export default function CommandesPage() {
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-24 bg-[#F9F6F1]">
-      <div className="max-w-4xl mx-auto px-6">
+    <div className="min-h-screen pt-32 pb-24 bg-background">
+      <div className="px-6 sm:px-10 lg:px-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          {/* Back link */}
-          <Link
-            href="/compte"
-            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#C9A962] transition-colors mb-8"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour au compte
-          </Link>
-
           {/* Header */}
           <h1 className="text-3xl font-light tracking-[0.15em] uppercase mb-8">
             Mes Commandes
           </h1>
 
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-1">
+              <AccountSidebar />
+            </div>
+            <div className="lg:col-span-3">
+
           {/* Orders list */}
           {isLoading ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">Chargement...</p>
+              <p className="text-muted-foreground">Chargement...</p>
             </div>
           ) : orders.length === 0 ? (
-            <div className="bg-white p-12 shadow-sm text-center">
-              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <div className="bg-cream p-12 shadow-sm text-center">
+              <Package className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
               <h2 className="text-xl font-light tracking-[0.1em] uppercase mb-2">
                 Aucune commande
               </h2>
-              <p className="text-gray-500 mb-6">
+              <p className="text-muted-foreground mb-6">
                 Vous n&apos;avez pas encore passé de commande
               </p>
               <Link
                 href="/parfums"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#19110B] text-white text-sm tracking-[0.1em] uppercase hover:bg-[#C9A962] transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background text-sm tracking-[0.1em] uppercase hover:bg-primary transition-colors"
               >
                 Découvrir nos parfums
               </Link>
@@ -156,7 +154,7 @@ export default function CommandesPage() {
                     key={order.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white shadow-sm overflow-hidden"
+                    className="bg-cream shadow-sm overflow-hidden"
                   >
                     {/* Order header */}
                     <button
@@ -170,7 +168,7 @@ export default function CommandesPage() {
                           </div>
                           <div>
                             <p className="font-medium">{order.order_number}</p>
-                            <p className="text-sm text-gray-500">{formatDate(order.created_at)}</p>
+                            <p className="text-sm text-muted-foreground">{formatDate(order.created_at)}</p>
                           </div>
                         </div>
 
@@ -180,7 +178,7 @@ export default function CommandesPage() {
                             <p className={`text-sm ${status.color.split(' ')[0]}`}>{status.label}</p>
                           </div>
                           <ChevronRight
-                            className={`w-5 h-5 text-gray-400 transition-transform ${
+                            className={`w-5 h-5 text-muted-foreground/60 transition-transform ${
                               isExpanded ? 'rotate-90' : ''
                             }`}
                           />
@@ -199,7 +197,7 @@ export default function CommandesPage() {
                         <div className="p-6 space-y-4">
                           {order.items?.map((item) => (
                             <div key={item.id} className="flex gap-4">
-                              <div className="relative w-20 h-20 bg-[#F9F6F1] flex-shrink-0">
+                              <div className="relative w-20 h-20 bg-cream flex-shrink-0">
                                 {item.product_image && (
                                   <Image
                                     src={item.product_image}
@@ -211,8 +209,8 @@ export default function CommandesPage() {
                               </div>
                               <div className="flex-1">
                                 <p className="font-medium">{item.product_name}</p>
-                                <p className="text-sm text-gray-500">{item.size}</p>
-                                <p className="text-sm text-gray-500">Quantité : {item.quantity}</p>
+                                <p className="text-sm text-muted-foreground">{item.size}</p>
+                                <p className="text-sm text-muted-foreground">Quantité : {item.quantity}</p>
                               </div>
                               <p className="font-medium">{item.price.toLocaleString('fr-FR')} €</p>
                             </div>
@@ -220,14 +218,14 @@ export default function CommandesPage() {
                         </div>
 
                         {/* Summary */}
-                        <div className="p-6 bg-gray-50 border-t">
+                        <div className="p-6 bg-muted border-t">
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-gray-500">Sous-total</span>
+                              <span className="text-muted-foreground">Sous-total</span>
                               <span>{order.subtotal.toLocaleString('fr-FR')} €</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-500">Livraison</span>
+                              <span className="text-muted-foreground">Livraison</span>
                               <span>
                                 {order.shipping === 0 ? (
                                   <span className="text-green-600">Offerte</span>
@@ -245,7 +243,7 @@ export default function CommandesPage() {
                           {/* Tracking */}
                           {order.tracking_number && (
                             <div className="mt-4 pt-4 border-t">
-                              <p className="text-sm text-gray-500">Numéro de suivi</p>
+                              <p className="text-sm text-muted-foreground">Numéro de suivi</p>
                               <p className="font-medium">{order.tracking_number}</p>
                             </div>
                           )}
@@ -257,6 +255,8 @@ export default function CommandesPage() {
               })}
             </div>
           )}
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>

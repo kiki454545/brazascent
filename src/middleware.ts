@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server'
 /**
  * Middleware de sécurité pour Braza Scent
  * - Ajoute les headers de sécurité
- * - Protège les routes admin API (vérification basique)
  */
 
 // Headers de sécurité à ajouter à toutes les réponses

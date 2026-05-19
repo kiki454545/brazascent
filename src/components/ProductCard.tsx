@@ -78,7 +78,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Image container */}
-        <div className="relative aspect-[4/5] bg-[#F9F6F1] overflow-hidden mb-3">
+        <div className="relative aspect-[4/5] bg-cream overflow-hidden mb-3">
           {/* Main image */}
           <Image
             src={product.images[0]}
@@ -109,12 +109,12 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               </span>
             )}
             {product.new && !isOutOfStock && (
-              <span className="px-3 py-1 bg-[#C9A962] text-white text-xs tracking-[0.15em] uppercase">
+              <span className="px-3 py-1 bg-primary text-white text-xs tracking-[0.15em] uppercase">
                 Nouveau
               </span>
             )}
             {product.bestseller && !isOutOfStock && (
-              <span className="px-3 py-1 bg-[#19110B] text-white text-xs tracking-[0.15em] uppercase">
+              <span className="px-3 py-1 bg-foreground text-background text-xs tracking-[0.15em] uppercase">
                 Best-seller
               </span>
             )}
@@ -135,8 +135,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             onClick={handleToggleWishlist}
             className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-300 ${
               inWishlist
-                ? 'bg-[#C9A962] text-white'
-                : 'bg-white/80 text-[#19110B] opacity-0 group-hover:opacity-100'
+                ? 'bg-primary text-white'
+                : 'bg-background/80 text-foreground opacity-0 group-hover:opacity-100'
             }`}
           >
             <Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
@@ -145,7 +145,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           {/* Quick add - Masqué si rupture de stock */}
           {!isOutOfStock && (
             <div
-              className={`absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm p-4 transition-all duration-300 ${
+              className={`absolute bottom-0 left-0 right-0 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 border-t border-white/10 p-4 transition-all duration-300 ${
                 isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
               }`}
             >
@@ -161,8 +161,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
                     }}
                     className={`px-3 py-1 text-xs border transition-colors ${
                       selectedSize === size
-                        ? 'border-[#19110B] bg-[#19110B] text-white'
-                        : 'border-gray-300 hover:border-[#19110B]'
+                        ? 'border-foreground bg-foreground text-background'
+                        : 'border-border hover:border-foreground'
                     }`}
                   >
                     {size}
@@ -173,7 +173,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               {/* Add to cart button */}
               <button
                 onClick={handleAddToCart}
-                className="btn-luxury w-full py-2 bg-[#19110B] text-white text-xs tracking-[0.15em] uppercase flex items-center justify-center gap-2 hover:bg-[#C9A962] transition-colors"
+                className="btn-luxury w-full py-2 bg-foreground text-background text-xs tracking-[0.15em] uppercase flex items-center justify-center gap-2 hover:bg-primary transition-colors"
               >
                 <ShoppingBag className="w-4 h-4" />
                 Ajouter au panier
@@ -183,20 +183,22 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         </div>
 
         {/* Product info */}
-        <div className="text-center">
+        <div className="text-center min-w-0">
           {product.collection && (
-            <p className="text-xs text-gray-500 tracking-[0.15em] uppercase mb-1">
+            <p className="text-xs text-muted-foreground tracking-[0.15em] uppercase mb-1 truncate">
               {product.collection}
             </p>
           )}
-          <h3 className="text-lg font-light tracking-wide mb-1 group-hover:text-[#C9A962] transition-colors">
+          <h3 className="text-lg font-light tracking-wide mb-1 group-hover:text-primary transition-colors truncate">
             {product.name}
           </h3>
-          <p className="text-sm text-gray-600 mb-2">{product.shortDescription}</p>
-          <div className="flex items-center justify-center gap-3">
+          <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">
+            {product.shortDescription}
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
             <span className="font-medium">{currentPrice.toLocaleString('fr-FR')} €</span>
             {product.originalPrice && currentPrice < product.originalPrice && (
-              <span className="text-sm text-gray-400 line-through">
+              <span className="text-sm text-muted-foreground/60 line-through">
                 {product.originalPrice.toLocaleString('fr-FR')} €
               </span>
             )}

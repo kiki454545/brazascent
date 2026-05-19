@@ -11,6 +11,7 @@ import { useWishlistStore } from '@/store/wishlist'
 import { useAuthStore } from '@/store/auth'
 import { useSettingsStore } from '@/store/settings'
 import { CartDrawer } from './CartDrawer'
+import { ThemeToggle } from './ThemeToggle'
 import { supabase } from '@/lib/supabase'
 
 interface SearchProduct {
@@ -58,7 +59,7 @@ function AnnouncementCarousel() {
         >
           {repeatedMessages.map((message, index) => (
             <span key={`a-${index}`} className="mx-8 inline-flex items-center gap-2 whitespace-nowrap">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C9A962]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
               {message.text}
             </span>
           ))}
@@ -70,7 +71,7 @@ function AnnouncementCarousel() {
         >
           {repeatedMessages.map((message, index) => (
             <span key={`b-${index}`} className="mx-8 inline-flex items-center gap-2 whitespace-nowrap">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C9A962]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
               {message.text}
             </span>
           ))}
@@ -219,26 +220,26 @@ export function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isDarkHeader
-            ? 'bg-white shadow-sm'
+            ? 'bg-background shadow-sm'
             : 'bg-transparent'
         }`}
       >
-        {/* Top bar - Carrousel d'annonces */}
-        <div className={`text-center py-2 text-xs tracking-[0.2em] uppercase transition-colors duration-500 ${
-          isScrolled ? 'bg-[#19110B] text-white' : 'bg-[#19110B]/90 text-white'
+        {/* Top bar - Carrousel d'annonces (toujours noir, indépendant du thème) */}
+        <div className={`text-center py-2 text-xs tracking-[0.2em] uppercase transition-colors duration-500 text-white ${
+          isScrolled ? 'bg-black' : 'bg-black/90'
         }`}>
           <AnnouncementCarousel />
         </div>
 
         {/* Main header */}
-        <div className="px-6 lg:px-12">
+        <div className="px-6 sm:px-10 lg:px-20">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Left side - Menu & Search */}
             <div className="flex items-center gap-4 lg:gap-6">
               <button
                 onClick={() => setIsMenuOpen(true)}
-                className={`p-2 transition-colors duration-300 ${
-                  isDarkHeader ? 'text-[#19110B] hover:text-[#C9A962]' : 'text-white hover:text-[#C9A962]'
+                className={`py-2 -ml-2 pl-2 pr-2 transition-colors duration-300 ${
+                  isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
                 }`}
                 aria-label="Menu"
               >
@@ -248,7 +249,7 @@ export function Header() {
               <button
                 onClick={() => setIsSearchOpen(true)}
                 className={`p-2 transition-colors duration-300 ${
-                  isDarkHeader ? 'text-[#19110B] hover:text-[#C9A962]' : 'text-white hover:text-[#C9A962]'
+                  isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
                 }`}
                 aria-label="Rechercher"
               >
@@ -259,7 +260,7 @@ export function Header() {
             {/* Logo - Center */}
             <Link href="/" className="absolute left-1/2 transform -translate-x-1/2">
               <h1 className={`text-xl lg:text-2xl font-light tracking-[0.2em] uppercase transition-colors duration-500 ${
-                isDarkHeader ? 'text-[#19110B]' : 'text-white'
+                isDarkHeader ? 'text-foreground' : 'text-white'
               }`}>
                 Braza Scent
               </h1>
@@ -267,10 +268,16 @@ export function Header() {
 
             {/* Right side - Icons */}
             <div className="flex items-center gap-4 lg:gap-6">
+              <ThemeToggle
+                className={`hidden sm:block ${
+                  isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
+                }`}
+              />
+
               <Link
                 href="/compte"
                 className={`hidden sm:block p-2 transition-colors duration-300 ${
-                  isDarkHeader ? 'text-[#19110B] hover:text-[#C9A962]' : 'text-white hover:text-[#C9A962]'
+                  isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
                 }`}
                 aria-label="Mon compte"
               >
@@ -280,13 +287,13 @@ export function Header() {
               <Link
                 href="/favoris"
                 className={`hidden sm:block p-2 transition-colors duration-300 relative ${
-                  isDarkHeader ? 'text-[#19110B] hover:text-[#C9A962]' : 'text-white hover:text-[#C9A962]'
+                  isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
                 }`}
                 aria-label="Mes favoris"
               >
                 <Heart className="w-5 h-5" />
                 {wishlistItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#C9A962] text-white text-[10px] rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] rounded-full flex items-center justify-center">
                     {wishlistItems.length}
                   </span>
                 )}
@@ -294,14 +301,14 @@ export function Header() {
 
               <button
                 onClick={openCart}
-                className={`p-2 transition-colors duration-300 relative ${
-                  isDarkHeader ? 'text-[#19110B] hover:text-[#C9A962]' : 'text-white hover:text-[#C9A962]'
+                className={`py-2 pl-2 -mr-2 pr-2 transition-colors duration-300 relative ${
+                  isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
                 }`}
                 aria-label="Panier"
               >
                 <ShoppingBag className="w-5 h-5" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#C9A962] text-white text-[10px] rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[10px] rounded-full flex items-center justify-center">
                     {cartCount}
                   </span>
                 )}
@@ -331,14 +338,14 @@ export function Header() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.4, ease: 'easeOut' }}
-              className="fixed left-0 top-0 bottom-0 z-[70] w-full max-w-md bg-white shadow-2xl"
+              className="fixed left-0 top-0 bottom-0 z-[70] w-full max-w-md bg-background shadow-2xl"
             >
               {/* Menu header */}
               <div className="flex items-center justify-between px-6 h-16 border-b">
                 <span className="text-sm tracking-[0.2em] uppercase">Menu</span>
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-2 hover:text-[#C9A962] transition-colors"
+                  className="p-2 hover:text-primary transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -357,7 +364,7 @@ export function Header() {
                       <Link
                         href={item.href}
                         onClick={() => setIsMenuOpen(false)}
-                        className="group flex items-center justify-between py-4 text-xl tracking-[0.1em] hover:text-[#C9A962] transition-colors border-b border-gray-100"
+                        className="group flex items-center justify-between py-4 text-xl tracking-[0.1em] hover:text-primary transition-colors border-b border-border"
                       >
                         {item.name}
                         <ChevronRight className="w-5 h-5 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -367,8 +374,8 @@ export function Header() {
                 </nav>
 
                 {/* Secondary links */}
-                <div className="px-6 py-8 border-t bg-gray-50">
-                  <p className="text-xs tracking-[0.2em] uppercase text-gray-500 mb-4">
+                <div className="px-6 py-8 border-t bg-muted">
+                  <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">
                     Mon compte
                   </p>
                   <div className="space-y-3">
@@ -377,7 +384,7 @@ export function Header() {
                         <Link
                           href="/compte"
                           onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-3 text-sm hover:text-[#C9A962] transition-colors"
+                          className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                         >
                           <User className="w-4 h-4" />
                           {profile?.first_name || 'Mon profil'}
@@ -385,7 +392,7 @@ export function Header() {
                         <Link
                           href="/favoris"
                           onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-3 text-sm hover:text-[#C9A962] transition-colors"
+                          className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                         >
                           <Heart className="w-4 h-4" />
                           Mes favoris
@@ -393,7 +400,7 @@ export function Header() {
                         <Link
                           href="/panier"
                           onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-3 text-sm hover:text-[#C9A962] transition-colors"
+                          className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                         >
                           <ShoppingBag className="w-4 h-4" />
                           Mon panier
@@ -414,7 +421,7 @@ export function Header() {
                         <Link
                           href="/compte"
                           onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-3 text-sm hover:text-[#C9A962] transition-colors"
+                          className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                         >
                           <User className="w-4 h-4" />
                           Se connecter
@@ -422,7 +429,7 @@ export function Header() {
                         <Link
                           href="/favoris"
                           onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-3 text-sm hover:text-[#C9A962] transition-colors"
+                          className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                         >
                           <Heart className="w-4 h-4" />
                           Mes favoris
@@ -430,7 +437,7 @@ export function Header() {
                         <Link
                           href="/panier"
                           onClick={() => setIsMenuOpen(false)}
-                          className="flex items-center gap-3 text-sm hover:text-[#C9A962] transition-colors"
+                          className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                         >
                           <ShoppingBag className="w-4 h-4" />
                           Mon panier
@@ -442,11 +449,11 @@ export function Header() {
 
                 {/* Contact */}
                 <div className="px-6 py-6">
-                  <p className="text-xs tracking-[0.2em] uppercase text-gray-500 mb-3">
+                  <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-3">
                     Service client
                   </p>
-                  <p className="text-sm text-gray-600 mb-1">{settings.storePhone}</p>
-                  <p className="text-sm text-gray-600">{settings.storeEmail}</p>
+                  <p className="text-sm text-muted-foreground mb-1">{settings.storePhone}</p>
+                  <p className="text-sm text-muted-foreground">{settings.storeEmail}</p>
                 </div>
               </div>
             </motion.div>
@@ -462,16 +469,16 @@ export function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[60] bg-white overflow-y-auto overscroll-contain touch-pan-y"
+            className="fixed inset-0 z-[60] bg-background overflow-y-auto overscroll-contain touch-pan-y"
           >
             {/* Search header */}
-            <div className="flex items-center justify-between px-6 lg:px-12 h-16 lg:h-20 border-b">
+            <div className="flex items-center justify-between px-6 sm:px-10 lg:px-20 h-16 lg:h-20 border-b">
               <button
                 onClick={() => {
                   setIsSearchOpen(false)
                   setSearchQuery('')
                 }}
-                className="p-2 hover:text-[#C9A962] transition-colors"
+                className="p-2 hover:text-primary transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -490,17 +497,17 @@ export function Header() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Rechercher un parfum ou une marque..."
-                    className="w-full py-4 pr-12 text-xl lg:text-2xl border-b-2 border-[#19110B] focus:outline-none focus:border-[#C9A962] transition-colors bg-transparent"
+                    className="w-full py-4 pr-12 text-xl lg:text-2xl border-b-2 border-foreground focus:outline-none focus:border-primary transition-colors bg-transparent"
                     autoFocus
                   />
                   <button
                     type="submit"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 p-2 hover:text-[#C9A962] transition-colors"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 p-2 hover:text-primary transition-colors"
                   >
                     {isSearching ? (
-                      <Loader2 className="w-6 h-6 animate-spin text-[#C9A962]" />
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     ) : (
-                      <Search className="w-6 h-6 text-gray-400" />
+                      <Search className="w-6 h-6 text-muted-foreground" />
                     )}
                   </button>
                 </div>
@@ -509,7 +516,7 @@ export function Header() {
               {/* Résultats de recherche */}
               {searchQuery.trim() ? (
                 <div className="mt-8">
-                  <p className="text-sm tracking-[0.2em] uppercase text-gray-500 mb-6">
+                  <p className="text-sm tracking-[0.2em] uppercase text-muted-foreground mb-6">
                     {searchResults.length > 0
                       ? `${searchResults.length} résultat${searchResults.length > 1 ? 's' : ''}`
                       : 'Aucun résultat'
@@ -527,7 +534,7 @@ export function Header() {
                           }}
                           className="group"
                         >
-                          <div className="relative aspect-square bg-[#F9F6F1] overflow-hidden mb-2">
+                          <div className="relative aspect-square bg-cream overflow-hidden mb-2">
                             <Image
                               src={product.images?.[0] || '/images/placeholder.jpg'}
                               alt={product.name}
@@ -535,9 +542,9 @@ export function Header() {
                               className="object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           </div>
-                          <p className="text-xs text-gray-500 uppercase tracking-wider">{product.brand}</p>
-                          <p className="text-sm font-medium truncate group-hover:text-[#C9A962] transition-colors">{product.name}</p>
-                          <p className="text-sm text-[#C9A962]">À partir de {getProductPrice(product)} €</p>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider">{product.brand}</p>
+                          <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{product.name}</p>
+                          <p className="text-sm text-primary">À partir de {getProductPrice(product)} €</p>
                         </Link>
                       ))}
                     </div>
@@ -545,7 +552,7 @@ export function Header() {
                   {searchResults.length > 0 && (
                     <button
                       onClick={handleSearchSubmit}
-                      className="mt-6 w-full py-3 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                      className="mt-6 w-full py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
                     >
                       Voir tous les résultats
                     </button>
@@ -554,7 +561,7 @@ export function Header() {
               ) : (
                 /* Best sellers par défaut */
                 <div className="mt-8">
-                  <p className="text-sm tracking-[0.2em] uppercase text-gray-500 mb-6">
+                  <p className="text-sm tracking-[0.2em] uppercase text-muted-foreground mb-6">
                     Best Sellers
                   </p>
                   {bestSellers.length > 0 ? (
@@ -569,7 +576,7 @@ export function Header() {
                           }}
                           className="group"
                         >
-                          <div className="relative aspect-square bg-[#F9F6F1] overflow-hidden mb-2">
+                          <div className="relative aspect-square bg-cream overflow-hidden mb-2">
                             <Image
                               src={product.images?.[0] || '/images/placeholder.jpg'}
                               alt={product.name}
@@ -577,21 +584,21 @@ export function Header() {
                               className="object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           </div>
-                          <p className="text-xs text-gray-500 uppercase tracking-wider">{product.brand}</p>
-                          <p className="text-sm font-medium truncate group-hover:text-[#C9A962] transition-colors">{product.name}</p>
-                          <p className="text-sm text-[#C9A962]">À partir de {getProductPrice(product)} €</p>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider">{product.brand}</p>
+                          <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{product.name}</p>
+                          <p className="text-sm text-primary">À partir de {getProductPrice(product)} €</p>
                         </Link>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500">Chargement...</p>
+                    <p className="text-muted-foreground">Chargement...</p>
                   )}
                 </div>
               )}
 
               {/* Catégories */}
               <div className="mt-12 pt-8 border-t">
-                <p className="text-sm tracking-[0.2em] uppercase text-gray-500 mb-6">
+                <p className="text-sm tracking-[0.2em] uppercase text-muted-foreground mb-6">
                   Catégories
                 </p>
                 <div className="flex flex-wrap gap-3">
@@ -607,7 +614,7 @@ export function Header() {
                         setIsSearchOpen(false)
                         setSearchQuery('')
                       }}
-                      className="px-5 py-2.5 border border-[#19110B] text-sm tracking-wider hover:bg-[#19110B] hover:text-white transition-colors"
+                      className="px-5 py-2.5 border border-foreground text-sm tracking-wider hover:bg-foreground hover:text-background transition-colors"
                     >
                       {item.name}
                     </Link>

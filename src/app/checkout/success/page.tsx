@@ -47,12 +47,12 @@ export default function CheckoutSuccessPage() {
   }, [sessionId])
 
   return (
-    <div className="min-h-screen pt-32 pb-24 bg-[#F9F6F1]">
+    <div className="min-h-screen pt-32 pb-24 bg-background">
       <div className="max-w-2xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-8 md:p-12 shadow-sm text-center"
+          className="bg-cream p-8 md:p-12 shadow-sm text-center"
         >
           {/* Success icon */}
           <motion.div
@@ -68,26 +68,26 @@ export default function CheckoutSuccessPage() {
             Commande confirmée
           </h1>
 
-          <p className="text-gray-600 mb-8">
+          <p className="text-muted-foreground mb-8">
             Merci pour votre achat ! Votre commande a été traitée avec succès.
           </p>
 
           {loading ? (
             <div className="flex justify-center mb-8">
-              <div className="w-6 h-6 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : sessionData ? (
-            <div className="bg-[#F9F6F1] p-6 mb-8 text-left">
-              <h2 className="text-sm tracking-[0.1em] uppercase text-gray-500 mb-4">
+            <div className="bg-muted p-6 mb-8 text-left">
+              <h2 className="text-sm tracking-[0.1em] uppercase text-muted-foreground mb-4">
                 Détails de la commande
               </h2>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Total payé</span>
+                  <span className="text-muted-foreground">Total payé</span>
                   <span className="font-medium">{sessionData.amountTotal.toLocaleString('fr-FR')} €</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Statut</span>
+                  <span className="text-muted-foreground">Statut</span>
                   <span className="text-green-600 font-medium">Payé</span>
                 </div>
               </div>
@@ -95,22 +95,22 @@ export default function CheckoutSuccessPage() {
           ) : null}
 
           {/* Email confirmation */}
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-8">
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-8">
             <Mail className="w-4 h-4" />
             <span>Un email de confirmation vous a été envoyé</span>
           </div>
 
           {/* Next steps */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <Package className="w-6 h-6 text-[#C9A962] mx-auto mb-2" />
+            <div className="p-4 border border-border rounded-lg">
+              <Package className="w-6 h-6 text-primary mx-auto mb-2" />
               <p className="text-sm font-medium">Préparation</p>
-              <p className="text-xs text-gray-500">Votre commande est en cours de préparation</p>
+              <p className="text-xs text-muted-foreground">Votre commande est en cours de préparation</p>
             </div>
-            <div className="p-4 border border-gray-200 rounded-lg">
-              <Mail className="w-6 h-6 text-[#C9A962] mx-auto mb-2" />
+            <div className="p-4 border border-border rounded-lg">
+              <Mail className="w-6 h-6 text-primary mx-auto mb-2" />
               <p className="text-sm font-medium">Suivi</p>
-              <p className="text-xs text-gray-500">Vous recevrez un email avec le numéro de suivi</p>
+              <p className="text-xs text-muted-foreground">Vous recevrez un email avec le numéro de suivi</p>
             </div>
           </div>
 
@@ -118,13 +118,13 @@ export default function CheckoutSuccessPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/compte"
-              className="px-6 py-3 border border-gray-300 text-sm tracking-[0.15em] uppercase hover:bg-gray-50 transition-colors"
+              className="px-6 py-3 border border-border text-sm tracking-[0.15em] uppercase hover:bg-muted transition-colors"
             >
               Mes commandes
             </Link>
             <Link
               href="/parfums"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
             >
               Continuer mes achats
               <ArrowRight className="w-4 h-4" />

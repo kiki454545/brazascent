@@ -1,17 +1,18 @@
 import type { Metadata } from "next"
-import { Cormorant_Garamond, Montserrat } from "next/font/google"
+import { DM_Serif_Display, Montserrat } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/components/AuthProvider"
+import { ThemeProvider } from "@/components/ThemeProvider"
 import { SettingsProvider } from "@/components/SettingsProvider"
 import { MainLayout } from "@/components/MainLayout"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { GlobalErrorHandler } from "@/components/GlobalErrorHandler"
 import { TrackingProvider } from "@/components/TrackingProvider"
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+const dmSerif = DM_Serif_Display({
+  variable: "--font-serif-display",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400"],
   display: "swap",
 })
 
@@ -77,17 +78,37 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="fr" data-scroll-behavior="smooth">
-      <body className={`${cormorant.variable} ${montserrat.variable} antialiased`}>
+    <html lang="fr" data-scroll-behavior="smooth" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function() {
+  try {
+    var stored = localStorage.getItem('brazascent-theme');
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // Suit l'OS si pas de choix explicite, sinon respecte le choix sauvegardé
+    var theme = stored === 'light' || stored === 'dark' ? stored : (prefersDark ? 'dark' : 'light');
+    if (theme === 'dark') document.documentElement.classList.add('dark');
+    document.documentElement.style.colorScheme = theme;
+  } catch (e) {}
+})();
+            `.trim(),
+          }}
+        />
+      </head>
+      <body className={`${dmSerif.variable} ${montserrat.variable} antialiased`}>
         <GlobalErrorHandler>
           <ErrorBoundary>
-            <AuthProvider>
-              <SettingsProvider>
-                <TrackingProvider>
-                  <MainLayout>{children}</MainLayout>
-                </TrackingProvider>
-              </SettingsProvider>
-            </AuthProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <SettingsProvider>
+                  <TrackingProvider>
+                    <MainLayout>{children}</MainLayout>
+                  </TrackingProvider>
+                </SettingsProvider>
+              </AuthProvider>
+            </ThemeProvider>
           </ErrorBoundary>
         </GlobalErrorHandler>
       </body>

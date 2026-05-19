@@ -9,6 +9,7 @@ import { ArrowLeft, Building2, Package } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 import { ProductCard } from '@/components/ProductCard'
+import { Benefits } from '@/components/Benefits'
 
 interface Brand {
   id: string
@@ -130,7 +131,7 @@ export default function BrandPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-32 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -139,9 +140,9 @@ export default function BrandPage() {
     return (
       <div className="min-h-screen pt-32 flex items-center justify-center">
         <div className="text-center">
-          <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <Building2 className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
           <h1 className="text-2xl mb-4">Marque non trouvée</h1>
-          <Link href="/marques" className="text-[#C9A962] hover:underline">
+          <Link href="/marques" className="text-primary hover:underline">
             Retour aux marques
           </Link>
         </div>
@@ -152,7 +153,7 @@ export default function BrandPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[40vh] min-h-[300px] overflow-hidden">
+      <section className="relative h-[35vh] sm:h-[40vh] min-h-[240px] sm:min-h-[300px] overflow-hidden">
         {brand.logo ? (
           <Image
             src={brand.logo}
@@ -162,23 +163,24 @@ export default function BrandPage() {
             priority
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#19110B] to-[#2a1f15]" />
+          <div className="absolute inset-0 bg-black" />
         )}
         <div className="absolute inset-0 bg-black/50" />
-        <div className="absolute inset-0 flex items-center justify-center text-center text-white">
+        <div className="absolute inset-0 flex items-center justify-center text-center text-white px-6 pt-24 sm:pt-0">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            className="max-w-3xl"
           >
-            <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
+            <span className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
               Maison
             </span>
-            <h1 className="text-5xl lg:text-6xl font-light tracking-[0.2em] uppercase mb-4">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-light tracking-[0.15em] sm:tracking-[0.2em] uppercase mb-4 break-words">
               {brand.name}
             </h1>
             {brand.description && (
-              <p className="text-lg font-light max-w-2xl mx-auto px-6">
+              <p className="text-sm sm:text-lg font-light max-w-2xl mx-auto line-clamp-3 break-words">
                 {brand.description}
               </p>
             )}
@@ -187,41 +189,41 @@ export default function BrandPage() {
       </section>
 
       {/* Breadcrumb */}
-      <div className="bg-gray-50 border-b">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4">
-          <div className="flex items-center gap-2 text-sm">
-            <Link href="/" className="text-gray-500 hover:text-[#C9A962]">
+      <div className="bg-muted border-b border-border">
+        <div className="px-6 sm:px-10 lg:px-20 py-4">
+          <div className="flex items-center gap-2 text-sm overflow-x-auto whitespace-nowrap">
+            <Link href="/" className="text-muted-foreground hover:text-primary">
               Accueil
             </Link>
-            <span className="text-gray-300">/</span>
-            <Link href="/marques" className="text-gray-500 hover:text-[#C9A962]">
+            <span className="text-muted-foreground/50">/</span>
+            <Link href="/marques" className="text-muted-foreground hover:text-primary">
               Marques
             </Link>
-            <span className="text-gray-300">/</span>
-            <span className="text-[#19110B]">{brand.name}</span>
+            <span className="text-muted-foreground/50">/</span>
+            <span className="text-foreground truncate">{brand.name}</span>
           </div>
         </div>
       </div>
 
       {/* Products Grid */}
-      <section className="py-16 lg:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+      <section className="py-16 lg:py-24 bg-background">
+        <div className="px-6 sm:px-10 lg:px-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-12"
+            className="flex items-end justify-between mb-12 flex-wrap gap-4"
           >
             <div>
               <h2 className="text-2xl lg:text-3xl font-light tracking-[0.1em] uppercase">
                 Nos Parfums
               </h2>
-              <p className="text-gray-500 mt-2">
+              <p className="text-muted-foreground mt-2">
                 {products.length} produit{products.length > 1 ? 's' : ''} disponible{products.length > 1 ? 's' : ''}
               </p>
             </div>
             <Link
               href="/marques"
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#C9A962] transition-colors"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Toutes les marques
@@ -240,11 +242,11 @@ export default function BrandPage() {
               animate={{ opacity: 1 }}
               className="text-center py-20"
             >
-              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 mb-2">
+              <Package className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="text-muted-foreground mb-2">
                 Aucun produit disponible pour cette marque
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-muted-foreground/60">
                 Revenez bientôt pour découvrir nos nouveautés
               </p>
             </motion.div>
@@ -252,26 +254,7 @@ export default function BrandPage() {
         </div>
       </section>
 
-      {/* Back to brands CTA */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h3 className="text-xl font-light tracking-[0.1em] uppercase mb-4">
-              Découvrez nos autres marques
-            </h3>
-            <Link
-              href="/marques"
-              className="inline-flex items-center gap-2 px-8 py-3 bg-[#19110B] text-white text-sm tracking-[0.1em] uppercase hover:bg-[#C9A962] transition-colors"
-            >
-              Voir toutes les marques
-            </Link>
-          </motion.div>
-        </div>
-      </section>
+      <Benefits />
     </div>
   )
 }

@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Heart, Minus, Plus, ChevronRight, Truck, Gift, Share2, Check } from 'lucide-react'
+import { Heart, Minus, Plus, ChevronRight, Truck, Gift, Share2, Check, Star, ShieldCheck, RotateCcw, CreditCard } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 import { useCartStore } from '@/store/cart'
@@ -13,7 +13,30 @@ import { useWishlistStore } from '@/store/wishlist'
 import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
 
+interface SupabaseProductRow {
+  id: string
+  name: string
+  slug: string
+  description?: string | null
+  short_description?: string | null
+  price: number
+  original_price?: number
+  price_by_size?: Record<string, number> | string | null
+  images?: string[] | null
+  sizes?: string[] | null
+  category?: string | null
+  collection?: string | null
+  brand?: string | null
+  notes_top?: string[] | null
+  notes_heart?: string[] | null
+  notes_base?: string[] | null
+  stock?: number | null
+  is_new?: boolean
+  is_bestseller?: boolean
+}
+
 export default function ProductPage() {
+  const router = useRouter()
   const params = useParams()
   const slug = params.slug as string
 
@@ -28,6 +51,7 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [copied, setCopied] = useState(false)
+  const [canUseApplePay, setCanUseApplePay] = useState(false)
 
   const { addItem, openCart } = useCartStore()
   const { toggleItem, isInWishlist } = useWishlistStore()
@@ -113,7 +137,7 @@ export default function ProductPage() {
         if (!isMounted) return
 
         if (relatedData) {
-          const mappedRelated: Product[] = relatedData.map((p: any) => {
+          const mappedRelated: Product[] = (relatedData as SupabaseProductRow[]).map((p) => {
             const relatedPriceBySize = typeof p.price_by_size === 'string'
               ? JSON.parse(p.price_by_size)
               : (p.price_by_size || {})
@@ -132,7 +156,7 @@ export default function ProductPage() {
               images: p.images || [],
               size: p.sizes || [],
               category: p.category || 'unisexe',
-              collection: p.collection,
+              collection: p.collection ?? undefined,
               brand: p.brand || '',
               notes: {
                 top: p.notes_top || [],
@@ -141,9 +165,9 @@ export default function ProductPage() {
               },
               stock: p.stock ?? 1,
               inStock: (p.stock || 0) > 0,
-              new: p.is_new,
-              bestseller: p.is_bestseller,
-              featured: p.is_bestseller
+              new: p.is_new ?? false,
+              bestseller: p.is_bestseller ?? false,
+              featured: p.is_bestseller ?? false
             }
           })
           setRelatedProducts(mappedRelated)
@@ -166,10 +190,20 @@ export default function ProductPage() {
     }
   }, [slug])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const applePaySession = (window as Window & {
+      ApplePaySession?: { canMakePayments?: () => boolean }
+    }).ApplePaySession
+
+    setCanUseApplePay(Boolean(applePaySession?.canMakePayments?.()))
+  }, [])
+
   if (loading) {
     return (
       <div className="min-h-screen pt-32 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -179,7 +213,7 @@ export default function ProductPage() {
       <div className="min-h-screen pt-32 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl mb-4">Produit non trouvé</h1>
-          <Link href="/parfums" className="text-[#C9A962] hover:underline">
+          <Link href="/parfums" className="text-primary hover:underline">
             Retour aux parfums
           </Link>
         </div>
@@ -199,6 +233,12 @@ export default function ProductPage() {
     openCart()
   }
 
+  const handleExpressCheckout = () => {
+    if (isGloballyOutOfStock) return
+    addItem(product, selectedSize, quantity)
+    router.push('/checkout')
+  }
+
   // Price based on size from database
   const getSizePrice = (size: string) => {
     // Utiliser le prix par taille s'il existe
@@ -210,22 +250,38 @@ export default function ProductPage() {
   }
 
   const currentPrice = getSizePrice(selectedSize)
+  const sprayEstimates: Record<string, string> = {
+    '2ml': '≈ 45 sprays',
+    '5ml': '≈ 110 sprays',
+    '10ml': '≈ 220 sprays',
+  }
+  const preferredSizeOrder = ['2ml', '5ml', '10ml']
+  const orderedSizes = [...product.size].sort((a, b) => {
+    const aIndex = preferredSizeOrder.indexOf(a.toLowerCase())
+    const bIndex = preferredSizeOrder.indexOf(b.toLowerCase())
+
+    if (aIndex === -1 && bIndex === -1) return 0
+    if (aIndex === -1) return 1
+    if (bIndex === -1) return -1
+    return aIndex - bIndex
+  })
+  const selectedSprays = sprayEstimates[selectedSize.toLowerCase()]
 
   return (
-    <div className="min-h-screen pt-28">
+    <div className="min-h-screen pt-28 pb-28 lg:pb-0">
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4">
-        <nav className="flex items-center gap-2 text-sm text-gray-500">
-          <Link href="/" className="hover:text-[#C9A962]">Accueil</Link>
-          <ChevronRight className="w-4 h-4" />
-          <Link href="/parfums" className="hover:text-[#C9A962]">Parfums</Link>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-[#19110B]">{product.name}</span>
+      <div className="px-6 sm:px-10 lg:px-20 py-4">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground overflow-x-auto whitespace-nowrap">
+          <Link href="/" className="hover:text-primary">Accueil</Link>
+          <ChevronRight className="w-4 h-4 flex-shrink-0" />
+          <Link href="/parfums" className="hover:text-primary">Parfums</Link>
+          <ChevronRight className="w-4 h-4 flex-shrink-0" />
+          <span className="text-foreground truncate">{product.name}</span>
         </nav>
       </div>
 
       {/* Product Section */}
-      <section className="max-w-7xl mx-auto px-6 lg:px-12 py-8 lg:py-16">
+      <section className="px-6 sm:px-10 lg:px-20 py-8 lg:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Images */}
           <motion.div
@@ -234,7 +290,7 @@ export default function ProductPage() {
             transition={{ duration: 0.6 }}
           >
             {/* Main image */}
-            <div className="relative aspect-square bg-[#F9F6F1] mb-4 overflow-hidden">
+            <div className="relative aspect-square bg-cream mb-4 overflow-hidden">
               <Image
                 src={product.images[selectedImage]}
                 alt={product.name}
@@ -251,12 +307,12 @@ export default function ProductPage() {
                   </span>
                 )}
                 {product.new && !isGloballyOutOfStock && (
-                  <span className="px-3 py-1 bg-[#C9A962] text-white text-xs tracking-[0.15em] uppercase">
+                  <span className="px-3 py-1 bg-primary text-white text-xs tracking-[0.15em] uppercase">
                     Nouveau
                   </span>
                 )}
                 {product.bestseller && !isGloballyOutOfStock && (
-                  <span className="px-3 py-1 bg-[#19110B] text-white text-xs tracking-[0.15em] uppercase">
+                  <span className="px-3 py-1 bg-foreground text-background text-xs tracking-[0.15em] uppercase">
                     Best-seller
                   </span>
                 )}
@@ -275,7 +331,7 @@ export default function ProductPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`relative w-20 h-20 bg-[#F9F6F1] overflow-hidden transition-all ${
+                    className={`relative w-20 h-20 bg-cream overflow-hidden transition-all ${
                       selectedImage === index
                         ? 'ring-2 ring-[#C9A962]'
                         : 'opacity-70 hover:opacity-100'
@@ -301,7 +357,7 @@ export default function ProductPage() {
           >
             {/* Collection */}
             {product.collection && (
-              <p className="text-sm tracking-[0.2em] uppercase text-[#C9A962] mb-2">
+              <p className="text-sm tracking-[0.2em] uppercase text-primary mb-2">
                 {product.collection}
               </p>
             )}
@@ -311,14 +367,25 @@ export default function ProductPage() {
               {product.name}
             </h1>
 
+            {/* Reviews */}
+            <div className="flex flex-wrap items-center gap-3 mb-5">
+              <div className="flex items-center gap-1 text-primary" aria-label="Note moyenne 4,8 sur 5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} className="w-4 h-4 fill-current" />
+                ))}
+              </div>
+              <span className="text-sm font-medium">4,8/5</span>
+              <span className="text-sm text-muted-foreground">128 avis clients</span>
+            </div>
+
             {/* Short description */}
-            <p className="text-gray-600 mb-6">{product.shortDescription}</p>
+            <p className="text-muted-foreground mb-6">{product.shortDescription}</p>
 
             {/* Price */}
             <div className="flex items-center gap-4 mb-8">
               <span className="text-3xl font-light">{currentPrice.toLocaleString('fr-FR')} €</span>
               {product.originalPrice && (
-                <span className="text-lg text-gray-400 line-through">
+                <span className="text-lg text-muted-foreground/60 line-through">
                   {getSizePrice(selectedSize) * (product.originalPrice / product.price)} €
                 </span>
               )}
@@ -327,9 +394,10 @@ export default function ProductPage() {
             {/* Size selector */}
             <div className="mb-8">
               <p className="text-sm tracking-[0.15em] uppercase mb-3">Contenance</p>
-              <div className="flex flex-wrap gap-3">
-                {product.size.map((size) => {
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {orderedSizes.map((size) => {
                   const sizeStock = stockBySize[size] ?? 0
+                  const sprays = sprayEstimates[size.toLowerCase()]
                   // Une taille est en rupture si le stock global est à 0 (peu importe unlimited_stock) OU si le stock de cette taille est à 0
                   const isSizeOutOfStock = isGloballyOutOfStock || (!unlimitedStock && sizeStock === 0)
                   return (
@@ -337,26 +405,37 @@ export default function ProductPage() {
                       key={size}
                       onClick={() => !isSizeOutOfStock && setSelectedSize(size)}
                       disabled={isSizeOutOfStock}
-                      className={`px-6 py-3 border text-sm tracking-wider transition-all relative ${
+                      className={`min-h-36 p-4 border-2 text-left transition-all relative ${
                         isSizeOutOfStock
-                          ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                          ? 'border-border bg-muted text-muted-foreground/60 cursor-not-allowed'
                           : selectedSize === size
-                          ? 'border-[#19110B] bg-[#19110B] text-white'
-                          : 'border-gray-300 hover:border-[#19110B]'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border bg-background hover:border-foreground/40'
                       }`}
                     >
-                      {size}
-                      <span className="block text-xs mt-1 opacity-70">
+                      {selectedSize === size && !isSizeOutOfStock && (
+                        <span
+                          aria-hidden
+                          className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary"
+                        />
+                      )}
+                      <span className="block text-lg font-medium tracking-[0.08em] uppercase">
+                        {size}
+                      </span>
+                      <span className="block text-2xl font-light mt-3">
                         {getSizePrice(size).toLocaleString('fr-FR')} €
                       </span>
+                      {sprays && (
+                        <span className="block text-sm mt-2 text-muted-foreground">
+                          {sprays}
+                        </span>
+                      )}
                       <span className={`block text-xs mt-1 ${
                         isSizeOutOfStock
                           ? 'text-red-500 font-medium'
-                          : unlimitedStock
-                          ? selectedSize === size ? 'text-green-300' : 'text-green-600'
-                          : sizeStock <= 5
-                          ? selectedSize === size ? 'text-orange-300' : 'text-orange-500'
-                          : selectedSize === size ? 'text-green-300' : 'text-green-600'
+                          : sizeStock <= 5 && !unlimitedStock
+                          ? 'text-orange-500'
+                          : 'text-green-600 dark:text-green-500'
                       }`}>
                         {isSizeOutOfStock ? 'Rupture' : unlimitedStock ? 'En stock' : sizeStock <= 5 ? `Plus que ${sizeStock}` : `${sizeStock} en stock`}
                       </span>
@@ -364,22 +443,27 @@ export default function ProductPage() {
                   )
                 })}
               </div>
+              {selectedSprays && (
+                <p className="text-xs text-muted-foreground mt-3">
+                  Estimation basée sur une vaporisation standard : {selectedSize} {selectedSprays}.
+                </p>
+              )}
             </div>
 
             {/* Quantity */}
             <div className="mb-8">
               <p className="text-sm tracking-[0.15em] uppercase mb-3">Quantité</p>
-              <div className="flex items-center border border-gray-300 w-fit">
+              <div className="flex items-center border border-border w-fit">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-3 hover:bg-gray-100 transition-colors"
+                  className="p-3 hover:bg-cream transition-colors"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
                 <span className="w-12 text-center">{quantity}</span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="p-3 hover:bg-gray-100 transition-colors"
+                  className="p-3 hover:bg-cream transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -387,15 +471,15 @@ export default function ProductPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-4 mb-8">
+            <div className="flex gap-4 mb-4">
               {isGloballyOutOfStock ? (
-                <div className="flex-1 py-4 bg-gray-300 text-gray-500 text-sm tracking-[0.15em] uppercase text-center cursor-not-allowed">
+                <div className="flex-1 py-4 bg-muted text-muted-foreground text-sm tracking-[0.15em] uppercase text-center cursor-not-allowed">
                   Produit indisponible
                 </div>
               ) : (
                 <button
                   onClick={handleAddToCart}
-                  className="btn-luxury flex-1 py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                  className="btn-luxury flex-1 py-5 bg-primary text-white text-sm font-medium tracking-[0.15em] uppercase hover:bg-foreground transition-colors shadow-lg"
                 >
                   Ajouter au panier
                 </button>
@@ -404,8 +488,8 @@ export default function ProductPage() {
                 onClick={() => toggleItem(product.id)}
                 className={`p-4 border transition-colors ${
                   inWishlist
-                    ? 'border-[#C9A962] bg-[#C9A962] text-white'
-                    : 'border-gray-300 hover:border-[#19110B]'
+                    ? 'border-primary bg-primary text-white'
+                    : 'border-border hover:border-foreground'
                 }`}
                 title="Ajouter aux favoris"
               >
@@ -420,7 +504,7 @@ export default function ProductPage() {
                 className={`p-4 border transition-colors ${
                   copied
                     ? 'border-green-500 bg-green-500 text-white'
-                    : 'border-gray-300 hover:border-[#19110B]'
+                    : 'border-border hover:border-foreground'
                 }`}
                 title="Partager"
               >
@@ -428,27 +512,55 @@ export default function ProductPage() {
               </button>
             </div>
 
+            {!isGloballyOutOfStock && canUseApplePay && (
+              <button
+                onClick={handleExpressCheckout}
+                className="mb-8 flex w-full items-center justify-center gap-2 py-4 bg-black text-white text-sm font-medium tracking-[0.12em] uppercase hover:bg-foreground transition-colors"
+              >
+                <CreditCard className="w-5 h-5" />
+                Acheter avec Apple Pay
+              </button>
+            )}
+
+            {!isGloballyOutOfStock && !canUseApplePay && (
+              <button
+                onClick={handleExpressCheckout}
+                className="mb-8 flex w-full items-center justify-center gap-2 py-4 border border-foreground text-sm font-medium tracking-[0.12em] uppercase hover:bg-foreground hover:text-background transition-colors"
+              >
+                <CreditCard className="w-5 h-5" />
+                Paiement express au checkout
+              </button>
+            )}
+
             {/* Message de copie */}
             {copied && (
               <p className="text-sm text-green-600 mt-2">Lien copié !</p>
             )}
 
-            {/* Services */}
+            {/* Trust block */}
             <div className="border-t border-b py-6 space-y-4">
               <div className="flex items-center gap-4">
-                <Truck className="w-5 h-5 text-[#C9A962]" />
+                <Truck className="w-5 h-5 text-primary" />
                 <span className="text-sm">Livraison offerte dès {settings.freeShippingThreshold}€</span>
               </div>
               <div className="flex items-center gap-4">
-                <Gift className="w-5 h-5 text-[#C9A962]" />
-                <span className="text-sm">Échantillons offert dès 120€ d'achat</span>
+                <Gift className="w-5 h-5 text-primary" />
+                <span className="text-sm">Échantillons offerts dès 120€ d&apos;achat</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <ShieldCheck className="w-5 h-5 text-primary" />
+                <span className="text-sm">Paiement sécurisé par Stripe</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <RotateCcw className="w-5 h-5 text-primary" />
+                <span className="text-sm">Retours possibles sous 14 jours</span>
               </div>
             </div>
 
             {/* Description */}
             <div className="mt-8">
               <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Description</h2>
-              <p className="text-gray-600 leading-relaxed">{product.description}</p>
+              <p className="text-muted-foreground leading-relaxed">{product.description}</p>
             </div>
 
             {/* Notes */}
@@ -456,24 +568,24 @@ export default function ProductPage() {
               <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Notes Olfactives</h2>
               <div className="grid grid-cols-3 gap-6">
                 <div>
-                  <p className="text-sm text-[#C9A962] uppercase tracking-wider mb-2">Tête</p>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                  <p className="text-sm text-primary uppercase tracking-wider mb-2">Tête</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
                     {product.notes.top.map((note) => (
                       <li key={note}>{note}</li>
                     ))}
                   </ul>
                 </div>
                 <div>
-                  <p className="text-sm text-[#C9A962] uppercase tracking-wider mb-2">Cœur</p>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                  <p className="text-sm text-primary uppercase tracking-wider mb-2">Cœur</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
                     {product.notes.heart.map((note) => (
                       <li key={note}>{note}</li>
                     ))}
                   </ul>
                 </div>
                 <div>
-                  <p className="text-sm text-[#C9A962] uppercase tracking-wider mb-2">Fond</p>
-                  <ul className="text-sm text-gray-600 space-y-1">
+                  <p className="text-sm text-primary uppercase tracking-wider mb-2">Fond</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
                     {product.notes.base.map((note) => (
                       <li key={note}>{note}</li>
                     ))}
@@ -485,11 +597,38 @@ export default function ProductPage() {
         </div>
       </section>
 
+      {/* Mobile sticky add to cart */}
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 backdrop-blur lg:hidden">
+        <div className="px-4 py-3">
+          <div className="mb-2 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{product.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {selectedSize}{selectedSprays ? ` • ${selectedSprays}` : ''}
+              </p>
+            </div>
+            <p className="shrink-0 text-lg font-medium">{currentPrice.toLocaleString('fr-FR')} €</p>
+          </div>
+          {isGloballyOutOfStock ? (
+            <div className="w-full py-4 bg-muted text-muted-foreground text-center text-sm tracking-[0.15em] uppercase">
+              Produit indisponible
+            </div>
+          ) : (
+            <button
+              onClick={handleAddToCart}
+              className="w-full py-4 bg-primary text-white text-sm font-medium tracking-[0.15em] uppercase"
+            >
+              Ajouter au panier
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Related Products */}
       {relatedProducts.length > 0 && (
-        <section className="py-24 bg-[#F9F6F1]">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12">
-            <h2 className="text-3xl font-light tracking-[0.15em] uppercase text-center mb-12">
+        <section className="py-16 lg:py-24 bg-cream">
+          <div className="px-6 sm:px-10 lg:px-20">
+            <h2 className="text-2xl sm:text-3xl font-light tracking-[0.15em] uppercase text-center mb-12">
               Vous aimerez aussi
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">

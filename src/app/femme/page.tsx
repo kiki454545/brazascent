@@ -95,7 +95,7 @@ export default function FemmePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <span className="text-sm tracking-[0.3em] uppercase mb-4 block text-[#C9A962]">
+            <span className="text-sm tracking-[0.3em] uppercase mb-4 block text-primary">
               Collection
             </span>
             <h1 className="text-5xl lg:text-7xl font-light tracking-[0.2em] uppercase mb-4">
@@ -109,11 +109,11 @@ export default function FemmePage() {
       </section>
 
       {/* Products */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+      <section className="py-16 lg:py-24 bg-background">
+        <div className="px-6 sm:px-10 lg:px-20">
           {/* Filter bar */}
           <div className="flex items-center justify-between mb-12 pb-6 border-b">
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               {sortedProducts.length} parfum{sortedProducts.length > 1 ? 's' : ''}
             </span>
 
@@ -135,7 +135,7 @@ export default function FemmePage() {
           {/* Products grid */}
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : sortedProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
@@ -145,7 +145,7 @@ export default function FemmePage() {
             </div>
           ) : (
             <div className="text-center py-20">
-              <p className="text-gray-500">Aucun parfum disponible dans cette catégorie</p>
+              <p className="text-muted-foreground">Aucun parfum disponible dans cette catégorie</p>
             </div>
           )}
         </div>

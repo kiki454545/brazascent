@@ -33,7 +33,7 @@ const statusLabels: Record<string, { label: string; color: string; icon: any }> 
   open: { label: 'Ouvert', color: 'bg-blue-100 text-blue-700', icon: AlertCircle },
   in_progress: { label: 'En cours', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
   resolved: { label: 'Résolu', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-  closed: { label: 'Fermé', color: 'bg-gray-100 text-gray-700', icon: CheckCircle },
+  closed: { label: 'Fermé', color: 'bg-muted text-foreground/80', icon: CheckCircle },
 }
 
 const categoryLabels: Record<string, string> = {
@@ -169,7 +169,7 @@ export default function TicketDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-32 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#C9A962]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -196,7 +196,7 @@ export default function TicketDetailPage() {
         >
           <Link
             href="/compte/tickets"
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-[#C9A962] transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
             Retour aux tickets
@@ -207,7 +207,7 @@ export default function TicketDetailPage() {
               <h1 className="text-2xl font-light tracking-wide mb-2">
                 {ticket.subject}
               </h1>
-              <div className="flex items-center gap-3 text-sm text-gray-500">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded ${status.color}`}>
                   <StatusIcon className="w-3 h-3" />
                   {status.label}
@@ -225,7 +225,7 @@ export default function TicketDetailPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-[#F9F6F1] p-6 mb-6 min-h-[400px] max-h-[500px] overflow-y-auto"
+          className="bg-cream p-6 mb-6 min-h-[400px] max-h-[500px] overflow-y-auto"
         >
           <div className="space-y-6">
             {messages.map((message) => (
@@ -234,32 +234,32 @@ export default function TicketDetailPage() {
                 className={`flex gap-4 ${message.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {message.sender_type === 'admin' && (
-                  <div className="w-10 h-10 rounded-full bg-[#C9A962] flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                     <Shield className="w-5 h-5 text-white" />
                   </div>
                 )}
                 <div
                   className={`max-w-[70%] ${
                     message.sender_type === 'user'
-                      ? 'bg-[#19110B] text-white'
-                      : 'bg-white border border-gray-200'
+                      ? 'bg-foreground text-background'
+                      : 'bg-cream border border-border'
                   } p-4 rounded-lg`}
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <span className={`font-medium text-sm ${message.sender_type === 'user' ? 'text-[#C9A962]' : 'text-[#C9A962]'}`}>
+                    <span className={`font-medium text-sm ${message.sender_type === 'user' ? 'text-primary' : 'text-primary'}`}>
                       {message.sender_type === 'admin' ? 'Support BrazaScent' : message.sender_name}
                     </span>
                   </div>
-                  <p className={`text-sm whitespace-pre-wrap ${message.sender_type === 'user' ? 'text-gray-100' : 'text-gray-700'}`}>
+                  <p className={`text-sm whitespace-pre-wrap ${message.sender_type === 'user' ? 'text-background/90' : 'text-foreground/80'}`}>
                     {message.message}
                   </p>
-                  <p className={`text-xs mt-2 ${message.sender_type === 'user' ? 'text-gray-400' : 'text-gray-400'}`}>
+                  <p className={`text-xs mt-2 ${message.sender_type === 'user' ? 'text-muted-foreground/60' : 'text-muted-foreground/60'}`}>
                     {formatMessageDate(message.created_at)}
                   </p>
                 </div>
                 {message.sender_type === 'user' && (
-                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-gray-600" />
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-muted-foreground" />
                   </div>
                 )}
               </div>
@@ -282,12 +282,12 @@ export default function TicketDetailPage() {
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Écrivez votre réponse..."
               rows={3}
-              className="flex-1 px-4 py-3 border border-gray-300 focus:border-[#C9A962] outline-none transition-colors resize-none"
+              className="flex-1 px-4 py-3 border border-border focus:border-primary outline-none transition-colors resize-none"
             />
             <button
               type="submit"
               disabled={sending || !newMessage.trim()}
-              className="px-6 py-3 bg-[#19110B] text-white hover:bg-[#C9A962] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 h-fit"
+              className="px-6 py-3 bg-foreground text-background hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 h-fit"
             >
               {sending ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -297,11 +297,11 @@ export default function TicketDetailPage() {
             </button>
           </motion.form>
         ) : (
-          <div className="text-center py-6 bg-gray-100 rounded-lg">
-            <p className="text-gray-500">Ce ticket est fermé et ne peut plus recevoir de messages.</p>
+          <div className="text-center py-6 bg-muted rounded-lg">
+            <p className="text-muted-foreground">Ce ticket est fermé et ne peut plus recevoir de messages.</p>
             <Link
               href="/contact"
-              className="inline-block mt-4 text-[#C9A962] hover:text-[#19110B] transition-colors"
+              className="inline-block mt-4 text-primary hover:text-foreground transition-colors"
             >
               Ouvrir un nouveau ticket
             </Link>

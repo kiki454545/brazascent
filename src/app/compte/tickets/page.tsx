@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { MessageSquare, Plus, Clock, CheckCircle, AlertCircle, Loader2, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { AccountSidebar } from '@/components/AccountSidebar'
 
 interface Ticket {
   id: string
@@ -21,7 +22,7 @@ const statusLabels: Record<string, { label: string; color: string; icon: any }> 
   open: { label: 'Ouvert', color: 'bg-blue-100 text-blue-700', icon: AlertCircle },
   in_progress: { label: 'En cours', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
   resolved: { label: 'Résolu', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-  closed: { label: 'Fermé', color: 'bg-gray-100 text-gray-700', icon: CheckCircle },
+  closed: { label: 'Fermé', color: 'bg-muted text-gray-700', icon: CheckCircle },
 }
 
 const categoryLabels: Record<string, string> = {
@@ -83,52 +84,58 @@ export default function TicketsPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-32 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#C9A962]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen pt-28 pb-24">
-      <div className="max-w-4xl mx-auto px-6 lg:px-12">
+    <div className="min-h-screen pt-32 pb-24 bg-background">
+      <div className="px-6 sm:px-10 lg:px-20">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
+          className="flex items-end justify-between mb-8 flex-wrap gap-4"
         >
           <div>
             <h1 className="text-3xl font-light tracking-[0.15em] uppercase mb-2">
-              Mes Tickets
+              Support
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Suivez vos demandes et échangez avec notre équipe
             </p>
           </div>
           <Link
             href="/contact"
-            className="flex items-center gap-2 px-6 py-3 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+            className="flex items-center gap-2 px-6 py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
           >
             <Plus className="w-4 h-4" />
             Nouveau ticket
           </Link>
         </motion.div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-1">
+            <AccountSidebar />
+          </div>
+          <div className="lg:col-span-3">
+
         {/* Tickets List */}
         {tickets.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16 bg-[#F9F6F1]"
+            className="text-center py-16 bg-cream"
           >
-            <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <MessageSquare className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
             <h2 className="text-xl font-medium mb-2">Aucun ticket</h2>
-            <p className="text-gray-500 mb-6">
+            <p className="text-muted-foreground mb-6">
               Vous n'avez pas encore créé de ticket de support
             </p>
             <Link
               href="/contact"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
             >
               <Plus className="w-4 h-4" />
               Créer un ticket
@@ -153,7 +160,7 @@ export default function TicketsPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-white border border-gray-200 p-6 hover:border-[#C9A962] hover:shadow-sm transition-all group"
+                    className="bg-white border border-border p-6 hover:border-primary hover:shadow-sm transition-all group"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -162,21 +169,21 @@ export default function TicketsPage() {
                             <StatusIcon className="w-3 h-3" />
                             {status.label}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {categoryLabels[ticket.category]}
                           </span>
                         </div>
-                        <h3 className="font-medium text-lg mb-1 truncate group-hover:text-[#C9A962] transition-colors">
+                        <h3 className="font-medium text-lg mb-1 truncate group-hover:text-primary transition-colors">
                           {ticket.subject}
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           Créé le {formatDate(ticket.created_at)}
                           {ticket.updated_at !== ticket.created_at && (
                             <span> • Mis à jour le {formatDate(ticket.updated_at)}</span>
                           )}
                         </p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[#C9A962] transition-colors flex-shrink-0" />
+                      <ChevronRight className="w-5 h-5 text-muted-foreground/60 group-hover:text-primary transition-colors flex-shrink-0" />
                     </div>
                   </motion.div>
                 </Link>
@@ -189,10 +196,12 @@ export default function TicketsPage() {
         <div className="mt-8 pt-8 border-t">
           <Link
             href="/compte"
-            className="text-gray-500 hover:text-[#C9A962] transition-colors"
+            className="text-muted-foreground hover:text-primary transition-colors"
           >
             ← Retour à mon compte
           </Link>
+        </div>
+          </div>
         </div>
       </div>
     </div>

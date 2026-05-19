@@ -45,7 +45,7 @@ export function Footer() {
         .insert({ email, source: 'footer' })
 
       if (error) {
-        if (error.code === '23505') { // Unique constraint violation
+        if (error.code === '23505') {
           setStatus('error')
           setMessage('Cette adresse email est déjà inscrite')
         } else {
@@ -68,30 +68,91 @@ export function Footer() {
   }
 
   return (
-    <footer className="bg-[#19110B] text-white">
-      {/* Newsletter */}
-      <div className="border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16">
-          <div className="max-w-xl mx-auto text-center">
-            <h3 className="text-2xl lg:text-3xl font-light tracking-[0.2em] uppercase mb-4">
-              Newsletter
-            </h3>
-            <p className="text-gray-400 mb-6">
-              Inscrivez-vous pour recevoir nos dernières nouveautés et offres exclusives
+    <footer className="bg-black text-white">
+      {/* Main footer */}
+      <div className="px-6 sm:px-10 lg:px-20 py-16 lg:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12">
+          {/* Brand + contact */}
+          <div className="lg:col-span-4">
+            <Link href="/" className="inline-block mb-6">
+              <h2 className="text-2xl font-light tracking-[0.2em] uppercase">
+                Braza Scent
+              </h2>
+            </Link>
+            <p className="text-white/60 text-sm leading-relaxed mb-6 max-w-sm">
+              Boutique de parfums en petites quantités pour découvrir et tester les plus grandes fragrances.
+              Trouvez votre signature olfactive sans vous ruiner.
             </p>
-            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3">
+
+            <div className="space-y-3 text-sm text-white/60">
+              <div className="flex items-center gap-3">
+                <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>{settings.storeAddress}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Phone className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>{settings.storePhone}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>{settings.storeEmail}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Boutique */}
+          <div className="lg:col-span-2">
+            <h4 className="text-sm tracking-[0.2em] uppercase mb-6">Boutique</h4>
+            <ul className="space-y-3">
+              {footerLinks.boutique.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-white/60 hover:text-primary transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Services */}
+          <div className="lg:col-span-2">
+            <h4 className="text-sm tracking-[0.2em] uppercase mb-6">Services</h4>
+            <ul className="space-y-3">
+              {footerLinks.services.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-white/60 hover:text-primary transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Newsletter — col droite */}
+          <div className="lg:col-span-4">
+            <h4 className="text-sm tracking-[0.2em] uppercase mb-4">Newsletter</h4>
+            <p className="text-white/60 text-sm mb-5 leading-relaxed">
+              Recevez nos nouveautés et offres exclusives.
+            </p>
+            <form onSubmit={handleSubscribe} className="space-y-3">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Votre adresse email"
                 disabled={status === 'loading'}
-                className="flex-1 px-4 py-3 bg-transparent border border-white/30 focus:border-[#C9A962] outline-none transition-colors text-sm tracking-wider disabled:opacity-50"
+                className="w-full px-4 py-3 bg-transparent border border-white/20 focus:border-primary outline-none transition-colors text-sm tracking-wider disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={status === 'loading'}
-                className="btn-luxury px-8 py-3 bg-[#C9A962] text-[#19110B] text-sm tracking-[0.15em] uppercase font-medium hover:bg-[#E8D5A3] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="btn-luxury w-full py-3 bg-primary text-primary-foreground text-sm tracking-[0.15em] uppercase font-medium hover:bg-gold-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {status === 'loading' ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -110,76 +171,9 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Main footer */}
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
-          {/* Brand */}
-          <div className="lg:col-span-2">
-            <Link href="/" className="inline-block mb-6">
-              <h2 className="text-2xl font-light tracking-[0.2em] uppercase">
-                Braza Scent
-              </h2>
-            </Link>
-            <p className="text-gray-400 text-sm leading-relaxed mb-6 max-w-sm">
-              Boutique de parfums en petites quantités pour découvrir et tester les plus grandes fragrances.
-              Trouvez votre signature olfactive sans vous ruiner.
-            </p>
-
-            {/* Contact */}
-            <div className="space-y-3 text-sm text-gray-400">
-              <div className="flex items-center gap-3">
-                <MapPin className="w-4 h-4 text-[#C9A962]" />
-                <span>{settings.storeAddress}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Phone className="w-4 h-4 text-[#C9A962]" />
-                <span>{settings.storePhone}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-[#C9A962]" />
-                <span>{settings.storeEmail}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Links */}
-          <div>
-            <h4 className="text-sm tracking-[0.2em] uppercase mb-6">Boutique</h4>
-            <ul className="space-y-3">
-              {footerLinks.boutique.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-gray-400 hover:text-[#C9A962] transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-sm tracking-[0.2em] uppercase mb-6">Services</h4>
-            <ul className="space-y-3">
-              {footerLinks.services.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-gray-400 hover:text-[#C9A962] transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-
       {/* Bottom bar */}
       <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-6">
+        <div className="px-6 sm:px-10 lg:px-20 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Social links */}
             <div className="flex items-center gap-6">
@@ -187,7 +181,7 @@ export function Footer() {
                 href="https://www.tiktok.com/@braza.scent?_r=1&_t=ZN-93DizAlYMis"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-[#C9A962] transition-colors"
+                className="text-white/60 hover:text-primary transition-colors"
                 title="TikTok"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -198,7 +192,7 @@ export function Footer() {
                 href="https://snapchat.com/t/Ye5KOxwv"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-[#C9A962] transition-colors"
+                className="text-white/60 hover:text-primary transition-colors"
                 title="Snapchat"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -209,7 +203,7 @@ export function Footer() {
                 href="https://api.whatsapp.com/send/?phone=33756939038&text&type=phone_number&app_absent=0&wame_ctl=1"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-[#25D366] transition-colors"
+                className="text-white/60 hover:text-primary transition-colors"
                 title="WhatsApp"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -219,19 +213,19 @@ export function Footer() {
             </div>
 
             {/* Copyright */}
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-white/50">
               © {new Date().getFullYear()} BrazaScent. Tous droits réservés.
             </p>
 
             {/* Legal links */}
-            <div className="flex items-center gap-6 text-xs text-gray-500">
-              <Link href="/mentions-legales" className="hover:text-[#C9A962] transition-colors">
+            <div className="flex items-center gap-6 text-xs text-white/50">
+              <Link href="/mentions-legales" className="hover:text-primary transition-colors">
                 Mentions légales
               </Link>
-              <Link href="/cgv" className="hover:text-[#C9A962] transition-colors">
+              <Link href="/cgv" className="hover:text-primary transition-colors">
                 CGV
               </Link>
-              <Link href="/confidentialite" className="hover:text-[#C9A962] transition-colors">
+              <Link href="/confidentialite" className="hover:text-primary transition-colors">
                 Confidentialité
               </Link>
             </div>

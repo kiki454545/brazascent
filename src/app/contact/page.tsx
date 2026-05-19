@@ -113,7 +113,7 @@ export default function ContactPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-32 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#C9A962]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -130,7 +130,7 @@ export default function ContactPage() {
           <h1 className="text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase mb-4">
             Contact
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Une question ? Un problème avec votre commande ? Notre équipe est là pour vous aider.
           </p>
         </motion.div>
@@ -143,51 +143,51 @@ export default function ContactPage() {
             transition={{ delay: 0.2 }}
             className="lg:col-span-1"
           >
-            <div className="bg-[#F9F6F1] p-8 h-full">
+            <div className="bg-cream p-8 h-full">
               <h2 className="text-xl tracking-[0.15em] uppercase mb-8">Informations</h2>
 
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-[#C9A962]/10 rounded-full">
-                    <Mail className="w-5 h-5 text-[#C9A962]" />
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <Mail className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium mb-1">Email</p>
-                    <a href={`mailto:${settings.storeEmail}`} className="text-gray-600 hover:text-[#C9A962] transition-colors">
+                    <a href={`mailto:${settings.storeEmail}`} className="text-muted-foreground hover:text-primary transition-colors">
                       {settings.storeEmail}
                     </a>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-[#C9A962]/10 rounded-full">
-                    <Phone className="w-5 h-5 text-[#C9A962]" />
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <Phone className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium mb-1">Téléphone</p>
-                    <a href={`tel:${settings.storePhone}`} className="text-gray-600 hover:text-[#C9A962] transition-colors">
+                    <a href={`tel:${settings.storePhone}`} className="text-muted-foreground hover:text-primary transition-colors">
                       {settings.storePhone}
                     </a>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="p-3 bg-[#C9A962]/10 rounded-full">
-                    <MapPin className="w-5 h-5 text-[#C9A962]" />
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <MapPin className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium mb-1">Adresse</p>
-                    <p className="text-gray-600">{settings.storeAddress}</p>
+                    <p className="text-muted-foreground">{settings.storeAddress}</p>
                   </div>
                 </div>
               </div>
 
               {/* Si connecté, lien vers mes tickets */}
               {user && (
-                <div className="mt-8 pt-8 border-t border-gray-200">
+                <div className="mt-8 pt-8 border-t border-border">
                   <Link
                     href="/compte/tickets"
-                    className="flex items-center gap-3 text-[#C9A962] hover:text-[#19110B] transition-colors"
+                    className="flex items-center gap-3 text-primary hover:text-foreground transition-colors"
                   >
                     <MessageSquare className="w-5 h-5" />
                     <span>Voir mes tickets</span>
@@ -218,7 +218,7 @@ export default function ContactPage() {
                 {user ? (
                   <Link
                     href="/compte/tickets"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
                   >
                     <MessageSquare className="w-4 h-4" />
                     Voir mes tickets
@@ -226,7 +226,7 @@ export default function ContactPage() {
                 ) : (
                   <button
                     onClick={() => setSuccess(false)}
-                    className="px-6 py-3 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                    className="px-6 py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
                   >
                     Envoyer un autre message
                   </button>
@@ -258,7 +258,7 @@ export default function ContactPage() {
                       type="text"
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] outline-none transition-colors"
+                      className="w-full px-4 py-3 border border-border focus:border-primary outline-none transition-colors"
                       placeholder="Votre nom"
                       required
                     />
@@ -272,7 +272,7 @@ export default function ContactPage() {
                       type="email"
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] outline-none transition-colors"
+                      className="w-full px-4 py-3 border border-border focus:border-primary outline-none transition-colors"
                       placeholder="votre@email.com"
                       required
                     />
@@ -287,7 +287,7 @@ export default function ContactPage() {
                     <select
                       value={form.category}
                       onChange={(e) => setForm({ ...form, category: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] outline-none transition-colors bg-white"
+                      className="w-full px-4 py-3 border border-border focus:border-primary outline-none transition-colors bg-background"
                     >
                       {categories.map((cat) => (
                         <option key={cat.value} value={cat.value}>
@@ -305,7 +305,7 @@ export default function ContactPage() {
                       type="text"
                       value={form.subject}
                       onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] outline-none transition-colors"
+                      className="w-full px-4 py-3 border border-border focus:border-primary outline-none transition-colors"
                       placeholder="Sujet de votre demande"
                       required
                     />
@@ -320,7 +320,7 @@ export default function ContactPage() {
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                     rows={6}
-                    className="w-full px-4 py-3 border border-gray-300 focus:border-[#C9A962] outline-none transition-colors resize-none"
+                    className="w-full px-4 py-3 border border-border focus:border-primary outline-none transition-colors resize-none"
                     placeholder="Décrivez votre demande en détail..."
                     required
                   />
@@ -329,7 +329,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-4 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <>

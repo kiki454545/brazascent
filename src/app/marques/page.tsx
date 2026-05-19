@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, Building2 } from 'lucide-react'
+import { Building2 } from 'lucide-react'
+import { Benefits } from '@/components/Benefits'
 import { supabase } from '@/lib/supabase'
 
 interface Brand {
@@ -69,7 +70,7 @@ export default function MarquesPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[50vh] min-h-[400px] overflow-hidden">
+      <section className="relative h-[35vh] sm:h-[50vh] min-h-[240px] sm:min-h-[360px] overflow-hidden">
         <Image
           src="https://images.unsplash.com/photo-1592765213186-912a7504662d?w=1920&q=90"
           alt="Nos Marques"
@@ -78,19 +79,20 @@ export default function MarquesPage() {
           priority
         />
         <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 flex items-center justify-center text-center text-white">
+        <div className="absolute inset-0 flex items-center justify-center text-center text-white px-6 pt-24 sm:pt-0">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            className="max-w-3xl"
           >
-            <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
+            <span className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
               Maisons
             </span>
-            <h1 className="text-5xl lg:text-6xl font-light tracking-[0.2em] uppercase mb-4">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-light tracking-[0.15em] sm:tracking-[0.2em] uppercase mb-4">
               Nos Marques
             </h1>
-            <p className="text-lg font-light max-w-xl mx-auto">
+            <p className="text-sm sm:text-lg font-light max-w-xl mx-auto">
               Les plus grandes maisons de parfumerie réunies pour vous
             </p>
           </motion.div>
@@ -98,11 +100,11 @@ export default function MarquesPage() {
       </section>
 
       {/* Brands Grid */}
-      <section className="py-16 lg:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+      <section className="py-16 lg:py-24 bg-background">
+        <div className="px-6 sm:px-10 lg:px-20">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : brands.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -114,54 +116,45 @@ export default function MarquesPage() {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Link href={`/marques/${brand.slug}`} className="group block">
-                    <div className="relative aspect-[4/3] overflow-hidden mb-6 bg-gray-100">
+                  <Link href={`/marques/${brand.slug}`} className="group block text-center">
+                    <div className="relative aspect-[4/3] overflow-hidden mb-6 bg-cream">
                       {brand.logo ? (
-                        <>
-                          <Image
-                            src={brand.logo}
-                            alt={brand.name}
-                            fill
-                            className="object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
-                        </>
+                        <Image
+                          src={brand.logo}
+                          alt={brand.name}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <Building2 className="w-16 h-16 text-gray-300" />
+                          <Building2 className="w-16 h-16 text-muted-foreground/50" />
                         </div>
                       )}
                     </div>
 
-                    <h2 className="text-2xl font-light tracking-[0.15em] uppercase mb-2 group-hover:text-[#C9A962] transition-colors">
+                    <h2 className="text-xl sm:text-2xl font-light tracking-[0.15em] uppercase mb-2 group-hover:text-primary transition-colors truncate">
                       {brand.name}
                     </h2>
 
                     {brand.description && (
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      <p className="text-muted-foreground text-sm line-clamp-2 break-words max-w-xs mx-auto">
                         {brand.description}
                       </p>
                     )}
-
-                    <div className="flex items-center justify-end">
-                      <span className="flex items-center gap-2 text-sm tracking-[0.1em] uppercase text-[#C9A962] group-hover:gap-3 transition-all">
-                        Découvrir
-                        <ArrowRight className="w-4 h-4" />
-                      </span>
-                    </div>
                   </Link>
                 </motion.div>
               ))}
             </div>
           ) : (
             <div className="text-center py-20">
-              <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Aucune marque disponible pour le moment</p>
+              <Building2 className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="text-muted-foreground">Aucune marque disponible pour le moment</p>
             </div>
           )}
         </div>
       </section>
 
+      <Benefits />
     </div>
   )
 }

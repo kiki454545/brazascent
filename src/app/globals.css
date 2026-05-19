@@ -1,31 +1,79 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================
+   Système de tokens — toutes les couleurs s'adaptent au thème
+   Light = clair, Dark = sombre. Utilise les classes Tailwind:
+     bg-background / text-foreground       → page principale
+     bg-cream / text-foreground            → surface élevée (cards, modals)
+     bg-muted / text-muted-foreground      → zone discrète (footer, asides)
+     bg-primary / text-primary-foreground  → doré (CTA, accents)
+     border-border                         → bordures par défaut
+   ========================================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #19110B;
-  --gold: #C9A962;
-  --gold-light: #E8D5A3;
-  --gold-dark: #A68B4B;
-  --cream: #F9F6F1;
-  --charcoal: #1A1A1A;
+  /* Surfaces — noir & blanc neutres */
+  --background: #FFFFFF;            /* page */
+  --foreground: #0A0A0A;            /* texte principal — noir */
+  --cream: #F5F5F5;                 /* surface élevée (cards) */
+  --muted: #F0F0F0;                 /* surface discrète */
+  --muted-foreground: #666666;      /* texte secondaire */
+  --border: #E5E5E5;                /* bordures */
+  /* Brand — or chaud (entre or jaune et cuivré) */
+  --primary: #BF9952;
+  --primary-foreground: #0A0A0A;    /* texte foncé sur l'or */
+  --gold: #BF9952;
+  --gold-light: #E0C898;
+  --gold-dark: #8F7038;
+  --charcoal: #0A0A0A;
+}
+
+.dark {
+  /* Surfaces — noir profond */
+  --background: #000000;            /* page noire */
+  --foreground: #FAFAFA;            /* texte blanc */
+  --cream: #141414;                 /* surface légèrement élevée */
+  --muted: #0D0D0D;                 /* surface discrète */
+  --muted-foreground: #A3A3A3;      /* texte secondaire */
+  --border: #262626;                /* bordures */
+  /* Brand — or chaud (un peu plus clair pour le contraste sur noir) */
+  --primary: #D4AF6B;
+  --primary-foreground: #0A0A0A;    /* texte foncé sur l'or, même en dark */
+  --gold: #D4AF6B;
+  --gold-light: #E0C898;
+  --gold-dark: #8F7038;
+  --charcoal: #FAFAFA;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-cream: var(--cream);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
   --color-gold: var(--gold);
   --color-gold-light: var(--gold-light);
   --color-gold-dark: var(--gold-dark);
-  --color-cream: var(--cream);
   --color-charcoal: var(--charcoal);
-  --font-sans: var(--font-cormorant);
+  --font-sans: var(--font-montserrat);
+  --font-serif: var(--font-serif-display);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-montserrat), system-ui, -apple-system, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif-display), Georgia, serif;
+  /* DM Serif Display est dense, on aère un peu */
+  letter-spacing: 0.01em;
 }
 
 /* Smooth scrolling */

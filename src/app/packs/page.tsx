@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Gift, Truck, Star, Loader2 } from 'lucide-react'
+import { Gift, Loader2 } from 'lucide-react'
+import { Benefits } from '@/components/Benefits'
 import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cart'
 
@@ -30,7 +31,6 @@ export default function PacksPage() {
   const [packs, setPacks] = useState<Pack[]>([])
   const [products, setProducts] = useState<Record<string, Product>>({})
   const [loading, setLoading] = useState(true)
-  const [freeShippingThreshold, setFreeShippingThreshold] = useState(150)
   const { addItem } = useCartStore()
 
   useEffect(() => {
@@ -61,14 +61,6 @@ export default function PacksPage() {
 
         if (!isMounted) return
         if (productsError) throw productsError
-
-        // Fetch shipping settings
-        const settingsResponse = await fetch('/api/settings')
-        const settingsData = await settingsResponse.json()
-        if (!isMounted) return
-        if (settingsData?.shipping?.freeShippingThreshold) {
-          setFreeShippingThreshold(settingsData.shipping.freeShippingThreshold)
-        }
 
         // Create products lookup
         const productsLookup: Record<string, Product> = {}
@@ -125,7 +117,7 @@ export default function PacksPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#C9A962]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -133,7 +125,7 @@ export default function PacksPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[50vh] min-h-[400px] overflow-hidden">
+      <section className="relative h-[35vh] sm:h-[50vh] min-h-[240px] sm:min-h-[360px] overflow-hidden">
         <Image
           src="/images/packs-hero.jpg"
           alt="Nos Coffrets"
@@ -142,60 +134,33 @@ export default function PacksPage() {
           priority
         />
         <div className="absolute inset-0 bg-black/40" />
-        <div className="absolute inset-0 flex items-center justify-center text-center text-white">
+        <div className="absolute inset-0 flex items-center justify-center text-center text-white px-6 pt-24 sm:pt-0">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            className="max-w-3xl"
           >
-            <span className="text-sm tracking-[0.3em] uppercase text-[#C9A962] mb-4 block">
+            <span className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
               Packs
             </span>
-            <h1 className="text-5xl lg:text-6xl font-light tracking-[0.2em] uppercase mb-4">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-light tracking-[0.15em] sm:tracking-[0.2em] uppercase mb-4">
               Notre Sélection
             </h1>
-            <p className="text-lg font-light max-w-xl mx-auto">
+            <p className="text-sm sm:text-lg font-light max-w-xl mx-auto">
               Explorez une sélection de packs soigneusement composés pour vous faire voyager à travers différentes maisons et univers olfactifs.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Benefits */}
-      <section className="py-12 bg-[#F9F6F1]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { icon: Gift, title: 'Échantillons offerts', description: 'Dès 120€ d\'achat' },
-              { icon: Truck, title: 'Livraison offerte', description: `Dès ${freeShippingThreshold}€ d'achat` },
-              { icon: Star, title: 'Économies', description: 'Réductions sur les packs' },
-            ].map((benefit, index) => (
-              <motion.div
-                key={benefit.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-center gap-4 justify-center"
-              >
-                <benefit.icon className="w-8 h-8 text-[#C9A962]" />
-                <div>
-                  <p className="font-medium">{benefit.title}</p>
-                  <p className="text-sm text-gray-500">{benefit.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Packs Grid */}
-      <section className="py-16 lg:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
+      <section className="py-16 lg:py-24 bg-background">
+        <div className="px-6 sm:px-10 lg:px-20">
           {packs.length === 0 ? (
             <div className="text-center py-16">
-              <Gift className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">Aucun pack disponible pour le moment</p>
+              <Gift className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg">Aucun pack disponible pour le moment</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
@@ -209,7 +174,7 @@ export default function PacksPage() {
                   className="group"
                 >
                   <Link href={`/packs/${pack.slug}`} className="block">
-                    <div className="relative aspect-square overflow-hidden mb-6 bg-[#F9F6F1]">
+                    <div className="relative aspect-square overflow-hidden mb-6 bg-cream">
                       <Image
                         src={pack.image}
                         alt={pack.name}
@@ -217,33 +182,33 @@ export default function PacksPage() {
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                       {pack.tag && (
-                        <span className="absolute top-4 left-4 px-3 py-1 bg-[#C9A962] text-white text-xs tracking-wider uppercase">
+                        <span className="absolute top-4 left-4 px-3 py-1 bg-primary text-white text-xs tracking-wider uppercase">
                           {pack.tag}
                         </span>
                       )}
                     </div>
 
-                    <h2 className="text-xl font-light tracking-[0.1em] uppercase mb-2 group-hover:text-[#C9A962] transition-colors">
+                    <h2 className="text-xl font-light tracking-[0.1em] uppercase mb-2 group-hover:text-primary transition-colors truncate">
                       {pack.name}
                     </h2>
 
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2 break-words">
                       {pack.description}
                     </p>
 
                     {pack.product_ids?.length > 0 && (
-                      <div className="text-xs text-gray-500 mb-4">
-                        <p className="line-clamp-1">Contient : {getProductNames(pack.product_ids)}</p>
+                      <div className="text-xs text-muted-foreground mb-4">
+                        <p className="line-clamp-1 break-words">Contient : {getProductNames(pack.product_ids)}</p>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-xl font-medium">{pack.price} €</span>
                       {pack.original_price && (
-                        <span className="text-gray-400 line-through">{pack.original_price} €</span>
+                        <span className="text-muted-foreground/60 line-through">{pack.original_price} €</span>
                       )}
                       {pack.original_price && (
-                        <span className="text-xs text-[#C9A962] font-medium">
+                        <span className="text-xs text-primary font-medium">
                           -{Math.round((1 - pack.price / pack.original_price) * 100)}%
                         </span>
                       )}
@@ -252,7 +217,7 @@ export default function PacksPage() {
 
                   <button
                     onClick={() => handleAddToCart(pack)}
-                    className="w-full mt-4 py-3 bg-[#19110B] text-white text-sm tracking-[0.15em] uppercase hover:bg-[#C9A962] transition-colors"
+                    className="w-full mt-4 py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
                   >
                     Ajouter au panier
                   </button>
@@ -262,6 +227,8 @@ export default function PacksPage() {
           )}
         </div>
       </section>
+
+      <Benefits />
 
     </div>
   )
