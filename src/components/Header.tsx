@@ -85,6 +85,7 @@ const navigation = [
   { name: 'Parfums', href: '/parfums' },
   { name: 'Marques', href: '/marques' },
   { name: 'Packs', href: '/packs' },
+  { name: 'Promos 🔥', href: '/promos' },
 ]
 
 export function Header() {
@@ -606,6 +607,7 @@ export function Header() {
                     { name: 'Tous les parfums', href: '/parfums' },
                     { name: 'Marques', href: '/marques' },
                     { name: 'Packs', href: '/packs' },
+                    { name: 'Promos 🔥', href: '/promos' },
                   ].map((item) => (
                     <Link
                       key={item.name}

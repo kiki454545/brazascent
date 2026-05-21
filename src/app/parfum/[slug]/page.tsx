@@ -1,644 +1,199 @@
-'use client'
+import type { Metadata } from 'next'
+import { createClient } from '@supabase/supabase-js'
+import ProductClient from './ProductClient'
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Heart, Minus, Plus, ChevronRight, Truck, Gift, Share2, Check, Star, ShieldCheck, RotateCcw, CreditCard } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { Product } from '@/types'
-import { useCartStore } from '@/store/cart'
-import { useWishlistStore } from '@/store/wishlist'
-import { useSettingsStore } from '@/store/settings'
-import { ProductCard } from '@/components/ProductCard'
+const SITE_URL = 'https://brazascent.com'
 
-interface SupabaseProductRow {
-  id: string
-  name: string
-  slug: string
-  description?: string | null
-  short_description?: string | null
-  price: number
-  original_price?: number
-  price_by_size?: Record<string, number> | string | null
-  images?: string[] | null
-  sizes?: string[] | null
-  category?: string | null
-  collection?: string | null
-  brand?: string | null
-  notes_top?: string[] | null
-  notes_heart?: string[] | null
-  notes_base?: string[] | null
-  stock?: number | null
-  is_new?: boolean
-  is_bestseller?: boolean
+// Client Supabase pour le fetch côté serveur (metadata)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+// Régénération des metadata toutes les heures
+export const revalidate = 3600
+
+interface PageProps {
+  params: Promise<{ slug: string }>
 }
 
-export default function ProductPage() {
-  const router = useRouter()
-  const params = useParams()
-  const slug = params.slug as string
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
 
-  const [product, setProduct] = useState<Product | null>(null)
-  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
-  const [stockBySize, setStockBySize] = useState<Record<string, number>>({})
-  const [priceBySize, setPriceBySize] = useState<Record<string, number>>({})
-  const [unlimitedStock, setUnlimitedStock] = useState(false)
-  const [globalStock, setGlobalStock] = useState<number>(1)
-  const [loading, setLoading] = useState(true)
-  const [selectedImage, setSelectedImage] = useState(0)
-  const [selectedSize, setSelectedSize] = useState('')
-  const [quantity, setQuantity] = useState(1)
-  const [copied, setCopied] = useState(false)
-  const [canUseApplePay, setCanUseApplePay] = useState(false)
+  try {
+    const { data: product } = await supabase
+      .from('products')
+      .select('name, brand, description, short_description, images, category, price')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single()
 
-  const { addItem, openCart } = useCartStore()
-  const { toggleItem, isInWishlist } = useWishlistStore()
-  const { settings } = useSettingsStore()
-
-  useEffect(() => {
-    let isMounted = true
-
-    const isAbortError = (error: unknown): boolean => {
-      if (!error) return false
-      const message = (error as { message?: string }).message || String(error)
-      return message.includes('AbortError') || message.includes('aborted') || message.includes('signal')
-    }
-
-    const fetchProduct = async () => {
-      try {
-        // Récupérer le produit par slug
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .eq('slug', slug)
-          .single()
-
-        if (!isMounted) return
-
-        if (error || !data) {
-          if (!isAbortError(error)) {
-            console.error('Error fetching product:', error)
-          }
-          setLoading(false)
-          return
-        }
-
-        // Parser le prix par taille
-        const parsedPriceBySize = typeof data.price_by_size === 'string'
-          ? JSON.parse(data.price_by_size)
-          : (data.price_by_size || {})
-
-        // Mapper vers le format Product (inclure priceBySize pour le panier)
-        const mappedProduct: Product = {
-          id: data.id,
-          name: data.name,
-          slug: data.slug,
-          description: data.description || '',
-          shortDescription: data.short_description || '',
-          price: data.price,
-          originalPrice: data.original_price,
-          priceBySize: parsedPriceBySize,
-          images: data.images || [],
-          size: data.sizes || [],
-          category: data.category || 'unisexe',
-          collection: data.collection,
-          notes: {
-            top: data.notes_top || [],
-            heart: data.notes_heart || [],
-            base: data.notes_base || []
-          },
-          stock: data.stock ?? 1,
-          inStock: (data.stock || 0) > 0,
-          new: data.is_new,
-          bestseller: data.is_bestseller,
-          featured: data.is_bestseller
-        }
-
-        setProduct(mappedProduct)
-        setStockBySize(data.stock_by_size || {})
-        setUnlimitedStock(data.unlimited_stock ?? false)
-        // Si stock est explicitement 0, c'est une rupture. Si null/undefined, utiliser 1 par défaut
-        setGlobalStock(data.stock !== null && data.stock !== undefined ? data.stock : 1)
-        setPriceBySize(parsedPriceBySize)
-        setSelectedSize(mappedProduct.size[1] || mappedProduct.size[0] || '')
-
-        if (!isMounted) return
-
-        // Récupérer les produits similaires
-        const { data: relatedData } = await supabase
-          .from('products')
-          .select('*')
-          .eq('category', data.category)
-          .neq('id', data.id)
-          .limit(4)
-
-        if (!isMounted) return
-
-        if (relatedData) {
-          const mappedRelated: Product[] = (relatedData as SupabaseProductRow[]).map((p) => {
-            const relatedPriceBySize = typeof p.price_by_size === 'string'
-              ? JSON.parse(p.price_by_size)
-              : (p.price_by_size || {})
-            const prices = Object.values(relatedPriceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
-            const displayPrice = prices.length > 0 ? Math.min(...prices) : p.price
-
-            return {
-              id: p.id,
-              name: p.name,
-              slug: p.slug,
-              description: p.description || '',
-              shortDescription: p.short_description || '',
-              price: displayPrice,
-              originalPrice: p.original_price,
-              priceBySize: relatedPriceBySize,
-              images: p.images || [],
-              size: p.sizes || [],
-              category: p.category || 'unisexe',
-              collection: p.collection ?? undefined,
-              brand: p.brand || '',
-              notes: {
-                top: p.notes_top || [],
-                heart: p.notes_heart || [],
-                base: p.notes_base || []
-              },
-              stock: p.stock ?? 1,
-              inStock: (p.stock || 0) > 0,
-              new: p.is_new ?? false,
-              bestseller: p.is_bestseller ?? false,
-              featured: p.is_bestseller ?? false
-            }
-          })
-          setRelatedProducts(mappedRelated)
-        }
-      } catch (err) {
-        if (!isAbortError(err)) {
-          console.error('Error:', err)
-        }
-      } finally {
-        if (isMounted) setLoading(false)
+    if (!product) {
+      return {
+        title: 'Parfum introuvable',
+        description: "Ce parfum n'est pas disponible pour le moment.",
       }
     }
 
-    if (slug) {
-      fetchProduct()
+    const title = product.brand
+      ? `${product.name} - ${product.brand}${product.category ? ` - ${product.category}` : ''}`
+      : product.name
+
+    const description =
+      product.short_description ||
+      (product.description
+        ? product.description.substring(0, 160).trim() + '...'
+        : `Découvrez ${product.name} sur Braza Scent. Parfum disponible en formats 2ml, 5ml et 10ml. Livraison rapide en France.`)
+
+    const image = Array.isArray(product.images) && product.images.length > 0
+      ? product.images[0]
+      : `${SITE_URL}/images/parfums-hero.jpg`
+
+    const canonicalUrl = `${SITE_URL}/parfum/${slug}`
+
+    return {
+      title,
+      description,
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        title: `${title} | Braza Scent`,
+        description,
+        url: canonicalUrl,
+        type: 'website',
+        locale: 'fr_FR',
+        siteName: 'Braza Scent',
+        images: [
+          {
+            url: image,
+            width: 1200,
+            height: 1200,
+            alt: product.name,
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${title} | Braza Scent`,
+        description,
+        images: [image],
+      },
+    }
+  } catch (error) {
+    console.error('Erreur generateMetadata produit:', error)
+    return {
+      title: 'Parfum',
+      description: 'Découvrez nos parfums sur Braza Scent.',
+    }
+  }
+}
+
+// Génère le JSON-LD structuré (schema.org/Product) pour Google
+async function getProductJsonLd(slug: string) {
+  try {
+    const { data: product } = await supabase
+      .from('products')
+      .select('name, brand, description, short_description, images, price, original_price, stock, slug, sizes, price_by_size')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single()
+
+    if (!product) return null
+
+    // Déterminer la disponibilité
+    const inStock = product.stock === null || product.stock === undefined || product.stock > 0
+    const availability = inStock
+      ? 'https://schema.org/InStock'
+      : 'https://schema.org/OutOfStock'
+
+    // Déterminer le prix minimum (utile si plusieurs tailles)
+    let lowPrice = product.price
+    let highPrice = product.price
+    try {
+      const priceBySize = typeof product.price_by_size === 'string'
+        ? JSON.parse(product.price_by_size)
+        : product.price_by_size
+      if (priceBySize && typeof priceBySize === 'object') {
+        const prices = Object.values(priceBySize)
+          .map((p) => Number(p))
+          .filter((p) => p > 0)
+        if (prices.length > 0) {
+          lowPrice = Math.min(...prices)
+          highPrice = Math.max(...prices)
+        }
+      }
+    } catch {
+      // Ignorer les erreurs de parsing
     }
 
-    return () => {
-      isMounted = false
+    const image = Array.isArray(product.images) && product.images.length > 0
+      ? product.images[0]
+      : `${SITE_URL}/images/parfums-hero.jpg`
+
+    const description =
+      product.short_description ||
+      product.description ||
+      `Découvrez ${product.name} sur Braza Scent.`
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description,
+      image,
+      ...(product.brand && {
+        brand: {
+          '@type': 'Brand',
+          name: product.brand,
+        },
+      }),
+      offers: lowPrice !== highPrice
+        ? {
+            '@type': 'AggregateOffer',
+            priceCurrency: 'EUR',
+            lowPrice,
+            highPrice,
+            availability,
+            url: `${SITE_URL}/parfum/${product.slug}`,
+            seller: {
+              '@type': 'Organization',
+              name: 'Braza Scent',
+            },
+          }
+        : {
+            '@type': 'Offer',
+            priceCurrency: 'EUR',
+            price: product.price,
+            availability,
+            url: `${SITE_URL}/parfum/${product.slug}`,
+            seller: {
+              '@type': 'Organization',
+              name: 'Braza Scent',
+            },
+          },
     }
-  }, [slug])
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const applePaySession = (window as Window & {
-      ApplePaySession?: { canMakePayments?: () => boolean }
-    }).ApplePaySession
-
-    setCanUseApplePay(Boolean(applePaySession?.canMakePayments?.()))
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-32 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return jsonLd
+  } catch (error) {
+    console.error('Erreur génération JSON-LD:', error)
+    return null
   }
+}
 
-  if (!product) {
-    return (
-      <div className="min-h-screen pt-32 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl mb-4">Produit non trouvé</h1>
-          <Link href="/parfums" className="text-primary hover:underline">
-            Retour aux parfums
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
-  const inWishlist = isInWishlist(product.id)
-
-  // Vérifier si le produit est en rupture globale (stock = 0)
-  // Si stock global est à 0, c'est une rupture même si unlimited_stock est activé
-  const isGloballyOutOfStock = globalStock === 0
-
-  const handleAddToCart = () => {
-    if (isGloballyOutOfStock) return
-    addItem(product, selectedSize, quantity)
-    openCart()
-  }
-
-  const handleExpressCheckout = () => {
-    if (isGloballyOutOfStock) return
-    addItem(product, selectedSize, quantity)
-    router.push('/checkout')
-  }
-
-  // Price based on size from database
-  const getSizePrice = (size: string) => {
-    // Utiliser le prix par taille s'il existe
-    if (priceBySize[size] !== undefined && priceBySize[size] > 0) {
-      return priceBySize[size]
-    }
-    // Fallback sur le prix de base si pas de prix par taille
-    return product.price
-  }
-
-  const currentPrice = getSizePrice(selectedSize)
-  const sprayEstimates: Record<string, string> = {
-    '2ml': '≈ 45 sprays',
-    '5ml': '≈ 110 sprays',
-    '10ml': '≈ 220 sprays',
-  }
-  const preferredSizeOrder = ['2ml', '5ml', '10ml']
-  const orderedSizes = [...product.size].sort((a, b) => {
-    const aIndex = preferredSizeOrder.indexOf(a.toLowerCase())
-    const bIndex = preferredSizeOrder.indexOf(b.toLowerCase())
-
-    if (aIndex === -1 && bIndex === -1) return 0
-    if (aIndex === -1) return 1
-    if (bIndex === -1) return -1
-    return aIndex - bIndex
-  })
-  const selectedSprays = sprayEstimates[selectedSize.toLowerCase()]
+export default async function ProductPage({ params }: PageProps) {
+  const { slug } = await params
+  const jsonLd = await getProductJsonLd(slug)
 
   return (
-    <div className="min-h-screen pt-28 pb-28 lg:pb-0">
-      {/* Breadcrumb */}
-      <div className="px-6 sm:px-10 lg:px-20 py-4">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground overflow-x-auto whitespace-nowrap">
-          <Link href="/" className="hover:text-primary">Accueil</Link>
-          <ChevronRight className="w-4 h-4 flex-shrink-0" />
-          <Link href="/parfums" className="hover:text-primary">Parfums</Link>
-          <ChevronRight className="w-4 h-4 flex-shrink-0" />
-          <span className="text-foreground truncate">{product.name}</span>
-        </nav>
-      </div>
-
-      {/* Product Section */}
-      <section className="px-6 sm:px-10 lg:px-20 py-8 lg:py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-          {/* Images */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            {/* Main image */}
-            <div className="relative aspect-square bg-cream mb-4 overflow-hidden">
-              <Image
-                src={product.images[selectedImage]}
-                alt={product.name}
-                fill
-                className="object-cover"
-                priority
-              />
-
-              {/* Badges */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2">
-                {isGloballyOutOfStock && (
-                  <span className="px-3 py-1 bg-red-600 text-white text-xs tracking-[0.15em] uppercase">
-                    Rupture de stock
-                  </span>
-                )}
-                {product.new && !isGloballyOutOfStock && (
-                  <span className="px-3 py-1 bg-primary text-white text-xs tracking-[0.15em] uppercase">
-                    Nouveau
-                  </span>
-                )}
-                {product.bestseller && !isGloballyOutOfStock && (
-                  <span className="px-3 py-1 bg-foreground text-background text-xs tracking-[0.15em] uppercase">
-                    Best-seller
-                  </span>
-                )}
-              </div>
-
-              {/* Overlay rupture de stock */}
-              {isGloballyOutOfStock && (
-                <div className="absolute inset-0 bg-black/20 pointer-events-none" />
-              )}
-            </div>
-
-            {/* Thumbnails */}
-            {product.images.length > 1 && (
-              <div className="flex gap-3">
-                {product.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`relative w-20 h-20 bg-cream overflow-hidden transition-all ${
-                      selectedImage === index
-                        ? 'ring-2 ring-[#C9A962]'
-                        : 'opacity-70 hover:opacity-100'
-                    }`}
-                  >
-                    <Image
-                      src={image}
-                      alt={`${product.name} ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </motion.div>
-
-          {/* Product Info */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            {/* Collection */}
-            {product.collection && (
-              <p className="text-sm tracking-[0.2em] uppercase text-primary mb-2">
-                {product.collection}
-              </p>
-            )}
-
-            {/* Name */}
-            <h1 className="text-4xl lg:text-5xl font-light tracking-[0.1em] mb-4">
-              {product.name}
-            </h1>
-
-            {/* Reviews */}
-            <div className="flex flex-wrap items-center gap-3 mb-5">
-              <div className="flex items-center gap-1 text-primary" aria-label="Note moyenne 4,8 sur 5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="w-4 h-4 fill-current" />
-                ))}
-              </div>
-              <span className="text-sm font-medium">4,8/5</span>
-              <span className="text-sm text-muted-foreground">128 avis clients</span>
-            </div>
-
-            {/* Short description */}
-            <p className="text-muted-foreground mb-6">{product.shortDescription}</p>
-
-            {/* Price */}
-            <div className="flex items-center gap-4 mb-8">
-              <span className="text-3xl font-light">{currentPrice.toLocaleString('fr-FR')} €</span>
-              {product.originalPrice && (
-                <span className="text-lg text-muted-foreground/60 line-through">
-                  {getSizePrice(selectedSize) * (product.originalPrice / product.price)} €
-                </span>
-              )}
-            </div>
-
-            {/* Size selector */}
-            <div className="mb-8">
-              <p className="text-sm tracking-[0.15em] uppercase mb-3">Contenance</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {orderedSizes.map((size) => {
-                  const sizeStock = stockBySize[size] ?? 0
-                  const sprays = sprayEstimates[size.toLowerCase()]
-                  // Une taille est en rupture si le stock global est à 0 (peu importe unlimited_stock) OU si le stock de cette taille est à 0
-                  const isSizeOutOfStock = isGloballyOutOfStock || (!unlimitedStock && sizeStock === 0)
-                  return (
-                    <button
-                      key={size}
-                      onClick={() => !isSizeOutOfStock && setSelectedSize(size)}
-                      disabled={isSizeOutOfStock}
-                      className={`min-h-36 p-4 border-2 text-left transition-all relative ${
-                        isSizeOutOfStock
-                          ? 'border-border bg-muted text-muted-foreground/60 cursor-not-allowed'
-                          : selectedSize === size
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border bg-background hover:border-foreground/40'
-                      }`}
-                    >
-                      {selectedSize === size && !isSizeOutOfStock && (
-                        <span
-                          aria-hidden
-                          className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary"
-                        />
-                      )}
-                      <span className="block text-lg font-medium tracking-[0.08em] uppercase">
-                        {size}
-                      </span>
-                      <span className="block text-2xl font-light mt-3">
-                        {getSizePrice(size).toLocaleString('fr-FR')} €
-                      </span>
-                      {sprays && (
-                        <span className="block text-sm mt-2 text-muted-foreground">
-                          {sprays}
-                        </span>
-                      )}
-                      <span className={`block text-xs mt-1 ${
-                        isSizeOutOfStock
-                          ? 'text-red-500 font-medium'
-                          : sizeStock <= 5 && !unlimitedStock
-                          ? 'text-orange-500'
-                          : 'text-green-600 dark:text-green-500'
-                      }`}>
-                        {isSizeOutOfStock ? 'Rupture' : unlimitedStock ? 'En stock' : sizeStock <= 5 ? `Plus que ${sizeStock}` : `${sizeStock} en stock`}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-              {selectedSprays && (
-                <p className="text-xs text-muted-foreground mt-3">
-                  Estimation basée sur une vaporisation standard : {selectedSize} {selectedSprays}.
-                </p>
-              )}
-            </div>
-
-            {/* Quantity */}
-            <div className="mb-8">
-              <p className="text-sm tracking-[0.15em] uppercase mb-3">Quantité</p>
-              <div className="flex items-center border border-border w-fit">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-3 hover:bg-cream transition-colors"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="w-12 text-center">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="p-3 hover:bg-cream transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-4 mb-4">
-              {isGloballyOutOfStock ? (
-                <div className="flex-1 py-4 bg-muted text-muted-foreground text-sm tracking-[0.15em] uppercase text-center cursor-not-allowed">
-                  Produit indisponible
-                </div>
-              ) : (
-                <button
-                  onClick={handleAddToCart}
-                  className="btn-luxury flex-1 py-5 bg-primary text-white text-sm font-medium tracking-[0.15em] uppercase hover:bg-foreground transition-colors shadow-lg"
-                >
-                  Ajouter au panier
-                </button>
-              )}
-              <button
-                onClick={() => toggleItem(product.id)}
-                className={`p-4 border transition-colors ${
-                  inWishlist
-                    ? 'border-primary bg-primary text-white'
-                    : 'border-border hover:border-foreground'
-                }`}
-                title="Ajouter aux favoris"
-              >
-                <Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
-              </button>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href)
-                  setCopied(true)
-                  setTimeout(() => setCopied(false), 2000)
-                }}
-                className={`p-4 border transition-colors ${
-                  copied
-                    ? 'border-green-500 bg-green-500 text-white'
-                    : 'border-border hover:border-foreground'
-                }`}
-                title="Partager"
-              >
-                {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
-              </button>
-            </div>
-
-            {!isGloballyOutOfStock && canUseApplePay && (
-              <button
-                onClick={handleExpressCheckout}
-                className="mb-8 flex w-full items-center justify-center gap-2 py-4 bg-black text-white text-sm font-medium tracking-[0.12em] uppercase hover:bg-foreground transition-colors"
-              >
-                <CreditCard className="w-5 h-5" />
-                Acheter avec Apple Pay
-              </button>
-            )}
-
-            {!isGloballyOutOfStock && !canUseApplePay && (
-              <button
-                onClick={handleExpressCheckout}
-                className="mb-8 flex w-full items-center justify-center gap-2 py-4 border border-foreground text-sm font-medium tracking-[0.12em] uppercase hover:bg-foreground hover:text-background transition-colors"
-              >
-                <CreditCard className="w-5 h-5" />
-                Paiement express au checkout
-              </button>
-            )}
-
-            {/* Message de copie */}
-            {copied && (
-              <p className="text-sm text-green-600 mt-2">Lien copié !</p>
-            )}
-
-            {/* Trust block */}
-            <div className="border-t border-b py-6 space-y-4">
-              <div className="flex items-center gap-4">
-                <Truck className="w-5 h-5 text-primary" />
-                <span className="text-sm">Livraison offerte dès {settings.freeShippingThreshold}€</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <Gift className="w-5 h-5 text-primary" />
-                <span className="text-sm">Échantillons offerts dès 120€ d&apos;achat</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <ShieldCheck className="w-5 h-5 text-primary" />
-                <span className="text-sm">Paiement sécurisé par Stripe</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <RotateCcw className="w-5 h-5 text-primary" />
-                <span className="text-sm">Retours possibles sous 14 jours</span>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="mt-8">
-              <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Description</h2>
-              <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-            </div>
-
-            {/* Notes */}
-            <div className="mt-8">
-              <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Notes Olfactives</h2>
-              <div className="grid grid-cols-3 gap-6">
-                <div>
-                  <p className="text-sm text-primary uppercase tracking-wider mb-2">Tête</p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {product.notes.top.map((note) => (
-                      <li key={note}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-sm text-primary uppercase tracking-wider mb-2">Cœur</p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {product.notes.heart.map((note) => (
-                      <li key={note}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-sm text-primary uppercase tracking-wider mb-2">Fond</p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {product.notes.base.map((note) => (
-                      <li key={note}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Mobile sticky add to cart */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 backdrop-blur lg:hidden">
-        <div className="px-4 py-3">
-          <div className="mb-2 flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{product.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {selectedSize}{selectedSprays ? ` • ${selectedSprays}` : ''}
-              </p>
-            </div>
-            <p className="shrink-0 text-lg font-medium">{currentPrice.toLocaleString('fr-FR')} €</p>
-          </div>
-          {isGloballyOutOfStock ? (
-            <div className="w-full py-4 bg-muted text-muted-foreground text-center text-sm tracking-[0.15em] uppercase">
-              Produit indisponible
-            </div>
-          ) : (
-            <button
-              onClick={handleAddToCart}
-              className="w-full py-4 bg-primary text-white text-sm font-medium tracking-[0.15em] uppercase"
-            >
-              Ajouter au panier
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Related Products */}
-      {relatedProducts.length > 0 && (
-        <section className="py-16 lg:py-24 bg-cream">
-          <div className="px-6 sm:px-10 lg:px-20">
-            <h2 className="text-2xl sm:text-3xl font-light tracking-[0.15em] uppercase text-center mb-12">
-              Vous aimerez aussi
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {relatedProducts.map((p, index) => (
-                <ProductCard key={p.id} product={p} index={index} />
-              ))}
-            </div>
-          </div>
-        </section>
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       )}
-    </div>
+      <ProductClient />
+    </>
   )
 }
