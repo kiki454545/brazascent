@@ -121,6 +121,7 @@ export default function PanierPage() {
                         src={item.product.images[0]}
                         alt={item.product.name}
                         fill
+                        sizes="128px"
                         className="object-cover"
                       />
                       {itemOutOfStock && (

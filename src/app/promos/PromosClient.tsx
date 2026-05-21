@@ -28,6 +28,7 @@ interface SupabaseProductRow {
   stock?: number | null
   is_new?: boolean
   is_bestseller?: boolean
+  is_promo?: boolean
 }
 
 export default function PromosClient() {
@@ -39,12 +40,11 @@ export default function PromosClient() {
 
     const fetchPromoProducts = async () => {
       try {
-        // Récupérer tous les produits actifs ayant un original_price (= en promo)
+        // Récupérer tous les produits actifs en promo (flag is_promo OU original_price > price)
         const { data, error } = await supabase
           .from('products')
           .select('*')
           .eq('is_active', true)
-          .not('original_price', 'is', null)
           .order('created_at', { ascending: false })
 
         if (!isMounted) return
@@ -55,9 +55,11 @@ export default function PromosClient() {
           return
         }
 
-        // Filtrer pour ne garder que les vraies promos (original_price > price)
         const promoProducts = (data as SupabaseProductRow[])
-          .filter((p) => p.original_price !== null && p.original_price !== undefined && p.original_price > p.price)
+          .filter((p) =>
+            p.is_promo === true ||
+            (p.original_price !== null && p.original_price !== undefined && p.original_price > p.price)
+          )
           .map((p): Product => {
             const parsedPriceBySize = typeof p.price_by_size === 'string'
               ? JSON.parse(p.price_by_size)
@@ -86,6 +88,7 @@ export default function PromosClient() {
               inStock: (p.stock ?? 1) > 0,
               new: p.is_new,
               bestseller: p.is_bestseller,
+              promo: p.is_promo ?? false,
             }
           })
 

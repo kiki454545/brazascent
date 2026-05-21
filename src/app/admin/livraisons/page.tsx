@@ -199,7 +199,7 @@ export default function ShippingMethodsAdminPage() {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Modes de livraison</h1>
-          <p className="text-gray-500">
+          <p className="text-admin-muted">
             {methods.length} méthode{methods.length > 1 ? 's' : ''} au total
           </p>
         </div>
@@ -220,11 +220,11 @@ export default function ShippingMethodsAdminPage() {
         {methods.map(method => (
           <div
             key={method.id}
-            className={`bg-white rounded-xl shadow-sm overflow-hidden ${
+            className={`bg-admin-surface rounded-xl shadow-sm overflow-hidden ${
               !method.enabled ? 'opacity-50' : ''
             }`}
           >
-            <div className="aspect-video bg-gray-50 relative">
+            <div className="aspect-video bg-admin-surface-alt relative">
               {method.image_url ? (
                 <Image
                   src={method.image_url}
@@ -234,11 +234,11 @@ export default function ShippingMethodsAdminPage() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Truck className="w-12 h-12 text-gray-300" />
+                  <Truck className="w-12 h-12 text-admin-light" />
                 </div>
               )}
               {method.badge && (
-                <span className="absolute top-2 left-2 px-2 py-1 text-xs bg-[#F9F6F1] border border-[#C9A962]/40 rounded">
+                <span className="absolute top-2 left-2 px-2 py-1 text-xs bg-admin-surface text-admin-text border border-[#C9A962]/40 rounded">
                   {method.badge}
                 </span>
               )}
@@ -256,29 +256,29 @@ export default function ShippingMethodsAdminPage() {
                 </span>
               </div>
               {method.description && (
-                <p className="text-sm text-gray-500">{method.description}</p>
+                <p className="text-sm text-admin-muted">{method.description}</p>
               )}
               {method.description_2 && (
-                <p className="text-sm text-gray-500">{method.description_2}</p>
+                <p className="text-sm text-admin-muted">{method.description_2}</p>
               )}
               {method.free_threshold !== null && (
                 <p className="text-xs text-green-600 mt-2">
                   Gratuit dès {Number(method.free_threshold).toFixed(2)} €
                 </p>
               )}
-              <div className="flex items-center justify-between mt-4 pt-3 border-t">
-                <span className="text-xs text-gray-400">Ordre: {method.sort_order}</span>
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-admin-border">
+                <span className="text-xs text-admin-light">Ordre: {method.sort_order}</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => openEdit(method)}
-                    className="p-2 text-gray-400 hover:text-[#C9A962] transition-colors"
+                    className="p-2 text-admin-light hover:text-[#C9A962] transition-colors"
                     title="Modifier"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setDeleteId(method.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                    className="p-2 text-admin-light hover:text-red-600 transition-colors"
                     title="Supprimer"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -289,9 +289,9 @@ export default function ShippingMethodsAdminPage() {
           </div>
         ))}
         {methods.length === 0 && (
-          <div className="col-span-full bg-white rounded-xl shadow-sm p-12 text-center">
-            <Truck className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Aucune méthode de livraison configurée</p>
+          <div className="col-span-full bg-admin-surface rounded-xl shadow-sm p-12 text-center">
+            <Truck className="w-12 h-12 text-admin-light mx-auto mb-4" />
+            <p className="text-admin-muted">Aucune méthode de livraison configurée</p>
           </div>
         )}
       </motion.div>
@@ -299,12 +299,12 @@ export default function ShippingMethodsAdminPage() {
       {/* Modal édition */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
+          <div className="bg-admin-surface rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-admin-border sticky top-0 bg-admin-surface">
               <h2 className="text-xl font-semibold">
                 {editing ? 'Modifier la méthode' : 'Nouvelle méthode'}
               </h2>
-              <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button onClick={closeModal} className="p-2 hover:bg-admin-surface-alt rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -323,7 +323,7 @@ export default function ShippingMethodsAdminPage() {
                   onChange={e => setForm({ ...form, title: e.target.value })}
                   required
                   placeholder="Point Relais Mondial Relay"
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                  className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                 />
               </div>
 
@@ -334,7 +334,7 @@ export default function ShippingMethodsAdminPage() {
                   value={form.description}
                   onChange={e => setForm({ ...form, description: e.target.value })}
                   placeholder="Livraison en point relais"
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                  className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                 />
               </div>
 
@@ -345,7 +345,7 @@ export default function ShippingMethodsAdminPage() {
                   value={form.description_2}
                   onChange={e => setForm({ ...form, description_2: e.target.value })}
                   placeholder="3 à 5 jours ouvrés"
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                  className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                 />
               </div>
 
@@ -359,7 +359,7 @@ export default function ShippingMethodsAdminPage() {
                     value={form.price}
                     onChange={e => setForm({ ...form, price: e.target.value })}
                     required
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                   />
                 </div>
                 <div>
@@ -371,7 +371,7 @@ export default function ShippingMethodsAdminPage() {
                     value={form.free_threshold}
                     onChange={e => setForm({ ...form, free_threshold: e.target.value })}
                     placeholder="Vide = jamais gratuit"
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                   />
                 </div>
               </div>
@@ -384,7 +384,7 @@ export default function ShippingMethodsAdminPage() {
                     value={form.badge}
                     onChange={e => setForm({ ...form, badge: e.target.value })}
                     placeholder="Le meilleur prix"
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                   />
                 </div>
                 <div>
@@ -393,7 +393,7 @@ export default function ShippingMethodsAdminPage() {
                     type="number"
                     value={form.sort_order}
                     onChange={e => setForm({ ...form, sort_order: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                   />
                 </div>
               </div>
@@ -402,7 +402,7 @@ export default function ShippingMethodsAdminPage() {
                 <label className="block text-sm font-medium mb-1">Image / icône</label>
                 <div className="flex items-center gap-4">
                   {form.image_url ? (
-                    <div className="w-20 h-20 relative border rounded-lg overflow-hidden bg-gray-50">
+                    <div className="w-20 h-20 relative border rounded-lg overflow-hidden bg-admin-surface-alt">
                       <Image
                         src={form.image_url}
                         alt="Aperçu"
@@ -411,12 +411,12 @@ export default function ShippingMethodsAdminPage() {
                       />
                     </div>
                   ) : (
-                    <div className="w-20 h-20 border rounded-lg bg-gray-50 flex items-center justify-center">
-                      <Truck className="w-8 h-8 text-gray-300" />
+                    <div className="w-20 h-20 border border-admin-border rounded-lg bg-admin-surface-alt flex items-center justify-center">
+                      <Truck className="w-8 h-8 text-admin-light" />
                     </div>
                   )}
                   <div className="flex-1 space-y-2">
-                    <label className="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 w-fit">
+                    <label className="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-admin-surface-alt w-fit">
                       {uploading ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
@@ -461,7 +461,7 @@ export default function ShippingMethodsAdminPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 py-2 border rounded-lg hover:bg-gray-50"
+                  className="flex-1 py-2 border rounded-lg hover:bg-admin-surface-alt"
                 >
                   Annuler
                 </button>
@@ -482,15 +482,15 @@ export default function ShippingMethodsAdminPage() {
       {/* Modal suppression */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="bg-admin-surface rounded-xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold mb-2">Supprimer cette méthode ?</h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-admin-muted mb-4">
               Les commandes existantes utilisant cette méthode garderont leur libellé mais le lien sera rompu.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="flex-1 py-2 border rounded-lg hover:bg-gray-50"
+                className="flex-1 py-2 border rounded-lg hover:bg-admin-surface-alt"
               >
                 Annuler
               </button>

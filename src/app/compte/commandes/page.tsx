@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 import { Package, ChevronRight, Truck, CheckCircle, Clock, XCircle } from 'lucide-react'
 import { AccountSidebar } from '@/components/AccountSidebar'
 import { useAuthStore } from '@/store/auth'
@@ -106,10 +105,7 @@ export default function CommandesPage() {
   return (
     <div className="min-h-screen pt-32 pb-24 bg-background">
       <div className="px-6 sm:px-10 lg:px-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <div>
           {/* Header */}
           <h1 className="text-3xl font-light tracking-[0.15em] uppercase mb-8">
             Mes Commandes
@@ -150,12 +146,7 @@ export default function CommandesPage() {
                 const isExpanded = expandedOrder === order.id
 
                 return (
-                  <motion.div
-                    key={order.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-cream shadow-sm overflow-hidden"
-                  >
+                  <div key={order.id} className="bg-cream shadow-sm overflow-hidden">
                     {/* Order header */}
                     <button
                       onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
@@ -188,11 +179,7 @@ export default function CommandesPage() {
 
                     {/* Order details */}
                     {isExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="border-t"
-                      >
+                      <div className="border-t">
                         {/* Items */}
                         <div className="p-6 space-y-4">
                           {order.items?.map((item) => (
@@ -248,16 +235,16 @@ export default function CommandesPage() {
                             </div>
                           )}
                         </div>
-                      </motion.div>
+                      </div>
                     )}
-                  </motion.div>
+                  </div>
                 )
               })}
             </div>
           )}
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   )

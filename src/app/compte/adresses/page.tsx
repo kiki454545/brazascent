@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { MapPin, Plus, Edit2, Trash2, Check } from 'lucide-react'
 import { AccountSidebar } from '@/components/AccountSidebar'
 import { useAuthStore } from '@/store/auth'
@@ -173,10 +172,7 @@ export default function AdressesPage() {
   return (
     <div className="min-h-screen pt-32 pb-24 bg-background">
       <div className="px-6 sm:px-10 lg:px-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <div>
           {/* Header */}
           <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
             <h1 className="text-3xl font-light tracking-[0.15em] uppercase">
@@ -208,11 +204,7 @@ export default function AdressesPage() {
 
           {/* Add/Edit Form */}
           {isAdding && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="bg-cream p-8 shadow-sm mb-8"
-            >
+            <div className="bg-cream p-8 shadow-sm mb-8">
               <h2 className="text-xl tracking-[0.1em] uppercase mb-6">
                 {editingId ? 'Modifier l\'adresse' : 'Nouvelle adresse'}
               </h2>
@@ -295,7 +287,7 @@ export default function AdressesPage() {
                   </button>
                 </div>
               </form>
-            </motion.div>
+            </div>
           )}
 
           {/* Addresses list */}
@@ -320,12 +312,7 @@ export default function AdressesPage() {
           ) : (
             <div className="space-y-4">
               {addresses.map((address) => (
-                <motion.div
-                  key={address.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-cream p-6 shadow-sm"
-                >
+                <div key={address.id} className="bg-cream p-6 shadow-sm">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
                       <MapPin className="w-5 h-5 text-primary mt-1" />
@@ -372,13 +359,13 @@ export default function AdressesPage() {
                       </button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           )}
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   )

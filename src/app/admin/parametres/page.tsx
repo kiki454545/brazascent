@@ -364,7 +364,7 @@ export default function AdminSettingsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-[#C9A962] mx-auto mb-4" />
-          <p className="text-gray-500">Chargement des paramètres...</p>
+          <p className="text-admin-muted">Chargement des paramètres...</p>
         </div>
       </div>
     )
@@ -375,7 +375,7 @@ export default function AdminSettingsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold">Paramètres</h1>
-        <p className="text-gray-500">Configurez votre boutique</p>
+        <p className="text-admin-muted">Configurez votre boutique</p>
       </div>
 
       {/* Error message */}
@@ -389,7 +389,7 @@ export default function AdminSettingsPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-sm p-6"
+        className="bg-admin-surface rounded-xl shadow-sm p-6"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-[#C9A962]/10 rounded-lg">
@@ -400,49 +400,49 @@ export default function AdminSettingsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-admin-text mb-2">
               Nom de la boutique
             </label>
             <input
               type="text"
               value={settings.storeName}
               onChange={(e) => setSettings({ ...settings, storeName: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-admin-text mb-2">
               Email de contact
             </label>
             <input
               type="email"
               value={settings.storeEmail}
               onChange={(e) => setSettings({ ...settings, storeEmail: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-admin-text mb-2">
               Téléphone
             </label>
             <input
               type="tel"
               value={settings.storePhone}
               onChange={(e) => setSettings({ ...settings, storePhone: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-admin-text mb-2">
               Devise
             </label>
             <select
               value={settings.currency}
               onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             >
               <option value="EUR">Euro (€)</option>
               <option value="USD">Dollar ($)</option>
@@ -451,14 +451,14 @@ export default function AdminSettingsPage() {
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-admin-text mb-2">
               Adresse
             </label>
             <input
               type="text"
               value={settings.storeAddress}
               onChange={(e) => setSettings({ ...settings, storeAddress: e.target.value })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
         </div>
@@ -469,7 +469,7 @@ export default function AdminSettingsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white rounded-xl shadow-sm p-6"
+        className="bg-admin-surface rounded-xl shadow-sm p-6"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-blue-50 rounded-lg">
@@ -480,19 +480,19 @@ export default function AdminSettingsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-admin-text mb-2">
               Seuil livraison gratuite (€)
             </label>
             <input
               type="number"
               value={settings.freeShippingThreshold}
               onChange={(e) => setSettings({ ...settings, freeShippingThreshold: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-admin-text mb-2">
               Prix livraison standard (€)
             </label>
             <input
@@ -500,12 +500,12 @@ export default function AdminSettingsPage() {
               step="0.01"
               value={settings.standardShippingPrice}
               onChange={(e) => setSettings({ ...settings, standardShippingPrice: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-admin-text mb-2">
               Prix livraison express (€)
             </label>
             <input
@@ -514,22 +514,22 @@ export default function AdminSettingsPage() {
               value={settings.expressShippingPrice}
               onChange={(e) => setSettings({ ...settings, expressShippingPrice: parseFloat(e.target.value) || 0 })}
               disabled={!settings.enableExpressShipping}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] ${!settings.enableExpressShipping ? 'bg-gray-100 text-gray-400' : ''}`}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] ${!settings.enableExpressShipping ? 'bg-admin-surface-alt text-admin-light' : ''}`}
             />
           </div>
         </div>
 
         <div className="mt-6 pt-6 border-t">
-          <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
+          <label className="flex items-center justify-between p-4 bg-admin-surface-alt rounded-lg cursor-pointer">
             <div>
               <p className="font-medium">Livraison express</p>
-              <p className="text-sm text-gray-500">Proposer la livraison express aux clients (1-2 jours ouvrés)</p>
+              <p className="text-sm text-admin-muted">Proposer la livraison express aux clients (1-2 jours ouvrés)</p>
             </div>
             <input
               type="checkbox"
               checked={settings.enableExpressShipping}
               onChange={(e) => setSettings({ ...settings, enableExpressShipping: e.target.checked })}
-              className="w-5 h-5 rounded border-gray-300 accent-[#C9A962]"
+              className="w-5 h-5 rounded border-admin-border accent-[#C9A962]"
             />
           </label>
         </div>
@@ -540,7 +540,7 @@ export default function AdminSettingsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white rounded-xl shadow-sm p-6"
+        className="bg-admin-surface rounded-xl shadow-sm p-6"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-amber-50 rounded-lg">
@@ -548,13 +548,13 @@ export default function AdminSettingsPage() {
           </div>
           <div>
             <h2 className="text-lg font-medium">Bandeau d&apos;annonces</h2>
-            <p className="text-sm text-gray-500">Messages affichés dans la barre en haut du site</p>
+            <p className="text-sm text-admin-muted">Messages affichés dans la barre en haut du site</p>
           </div>
         </div>
 
         {/* Vitesse de rotation */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-admin-text mb-2">
             Vitesse de rotation (secondes)
           </label>
           <div className="flex items-center gap-4">
@@ -576,7 +576,7 @@ export default function AdminSettingsPage() {
             <div
               key={message.id}
               className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                message.enabled ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100'
+                message.enabled ? 'bg-admin-surface border-admin-border' : 'bg-admin-surface-alt border-admin-border'
               }`}
             >
               <GripVertical className="w-4 h-4 text-gray-300 cursor-grab" />
@@ -584,19 +584,19 @@ export default function AdminSettingsPage() {
                 type="checkbox"
                 checked={message.enabled}
                 onChange={() => toggleAnnouncement(message.id)}
-                className="w-4 h-4 rounded border-gray-300 accent-[#C9A962]"
+                className="w-4 h-4 rounded border-admin-border accent-[#C9A962]"
               />
               <input
                 type="text"
                 value={message.text}
                 onChange={(e) => updateAnnouncementText(message.id, e.target.value)}
                 className={`flex-1 px-3 py-1.5 border rounded focus:outline-none focus:border-[#C9A962] text-sm ${
-                  message.enabled ? '' : 'text-gray-400'
+                  message.enabled ? '' : 'text-admin-light'
                 }`}
               />
               <button
                 onClick={() => removeAnnouncement(message.id)}
-                className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                className="p-1.5 text-admin-light hover:text-red-500 transition-colors"
                 title="Supprimer"
               >
                 <Trash2 className="w-4 h-4" />
@@ -642,7 +642,7 @@ export default function AdminSettingsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-white rounded-xl shadow-sm p-6"
+        className="bg-admin-surface rounded-xl shadow-sm p-6"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-purple-50 rounded-lg">
@@ -652,16 +652,16 @@ export default function AdminSettingsPage() {
         </div>
 
         <div className="space-y-4">
-          <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
+          <label className="flex items-center justify-between p-4 bg-admin-surface-alt rounded-lg cursor-pointer">
             <div>
               <p className="font-medium">Notifications par email</p>
-              <p className="text-sm text-gray-500">Recevoir les alertes de nouvelles commandes</p>
+              <p className="text-sm text-admin-muted">Recevoir les alertes de nouvelles commandes</p>
             </div>
             <input
               type="checkbox"
               checked={settings.enableNotifications}
               onChange={(e) => setSettings({ ...settings, enableNotifications: e.target.checked })}
-              className="w-5 h-5 rounded border-gray-300 accent-[#C9A962]"
+              className="w-5 h-5 rounded border-admin-border accent-[#C9A962]"
             />
           </label>
 
@@ -671,13 +671,13 @@ export default function AdminSettingsPage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="p-4 bg-gray-50 rounded-lg space-y-4"
+              className="p-4 bg-admin-surface-alt rounded-lg space-y-4"
             >
               <div className="flex items-center gap-2 mb-2">
-                <Mail className="w-4 h-4 text-gray-500" />
+                <Mail className="w-4 h-4 text-admin-muted" />
                 <p className="font-medium text-sm">Emails de notification des commandes</p>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-admin-muted">
                 Ces adresses recevront un email à chaque nouvelle commande.
               </p>
 
@@ -687,7 +687,7 @@ export default function AdminSettingsPage() {
                   {settings.notificationEmails.map((email) => (
                     <div
                       key={email}
-                      className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border"
+                      className="flex items-center justify-between bg-admin-surface px-3 py-2 rounded-lg border border-admin-border"
                     >
                       <div className="flex items-center gap-2">
                         <Mail className="w-4 h-4 text-[#C9A962]" />
@@ -695,7 +695,7 @@ export default function AdminSettingsPage() {
                       </div>
                       <button
                         onClick={() => removeNotificationEmail(email)}
-                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        className="p-1 text-admin-light hover:text-red-500 transition-colors"
                         title="Supprimer"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -747,16 +747,16 @@ export default function AdminSettingsPage() {
             </motion.div>
           )}
 
-          <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
+          <label className="flex items-center justify-between p-4 bg-admin-surface-alt rounded-lg cursor-pointer">
             <div>
               <p className="font-medium">Confirmation par email</p>
-              <p className="text-sm text-gray-500">Les utilisateurs doivent confirmer leur email</p>
+              <p className="text-sm text-admin-muted">Les utilisateurs doivent confirmer leur email</p>
             </div>
             <input
               type="checkbox"
               checked={settings.enableEmailConfirmation}
               onChange={(e) => setSettings({ ...settings, enableEmailConfirmation: e.target.checked })}
-              className="w-5 h-5 rounded border-gray-300 accent-[#C9A962]"
+              className="w-5 h-5 rounded border-admin-border accent-[#C9A962]"
             />
           </label>
 
@@ -769,7 +769,7 @@ export default function AdminSettingsPage() {
               type="checkbox"
               checked={settings.maintenanceMode}
               onChange={(e) => setSettings({ ...settings, maintenanceMode: e.target.checked })}
-              className="w-5 h-5 rounded border-gray-300 accent-red-500"
+              className="w-5 h-5 rounded border-admin-border accent-red-500"
             />
           </label>
         </div>
@@ -782,7 +782,7 @@ export default function AdminSettingsPage() {
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
-            className="fixed bottom-0 left-0 lg:left-64 right-0 bg-white border-t shadow-lg z-40"
+            className="fixed bottom-0 left-0 lg:left-64 right-0 bg-admin-surface border-t border-admin-border shadow-lg z-40"
           >
             <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-2 text-amber-600">
@@ -793,7 +793,7 @@ export default function AdminSettingsPage() {
                 <button
                   onClick={handleReset}
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 text-admin-muted hover:bg-admin-surface-alt rounded-lg transition-colors disabled:opacity-50"
                 >
                   <RotateCcw className="w-4 h-4" />
                   Annuler
@@ -843,7 +843,7 @@ export default function AdminSettingsPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-xl max-w-md w-full p-6"
+              className="bg-admin-surface rounded-xl max-w-md w-full p-6"
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-amber-100 rounded-full">
@@ -852,7 +852,7 @@ export default function AdminSettingsPage() {
                 <h3 className="text-lg font-semibold">Modifications non sauvegardées</h3>
               </div>
 
-              <p className="text-gray-600 mb-6">
+              <p className="text-admin-muted mb-6">
                 Vous avez des modifications non sauvegardées. Que souhaitez-vous faire ?
               </p>
 
@@ -872,7 +872,7 @@ export default function AdminSettingsPage() {
                 <button
                   onClick={handleDiscardAndNavigate}
                   disabled={saving}
-                  className="flex items-center justify-center gap-2 w-full py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 w-full py-3 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors disabled:opacity-50"
                 >
                   <RotateCcw className="w-4 h-4" />
                   Annuler les modifications
@@ -883,7 +883,7 @@ export default function AdminSettingsPage() {
                     setPendingNavigation(null)
                   }}
                   disabled={saving}
-                  className="w-full py-3 text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+                  className="w-full py-3 text-admin-muted hover:text-admin-text transition-colors disabled:opacity-50"
                 >
                   Rester sur la page
                 </button>

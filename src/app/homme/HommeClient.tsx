@@ -1,65 +1,21 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
-import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'name'
 
-export default function HommePage() {
+interface HommeClientProps {
+  initialProducts: Product[]
+}
+
+export default function HommePage({ initialProducts }: HommeClientProps) {
   const [sortBy, setSortBy] = useState<SortOption>('featured')
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .eq('category', 'homme')
-          .order('created_at', { ascending: false })
-
-        if (error) {
-          console.error('Error fetching products:', error)
-        } else if (data) {
-          const mappedProducts: Product[] = data.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            description: p.description || '',
-            shortDescription: p.short_description || '',
-            price: p.price,
-            originalPrice: p.original_price,
-            images: p.images || [],
-            size: p.sizes || [],
-            category: p.category || 'homme',
-            collection: p.collection,
-            notes: {
-              top: p.notes_top || [],
-              heart: p.notes_heart || [],
-              base: p.notes_base || []
-            },
-            inStock: (p.stock || 0) > 0,
-            new: p.is_new,
-            bestseller: p.is_bestseller,
-            featured: p.is_bestseller
-          }))
-          setProducts(mappedProducts)
-        }
-      } catch (err) {
-        console.error('Error:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProducts()
-  }, [])
+  const [products] = useState<Product[]>(initialProducts)
 
   const sortedProducts = useMemo(() => {
     const sorted = [...products]
@@ -85,6 +41,7 @@ export default function HommePage() {
           src="https://images.unsplash.com/photo-1590736704728-f4730bb30770?w=1920"
           alt="Parfums Homme"
           fill
+          sizes="100vw"
           className="object-cover"
           priority
         />
@@ -133,11 +90,7 @@ export default function HommePage() {
           </div>
 
           {/* Products grid */}
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : sortedProducts.length > 0 ? (
+          {sortedProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
               {sortedProducts.map((product, index) => (
                 <ProductCard key={product.id} product={product} index={index} />

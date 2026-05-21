@@ -311,25 +311,25 @@ export default function AdminOrdersPage() {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Commandes</h1>
-          <p className="text-gray-500">
+          <p className="text-admin-muted">
             {activeOrders.length} à traiter · {completedOrders.length} terminées
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors">
+        <button className="flex items-center gap-2 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors">
           <Download className="w-5 h-5" />
           Exporter
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm">
-        <div className="flex border-b">
+      <div className="bg-admin-surface rounded-xl shadow-sm">
+        <div className="flex border-b border-admin-border">
           <button
             onClick={() => { setActiveTab('active'); setStatusFilter('') }}
             className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 text-sm font-medium transition-colors relative ${
               activeTab === 'active'
                 ? 'text-[#C9A962]'
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-admin-muted hover:text-admin-text'
             }`}
           >
             <Package className="w-5 h-5" />
@@ -338,7 +338,7 @@ export default function AdminOrdersPage() {
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                 activeTab === 'active'
                   ? 'bg-[#C9A962] text-white'
-                  : 'bg-gray-200 text-gray-600'
+                  : 'bg-admin-surface-alt text-admin-muted'
               }`}>
                 {activeOrders.length}
               </span>
@@ -355,7 +355,7 @@ export default function AdminOrdersPage() {
             className={`flex-1 flex items-center justify-center gap-3 px-6 py-4 text-sm font-medium transition-colors relative ${
               activeTab === 'completed'
                 ? 'text-[#C9A962]'
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-admin-muted hover:text-admin-text'
             }`}
           >
             <Archive className="w-5 h-5" />
@@ -363,7 +363,7 @@ export default function AdminOrdersPage() {
             <span className={`px-2.5 py-0.5 rounded-full text-xs ${
               activeTab === 'completed'
                 ? 'bg-[#C9A962] text-white'
-                : 'bg-gray-200 text-gray-600'
+                : 'bg-admin-surface-alt text-admin-muted'
             }`}>
               {completedOrders.length}
             </span>
@@ -379,13 +379,13 @@ export default function AdminOrdersPage() {
         {/* Search */}
         <div className="p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-admin-light" />
             <input
               type="text"
               placeholder="Rechercher par n° commande, client, email ou n° suivi..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full pl-10 pr-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
         </div>
@@ -400,7 +400,7 @@ export default function AdminOrdersPage() {
               <button
                 key={status.value}
                 onClick={() => setStatusFilter(statusFilter === status.value ? '' : status.value)}
-                className={`p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all ${
+                className={`p-4 bg-admin-surface rounded-xl shadow-sm hover:shadow-md transition-all ${
                   statusFilter === status.value ? 'ring-2 ring-[#C9A962]' : ''
                 }`}
               >
@@ -408,7 +408,7 @@ export default function AdminOrdersPage() {
                   <status.icon className="w-4 h-4" />
                 </div>
                 <p className="text-2xl font-semibold">{count}</p>
-                <p className="text-sm text-gray-500">{status.label}</p>
+                <p className="text-sm text-admin-muted">{status.label}</p>
               </button>
             )
           })}
@@ -420,7 +420,7 @@ export default function AdminOrdersPage() {
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => setStatusFilter(statusFilter === 'completed' ? '' : 'completed')}
-            className={`p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all ${
+            className={`p-4 bg-admin-surface rounded-xl shadow-sm hover:shadow-md transition-all ${
               statusFilter === 'completed' ? 'ring-2 ring-[#C9A962]' : ''
             }`}
           >
@@ -430,11 +430,11 @@ export default function AdminOrdersPage() {
             <p className="text-2xl font-semibold">
               {completedOrders.filter(o => o.status === 'completed').length}
             </p>
-            <p className="text-sm text-gray-500">Livrées</p>
+            <p className="text-sm text-admin-muted">Livrées</p>
           </button>
           <button
             onClick={() => setStatusFilter(statusFilter === 'cancelled' ? '' : 'cancelled')}
-            className={`p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all ${
+            className={`p-4 bg-admin-surface rounded-xl shadow-sm hover:shadow-md transition-all ${
               statusFilter === 'cancelled' ? 'ring-2 ring-[#C9A962]' : ''
             }`}
           >
@@ -444,7 +444,7 @@ export default function AdminOrdersPage() {
             <p className="text-2xl font-semibold">
               {completedOrders.filter(o => o.status === 'cancelled').length}
             </p>
-            <p className="text-sm text-gray-500">Annulées</p>
+            <p className="text-sm text-admin-muted">Annulées</p>
           </button>
         </div>
       )}
@@ -472,16 +472,16 @@ export default function AdminOrdersPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-sm overflow-hidden"
+        className="bg-admin-surface rounded-xl shadow-sm overflow-hidden"
       >
         {filteredOrders.length > 0 ? (
-          <div className="divide-y">
+          <div className="divide-y divide-admin-border">
             {filteredOrders.map((order) => {
               const statusConfig = getStatusConfig(order.status)
               return (
                 <div
                   key={order.id}
-                  className="p-4 hover:bg-gray-50 transition-colors"
+                  className="p-4 hover:bg-admin-surface-alt transition-colors"
                 >
                   <div className="flex items-start gap-4">
                     {/* Statut icon */}
@@ -519,7 +519,7 @@ export default function AdminOrdersPage() {
 
                           {statusDropdown === order.id && (
                             <div
-                              className="absolute bottom-full left-0 mb-1 w-48 bg-white rounded-lg shadow-lg border z-50"
+                              className="absolute bottom-full left-0 mb-1 w-48 bg-admin-surface rounded-lg shadow-lg border border-admin-border z-50"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {statusOptions.map((status) => (
@@ -529,8 +529,8 @@ export default function AdminOrdersPage() {
                                     e.stopPropagation()
                                     updateOrderStatus(order.id, status.value)
                                   }}
-                                  className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
-                                    order.status === status.value ? 'bg-gray-100 font-medium' : ''
+                                  className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-admin-surface-alt first:rounded-t-lg last:rounded-b-lg ${
+                                    order.status === status.value ? 'bg-admin-surface-alt font-medium' : ''
                                   }`}
                                 >
                                   <status.icon className="w-4 h-4" />
@@ -542,7 +542,7 @@ export default function AdminOrdersPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-admin-muted">
                         <span className="font-medium">
                           {order.shipping_address?.firstName} {order.shipping_address?.lastName}
                         </span>
@@ -555,12 +555,12 @@ export default function AdminOrdersPage() {
                       {/* Articles */}
                       <div className="mt-2 flex flex-wrap gap-2">
                         {order.items?.slice(0, 3).map((item, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-gray-100 rounded text-xs">
+                          <span key={idx} className="px-2 py-1 bg-admin-surface-alt rounded text-xs">
                             {item.product?.name} ({item.size}) ×{item.quantity}
                           </span>
                         ))}
                         {order.items?.length > 3 && (
-                          <span className="px-2 py-1 bg-gray-100 rounded text-xs">
+                          <span className="px-2 py-1 bg-admin-surface-alt rounded text-xs text-admin-muted">
                             +{order.items.length - 3} autres
                           </span>
                         )}
@@ -569,8 +569,8 @@ export default function AdminOrdersPage() {
                       {/* Suivi */}
                       {order.tracking_number && (
                         <div className="mt-2 flex items-center gap-2 text-sm">
-                          <Truck className="w-4 h-4 text-gray-400" />
-                          <span className="font-mono text-gray-600">{order.tracking_number}</span>
+                          <Truck className="w-4 h-4 text-admin-light" />
+                          <span className="font-mono text-admin-muted">{order.tracking_number}</span>
                           {order.tracking_url && (
                             <a
                               href={order.tracking_url}
@@ -593,7 +593,7 @@ export default function AdminOrdersPage() {
                           Code: {order.promo_code} (-{order.discount} €)
                         </p>
                       )}
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-admin-muted">
                         {new Date(order.created_at).toLocaleDateString('fr-FR', {
                           day: '2-digit',
                           month: 'short',
@@ -618,13 +618,13 @@ export default function AdminOrdersPage() {
             {activeTab === 'active' ? (
               <>
                 <CheckCircle className="w-12 h-12 text-green-300 mx-auto mb-4" />
-                <p className="text-gray-500 font-medium">Aucune commande à traiter</p>
-                <p className="text-sm text-gray-400">Toutes les commandes ont été traitées</p>
+                <p className="text-admin-muted font-medium">Aucune commande à traiter</p>
+                <p className="text-sm text-admin-light">Toutes les commandes ont été traitées</p>
               </>
             ) : (
               <>
-                <Archive className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Aucune commande terminée</p>
+                <Archive className="w-12 h-12 text-admin-light mx-auto mb-4" />
+                <p className="text-admin-muted">Aucune commande terminée</p>
               </>
             )}
           </div>
@@ -639,19 +639,19 @@ export default function AdminOrdersPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-auto"
+              className="bg-admin-surface rounded-xl max-w-3xl w-full max-h-[90vh] overflow-auto"
             >
-              <div className="p-6 border-b sticky top-0 bg-white z-10">
+              <div className="p-6 border-b border-admin-border sticky top-0 bg-admin-surface z-10">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-semibold">Commande #{selectedOrder.order_number}</h2>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-admin-muted">
                       {new Date(selectedOrder.created_at).toLocaleString('fr-FR')}
                     </p>
                   </div>
                   <button
                     onClick={() => setSelectedOrder(null)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 hover:bg-admin-surface-alt rounded-lg transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -661,7 +661,7 @@ export default function AdminOrdersPage() {
               <div className="p-6 space-y-6">
                 {/* Timeline de statut */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
+                  <h3 className="text-sm font-medium text-admin-muted uppercase tracking-wider mb-4">
                     Suivi de la commande
                   </h3>
                   <div className="relative">
@@ -680,23 +680,23 @@ export default function AdminOrdersPage() {
                                   ? 'bg-[#C9A962] text-white ring-4 ring-[#C9A962]/20'
                                   : isActive
                                   ? 'bg-[#C9A962] text-white'
-                                  : 'bg-gray-200 text-gray-500'
+                                  : 'bg-admin-surface-alt text-admin-muted'
                               }`}
                             >
                               <status.icon className="w-5 h-5" />
                             </button>
                             <span className={`mt-2 text-xs font-medium ${
-                              isActive ? 'text-[#C9A962]' : 'text-gray-500'
+                              isActive ? 'text-[#C9A962]' : 'text-admin-muted'
                             }`}>
                               {status.label}
                             </span>
                             {status.value === 'shipped' && selectedOrder.shipped_at && (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-admin-light">
                                 {new Date(selectedOrder.shipped_at).toLocaleDateString('fr-FR')}
                               </span>
                             )}
                             {status.value === 'completed' && selectedOrder.delivered_at && (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-admin-light">
                                 {new Date(selectedOrder.delivered_at).toLocaleDateString('fr-FR')}
                               </span>
                             )}
@@ -704,7 +704,7 @@ export default function AdminOrdersPage() {
                         )
                       })}
                     </div>
-                    <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 -z-0">
+                    <div className="absolute top-5 left-0 right-0 h-0.5 bg-admin-surface-alt -z-0">
                       <div
                         className="h-full bg-[#C9A962] transition-all"
                         style={{
@@ -738,13 +738,13 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {/* Informations de suivi */}
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
+                <div className="bg-admin-surface-alt rounded-xl p-4">
+                  <h3 className="text-sm font-medium text-admin-muted uppercase tracking-wider mb-4">
                     Informations de livraison
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-admin-text mb-1">
                         Transporteur
                       </label>
                       <select
@@ -761,7 +761,7 @@ export default function AdminOrdersPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-admin-text mb-1">
                         Numéro de suivi
                       </label>
                       <div className="relative">
@@ -769,13 +769,13 @@ export default function AdminOrdersPage() {
                           type="text"
                           value={editForm.tracking_number}
                           onChange={(e) => handleTrackingNumberChange(e.target.value)}
-                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                          className="w-full px-3 py-2 pr-10 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                           placeholder="Ex: 1Z999AA10123456784"
                         />
                         {editForm.tracking_number && (
                           <button
                             onClick={() => copyToClipboard(editForm.tracking_number)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-[#C9A962]"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-admin-light hover:text-[#C9A962]"
                           >
                             {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                           </button>
@@ -783,7 +783,7 @@ export default function AdminOrdersPage() {
                       </div>
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-admin-text mb-1">
                         Lien de suivi
                       </label>
                       <div className="flex gap-2">
@@ -791,7 +791,7 @@ export default function AdminOrdersPage() {
                           type="url"
                           value={editForm.tracking_url}
                           onChange={(e) => setEditForm({ ...editForm, tracking_url: e.target.value })}
-                          className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                          className="flex-1 px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                           placeholder="https://..."
                         />
                         {editForm.tracking_url && (
@@ -813,23 +813,23 @@ export default function AdminOrdersPage() {
                 {/* Client info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
+                    <h3 className="text-sm font-medium text-admin-muted uppercase tracking-wider mb-3">
                       Client
                     </h3>
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-admin-surface-alt rounded-lg p-4">
                       <p className="font-medium">
                         {selectedOrder.shipping_address?.firstName} {selectedOrder.shipping_address?.lastName}
                       </p>
-                      <p className="text-gray-600">{selectedOrder.shipping_address?.email}</p>
-                      <p className="text-gray-600">{selectedOrder.shipping_address?.phone}</p>
+                      <p className="text-admin-muted">{selectedOrder.shipping_address?.email}</p>
+                      <p className="text-admin-muted">{selectedOrder.shipping_address?.phone}</p>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
+                    <h3 className="text-sm font-medium text-admin-muted uppercase tracking-wider mb-3">
                       Adresse de livraison
                     </h3>
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-admin-surface-alt rounded-lg p-4">
                       <p>{selectedOrder.shipping_address?.address}</p>
                       <p>{selectedOrder.shipping_address?.postalCode} {selectedOrder.shipping_address?.city}</p>
                       <p>{selectedOrder.shipping_address?.country}</p>
@@ -839,13 +839,13 @@ export default function AdminOrdersPage() {
 
                 {/* Items */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-medium text-admin-muted uppercase tracking-wider mb-3">
                     Articles commandés
                   </h3>
                   <div className="space-y-3">
                     {selectedOrder.items?.map((item, index) => (
-                      <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                        <div className="w-16 h-16 bg-gray-200 rounded relative overflow-hidden">
+                      <div key={index} className="flex items-center gap-4 p-3 bg-admin-surface-alt rounded-lg">
+                        <div className="w-16 h-16 bg-admin-surface-alt rounded relative overflow-hidden">
                           {item.product?.images?.[0] && (
                             <Image
                               src={item.product.images[0]}
@@ -857,7 +857,7 @@ export default function AdminOrdersPage() {
                         </div>
                         <div className="flex-1">
                           <p className="font-medium">{item.product?.name}</p>
-                          <p className="text-sm text-gray-500">{item.size} × {item.quantity}</p>
+                          <p className="text-sm text-admin-muted">{item.size} × {item.quantity}</p>
                         </div>
                         <p className="font-medium">{(item.product?.price || 0) * item.quantity} €</p>
                       </div>
@@ -867,26 +867,26 @@ export default function AdminOrdersPage() {
 
                 {/* Notes admin */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
+                  <label className="block text-sm font-medium text-admin-muted uppercase tracking-wider mb-2">
                     Notes internes
                   </label>
                   <textarea
                     value={editForm.admin_notes}
                     onChange={(e) => setEditForm({ ...editForm, admin_notes: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] resize-none"
+                    className="w-full px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962] resize-none"
                     rows={3}
                     placeholder="Notes visibles uniquement par les administrateurs..."
                   />
                 </div>
 
                 {/* Totals */}
-                <div className="border-t pt-4">
+                <div className="border-t border-admin-border pt-4">
                   <div className="flex justify-between py-2">
-                    <span className="text-gray-600">Sous-total</span>
+                    <span className="text-admin-muted">Sous-total</span>
                     <span>{selectedOrder.subtotal?.toLocaleString('fr-FR')} €</span>
                   </div>
                   <div className="flex justify-between py-2">
-                    <span className="text-gray-600">
+                    <span className="text-admin-muted">
                       {selectedOrder.shipping_method
                         ? (selectedOrder.shipping_method === 'standard'
                             ? 'Livraison (Standard)'
@@ -916,11 +916,11 @@ export default function AdminOrdersPage() {
               </div>
 
               {/* Footer actions */}
-              <div className="p-6 border-t bg-gray-50 sticky bottom-0">
+              <div className="p-6 border-t border-admin-border bg-admin-surface-alt sticky bottom-0">
                 <div className="flex gap-4">
                   <button
                     onClick={() => setSelectedOrder(null)}
-                    className="flex-1 px-4 py-2 border rounded-lg hover:bg-white transition-colors"
+                    className="flex-1 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface transition-colors"
                   >
                     Fermer
                   </button>

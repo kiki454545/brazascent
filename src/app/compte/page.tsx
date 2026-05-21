@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { AccountSidebar } from '@/components/AccountSidebar'
 import { useAuthStore } from '@/store/auth'
@@ -100,10 +99,7 @@ export default function ComptePage() {
     return (
       <div className="min-h-screen pt-32 pb-24 bg-background">
         <div className="px-6 sm:px-10 lg:px-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <div>
             {/* Header */}
             <div className="mb-8">
               <h1 className="text-3xl font-light tracking-[0.15em] uppercase mb-2">
@@ -236,7 +232,7 @@ export default function ComptePage() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     )
@@ -246,11 +242,7 @@ export default function ComptePage() {
   return (
     <div className="min-h-screen pt-32 pb-24 bg-background">
       <div className="max-w-md mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-cream p-8 lg:p-12 shadow-sm"
-        >
+        <div className="bg-cream p-8 lg:p-12 shadow-sm animate-fade-in-up">
           {/* Tabs */}
           <div className="flex mb-8 border-b">
             <button
@@ -454,7 +446,7 @@ export default function ComptePage() {
               </button>
             </form>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   )

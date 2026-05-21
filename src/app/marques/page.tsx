@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { Building2 } from 'lucide-react'
 import { Benefits } from '@/components/Benefits'
 import { supabase } from '@/lib/supabase'
@@ -80,12 +79,7 @@ export default function MarquesPage() {
         />
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 flex items-center justify-center text-center text-white px-6 pt-24 sm:pt-0">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-3xl"
-          >
+          <div className="max-w-3xl animate-fade-in-up">
             <span className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
               Maisons
             </span>
@@ -95,7 +89,7 @@ export default function MarquesPage() {
             <p className="text-sm sm:text-lg font-light max-w-xl mx-auto">
               Les plus grandes maisons de parfumerie réunies pour vous
             </p>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -109,13 +103,7 @@ export default function MarquesPage() {
           ) : brands.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
               {brands.map((brand, index) => (
-                <motion.div
-                  key={brand.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                >
+                <div key={brand.id}>
                   <Link href={`/marques/${brand.slug}`} className="group block text-center">
                     <div className="relative aspect-[4/3] overflow-hidden mb-6 bg-cream">
                       {brand.logo ? (
@@ -142,7 +130,7 @@ export default function MarquesPage() {
                       </p>
                     )}
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
           ) : (

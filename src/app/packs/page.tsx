@@ -127,9 +127,10 @@ export default function PacksPage() {
       {/* Hero Section */}
       <section className="relative h-[35vh] sm:h-[50vh] min-h-[240px] sm:min-h-[360px] overflow-hidden">
         <Image
-          src="/images/packs-hero.jpg"
+          src="/images/packs-hero.webp"
           alt="Nos Coffrets"
           fill
+          sizes="100vw"
           className="object-cover"
           priority
         />

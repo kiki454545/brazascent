@@ -216,7 +216,7 @@ export default function AdminBrandsPage() {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Marques</h1>
-          <p className="text-gray-500">{brands.length} marque{brands.length > 1 ? 's' : ''} au total</p>
+          <p className="text-admin-muted">{brands.length} marque{brands.length > 1 ? 's' : ''} au total</p>
         </div>
         <button
           onClick={openCreateModal}
@@ -228,15 +228,15 @@ export default function AdminBrandsPage() {
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl shadow-sm p-4">
+      <div className="bg-admin-surface rounded-xl shadow-sm p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-admin-light" />
           <input
             type="text"
             placeholder="Rechercher une marque..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+            className="w-full pl-10 pr-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
           />
         </div>
       </div>
@@ -251,9 +251,9 @@ export default function AdminBrandsPage() {
           filteredBrands.map((brand) => (
             <div
               key={brand.id}
-              className="bg-white rounded-xl shadow-sm overflow-hidden"
+              className="bg-admin-surface rounded-xl shadow-sm overflow-hidden"
             >
-              <div className="aspect-video bg-gray-100 relative">
+              <div className="aspect-video bg-admin-surface-alt relative">
                 {brand.logo ? (
                   <Image
                     src={brand.logo}
@@ -263,28 +263,28 @@ export default function AdminBrandsPage() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Building2 className="w-12 h-12 text-gray-300" />
+                    <Building2 className="w-12 h-12 text-admin-light" />
                   </div>
                 )}
               </div>
               <div className="p-4">
                 <h3 className="font-medium text-lg mb-1">{brand.name}</h3>
                 {brand.description && (
-                  <p className="text-sm text-gray-500 line-clamp-2 mb-4">
+                  <p className="text-sm text-admin-muted line-clamp-2 mb-4">
                     {brand.description}
                   </p>
                 )}
                 <div className="flex items-center justify-end gap-2">
                   <button
                     onClick={() => openEditModal(brand)}
-                    className="p-2 text-gray-400 hover:text-[#C9A962] transition-colors"
+                    className="p-2 text-admin-light hover:text-[#C9A962] transition-colors"
                     title="Modifier"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setDeleteModal(brand.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                    className="p-2 text-admin-light hover:text-red-600 transition-colors"
                     title="Supprimer"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -294,9 +294,9 @@ export default function AdminBrandsPage() {
             </div>
           ))
         ) : (
-          <div className="col-span-full bg-white rounded-xl shadow-sm p-12 text-center">
-            <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">
+          <div className="col-span-full bg-admin-surface rounded-xl shadow-sm p-12 text-center">
+            <Building2 className="w-12 h-12 text-admin-light mx-auto mb-4" />
+            <p className="text-admin-muted mb-4">
               {searchQuery ? 'Aucune marque trouvée' : 'Aucune marque pour le moment'}
             </p>
             {!searchQuery && (
@@ -320,15 +320,15 @@ export default function AdminBrandsPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-xl w-full max-w-lg overflow-hidden"
+              className="bg-admin-surface rounded-xl w-full max-w-lg overflow-hidden"
             >
-              <div className="flex items-center justify-between p-6 border-b">
+              <div className="flex items-center justify-between p-6 border-b border-admin-border">
                 <h2 className="text-lg font-medium">
                   {editingBrand ? 'Modifier la marque' : 'Nouvelle marque'}
                 </h2>
                 <button
                   onClick={closeModal}
-                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                  className="p-1 hover:bg-admin-surface-alt rounded transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -342,47 +342,47 @@ export default function AdminBrandsPage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-admin-text mb-2">
                     Nom de la marque *
                   </label>
                   <input
                     type="text"
                     value={form.name}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                     placeholder="Ex: Braza Scent"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-admin-text mb-2">
                     Slug (URL)
                   </label>
                   <input
                     type="text"
                     value={form.slug}
                     onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] bg-gray-50"
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none bg-admin-surface-alt border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                     placeholder="braza-scent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-admin-text mb-2">
                     Description
                   </label>
                   <textarea
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] resize-none"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962] resize-none"
                     rows={3}
                     placeholder="Description de la marque..."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-admin-text mb-2">
                     Logo de la marque
                   </label>
                   <ImageUpload
@@ -396,7 +396,7 @@ export default function AdminBrandsPage() {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors"
                   >
                     Annuler
                   </button>
@@ -430,16 +430,16 @@ export default function AdminBrandsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-6 max-w-md w-full mx-4"
+            className="bg-admin-surface rounded-xl p-6 max-w-md w-full mx-4"
           >
             <h3 className="text-lg font-medium mb-2">Supprimer cette marque ?</h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-admin-muted mb-6">
               Cette action est irréversible. La marque sera définitivement supprimée.
             </p>
             <div className="flex gap-4">
               <button
                 onClick={() => setDeleteModal(null)}
-                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors"
               >
                 Annuler
               </button>

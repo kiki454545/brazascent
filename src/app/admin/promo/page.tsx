@@ -234,7 +234,7 @@ export default function PromoCodesPage() {
   )
 
   const getCodeStatus = (code: PromoCode) => {
-    if (!code.is_active) return { label: 'Inactif', color: 'bg-gray-100 text-gray-600' }
+    if (!code.is_active) return { label: 'Inactif', color: 'bg-admin-surface-alt text-admin-muted' }
 
     const now = new Date()
     const startsAt = new Date(code.starts_at)
@@ -253,7 +253,7 @@ export default function PromoCodesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Codes Promo</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-admin-muted text-sm mt-1">
             Gérez vos codes promotionnels
           </p>
         </div>
@@ -268,7 +268,7 @@ export default function PromoCodesPage() {
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-admin-light" />
         <input
           type="text"
           value={searchQuery}
@@ -284,46 +284,46 @@ export default function PromoCodesPage() {
           <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredCodes.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+        <div className="text-center py-12 bg-admin-surface rounded-lg shadow-sm">
           <Tag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Aucun code promo trouvé</p>
+          <p className="text-admin-muted">Aucun code promo trouvé</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-admin-surface rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-admin-surface-alt border-b border-admin-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Code
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Réduction
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Utilisations
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Validité
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-admin-border">
                 {filteredCodes.map((code) => {
                   const status = getCodeStatus(code)
                   return (
-                    <tr key={code.id} className="hover:bg-gray-50">
+                    <tr key={code.id} className="hover:bg-admin-surface-alt">
                       <td className="px-6 py-4">
                         <div>
                           <p className="font-mono font-semibold text-[#19110B]">{code.code}</p>
                           {code.description && (
-                            <p className="text-sm text-gray-500 truncate max-w-xs">{code.description}</p>
+                            <p className="text-sm text-admin-muted truncate max-w-xs">{code.description}</p>
                           )}
                         </div>
                       </td>
@@ -342,12 +342,12 @@ export default function PromoCodesPage() {
                           )}
                         </div>
                         {code.min_order_amount > 0 && (
-                          <p className="text-xs text-gray-500">Min. {code.min_order_amount} €</p>
+                          <p className="text-xs text-admin-muted">Min. {code.min_order_amount} €</p>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4 text-gray-400" />
+                          <Users className="w-4 h-4 text-admin-light" />
                           <span>
                             {code.current_uses}
                             {code.max_uses && ` / ${code.max_uses}`}
@@ -358,7 +358,7 @@ export default function PromoCodesPage() {
                         <div className="text-sm">
                           {code.expires_at ? (
                             <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <Calendar className="w-4 h-4 text-admin-light" />
                               <span>
                                 {new Date(code.expires_at).toLocaleDateString('fr-FR', {
                                   day: '2-digit',
@@ -370,7 +370,7 @@ export default function PromoCodesPage() {
                               </span>
                             </div>
                           ) : (
-                            <span className="text-gray-400">Illimité</span>
+                            <span className="text-admin-light">Illimité</span>
                           )}
                         </div>
                       </td>
@@ -383,21 +383,21 @@ export default function PromoCodesPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleViewUsage(code)}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 hover:bg-admin-surface-alt rounded-lg transition-colors"
                             title="Voir les utilisations"
                           >
-                            <Eye className="w-4 h-4 text-gray-500" />
+                            <Eye className="w-4 h-4 text-admin-muted" />
                           </button>
                           <button
                             onClick={() => handleOpenModal(code)}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 hover:bg-admin-surface-alt rounded-lg transition-colors"
                             title="Modifier"
                           >
-                            <Edit2 className="w-4 h-4 text-gray-500" />
+                            <Edit2 className="w-4 h-4 text-admin-muted" />
                           </button>
                           <button
                             onClick={() => toggleActive(code)}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 hover:bg-admin-surface-alt rounded-lg transition-colors"
                             title={code.is_active ? 'Désactiver' : 'Activer'}
                           >
                             {code.is_active ? (
@@ -430,7 +430,7 @@ export default function PromoCodesPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
+            className="bg-admin-surface rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h2 className="text-lg font-semibold">
@@ -438,7 +438,7 @@ export default function PromoCodesPage() {
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-admin-surface-alt rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -453,7 +453,7 @@ export default function PromoCodesPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-admin-text mb-1">
                   Code promo *
                 </label>
                 <input
@@ -467,7 +467,7 @@ export default function PromoCodesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-admin-text mb-1">
                   Description
                 </label>
                 <input
@@ -475,26 +475,26 @@ export default function PromoCodesPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="20% de réduction pour les nouveaux clients"
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                  className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-admin-text mb-1">
                     Type de réduction *
                   </label>
                   <select
                     value={formData.discount_type}
                     onChange={(e) => setFormData({ ...formData, discount_type: e.target.value as 'percentage' | 'fixed' })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                   >
                     <option value="percentage">Pourcentage (%)</option>
                     <option value="fixed">Montant fixe (€)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-admin-text mb-1">
                     Valeur *
                   </label>
                   <input
@@ -504,14 +504,14 @@ export default function PromoCodesPage() {
                     value={formData.discount_value}
                     onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
                     placeholder={formData.discount_type === 'percentage' ? '20' : '10.00'}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-admin-text mb-1">
                   Montant minimum de commande (€)
                 </label>
                 <input
@@ -521,12 +521,12 @@ export default function PromoCodesPage() {
                   value={formData.min_order_amount}
                   onChange={(e) => setFormData({ ...formData, min_order_amount: e.target.value })}
                   placeholder="50.00"
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                  className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-admin-text mb-1">
                   Nombre maximum d'utilisations
                 </label>
                 <input
@@ -535,34 +535,34 @@ export default function PromoCodesPage() {
                   value={formData.max_uses}
                   onChange={(e) => setFormData({ ...formData, max_uses: e.target.value })}
                   placeholder="Illimité"
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                  className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                 />
-                <p className="text-xs text-gray-500 mt-1">Laisser vide pour illimité</p>
+                <p className="text-xs text-admin-muted mt-1">Laisser vide pour illimité</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-admin-text mb-1">
                     Date de début
                   </label>
                   <input
                     type="datetime-local"
                     value={formData.starts_at}
                     onChange={(e) => setFormData({ ...formData, starts_at: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-admin-text mb-1">
                     Date de fin
                   </label>
                   <input
                     type="datetime-local"
                     value={formData.expires_at}
                     onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Laisser vide pour pas d'expiration</p>
+                  <p className="text-xs text-admin-muted mt-1">Laisser vide pour pas d'expiration</p>
                 </div>
               </div>
 
@@ -572,9 +572,9 @@ export default function PromoCodesPage() {
                   id="is_active"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4 text-[#C9A962] border-gray-300 rounded focus:ring-[#C9A962]"
+                  className="w-4 h-4 text-[#C9A962] border-admin-border rounded focus:ring-[#C9A962]"
                 />
-                <label htmlFor="is_active" className="text-sm text-gray-700">
+                <label htmlFor="is_active" className="text-sm text-admin-text">
                   Code actif
                 </label>
               </div>
@@ -583,7 +583,7 @@ export default function PromoCodesPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors"
                 >
                   Annuler
                 </button>
@@ -606,18 +606,18 @@ export default function PromoCodesPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
+            className="bg-admin-surface rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
           >
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <div>
                 <h2 className="text-lg font-semibold">
                   Historique d'utilisation
                 </h2>
-                <p className="text-sm text-gray-500 font-mono">{selectedCode.code}</p>
+                <p className="text-sm text-admin-muted font-mono">{selectedCode.code}</p>
               </div>
               <button
                 onClick={() => setShowUsageModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-admin-surface-alt rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -631,25 +631,25 @@ export default function PromoCodesPage() {
               ) : usageLogs.length === 0 ? (
                 <div className="text-center py-12">
                   <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Aucune utilisation enregistrée</p>
+                  <p className="text-admin-muted">Aucune utilisation enregistrée</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {usageLogs.map((log) => (
                     <div
                       key={log.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                      className="flex items-center justify-between p-4 bg-admin-surface-alt rounded-lg"
                     >
                       <div>
                         <p className="font-medium">
                           {log.user_email || 'Utilisateur anonyme'}
                         </p>
                         {log.order_id && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-admin-muted">
                             Commande: {log.order_id}
                           </p>
                         )}
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-admin-light">
                           {new Date(log.used_at).toLocaleString('fr-FR')}
                         </p>
                       </div>
@@ -660,7 +660,7 @@ export default function PromoCodesPage() {
                           </p>
                         )}
                         {log.order_total && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-admin-muted">
                             Total: {log.order_total.toFixed(2)} €
                           </p>
                         )}
@@ -671,9 +671,9 @@ export default function PromoCodesPage() {
               )}
             </div>
 
-            <div className="px-6 py-4 border-t bg-gray-50">
+            <div className="px-6 py-4 border-t bg-admin-surface-alt">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">
+                <span className="text-admin-muted">
                   Total utilisations: <strong>{selectedCode.current_uses}</strong>
                   {selectedCode.max_uses && ` / ${selectedCode.max_uses}`}
                 </span>

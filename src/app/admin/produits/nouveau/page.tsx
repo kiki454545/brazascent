@@ -27,6 +27,18 @@ const isAbortError = (error: unknown): boolean => {
          false
 }
 
+interface Accord {
+  name: string
+  color: string
+  intensity: number
+}
+
+interface AccordIA {
+  nom: string
+  intensite: number
+  couleur: string
+}
+
 interface ProductForm {
   name: string
   slug: string
@@ -42,11 +54,15 @@ interface ProductForm {
   notes_top: string[]
   notes_heart: string[]
   notes_base: string[]
+  main_accords: Accord[]
+  note_images: Record<string, string>
+  accords: AccordIA[]
   images: string[]
   stock: number
   is_new: boolean
   is_bestseller: boolean
   is_active: boolean
+  is_promo: boolean
   unlimited_stock: boolean
 }
 
@@ -73,16 +89,23 @@ export default function NewProductPage() {
     notes_top: [],
     notes_heart: [],
     notes_base: [],
+    main_accords: [],
+    note_images: {},
+    accords: [],
     images: [],
     stock: 150,
     is_new: true,
     is_bestseller: false,
     is_active: true,
+    is_promo: false,
     unlimited_stock: false
   })
 
   const [newNote, setNewNote] = useState({ top: '', heart: '', base: '' })
   const [newSize, setNewSize] = useState('')
+  const [generatingAccords, setGeneratingAccords] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
+  const [accordsText, setAccordsText] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -119,11 +142,15 @@ export default function NewProductPage() {
         notes_top: form.notes_top,
         notes_heart: form.notes_heart,
         notes_base: form.notes_base,
+        main_accords: form.main_accords,
+        note_images: form.note_images,
+        accords: form.accords,
         images: form.images,
         stock: form.stock,
         is_new: form.is_new,
         is_bestseller: form.is_bestseller,
         is_active: form.is_active,
+        is_promo: form.is_promo,
         unlimited_stock: form.unlimited_stock
       }
 
@@ -250,6 +277,94 @@ export default function NewProductPage() {
     })
   }
 
+  const addAccord = () => {
+    setForm({ ...form, main_accords: [...form.main_accords, { name: '', color: '#C9A962', intensity: 50 }] })
+  }
+
+  const removeAccord = (index: number) => {
+    setForm({ ...form, main_accords: form.main_accords.filter((_, i) => i !== index) })
+  }
+
+  const updateAccord = (index: number, field: keyof Accord, value: string | number) => {
+    const updated = [...form.main_accords]
+    updated[index] = { ...updated[index], [field]: value }
+    setForm({ ...form, main_accords: updated })
+  }
+
+  const updateNoteImage = (note: string, url: string) => {
+    setForm({ ...form, note_images: { ...form.note_images, [note]: url } })
+  }
+
+  const ACCORD_COLORS: Record<string, string> = {
+    'boisé': '#8B6B14', 'boise': '#8B6B14',
+    'musqué': '#C4A882', 'musque': '#C4A882', 'musc': '#C4A882',
+    'vanillé': '#F5C842', 'vanille': '#F5C842',
+    'ambré': '#CC7722', 'ambre': '#CC7722',
+    'épicé': '#C4541A', 'epice': '#C4541A',
+    'floral': '#E8A0BF', 'fleuri': '#E8A0BF',
+    'frais': '#4A9EBF',
+    'oriental': '#8B3A3A',
+    'agrume': '#F4A523', 'agrumes': '#F4A523',
+    'aquatique': '#2E86AB', 'marin': '#2E86AB',
+    'poudré': '#D4A5A5',
+    'vert': '#5A8A3C', 'végétal': '#5A8A3C',
+    'gourmand': '#8B4513',
+    'chypré': '#6B8E23',
+    'fougère': '#4A7B4F',
+    'cuir': '#7B4B2A',
+    'fumé': '#696969',
+    'sucré': '#E88080',
+    'terreux': '#8B7355',
+    'woody': '#8B6B14', 'wood': '#8B6B14',
+    'musk': '#C4A882', 'musky': '#C4A882',
+    'vanilla': '#F5C842',
+    'amber': '#CC7722', 'ambery': '#CC7722',
+    'spicy': '#C4541A', 'spice': '#C4541A',
+    'rose': '#E8799A',
+    'fresh': '#4A9EBF',
+    'powdery': '#D4A5A5',
+    'green': '#5A8A3C',
+    'sweet': '#E88080',
+    'smoky': '#696969',
+    'earthy': '#8B7355',
+    'cedar': '#A0714F',
+    'sandalwood': '#C4956A',
+    'oud': '#5C3317',
+    'patchouli': '#6B4E3D',
+    'vetiver': '#7D8C4F',
+  }
+
+  const applyAccordsFromText = () => {
+    const names = accordsText.split(/[\n,;]+/).map((s) => s.trim()).filter(Boolean)
+    if (names.length === 0) return
+    const step = names.length > 1 ? Math.round(45 / (names.length - 1)) : 0
+    const accords = names.map((nom, i) => {
+      const key = nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      const couleur = ACCORD_COLORS[nom.toLowerCase()] || ACCORD_COLORS[key] || '#C9A962'
+      return { nom, intensite: Math.round(88 - i * step), couleur }
+    })
+    setForm((prev) => ({ ...prev, accords }))
+  }
+
+  const generateAccords = async () => {
+    setGeneratingAccords(true)
+    setGenerateError(null)
+    try {
+      const res = await fetch('/api/admin/generate-accords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nom: form.name, marque: form.brand }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Erreur API')
+      setForm((prev) => ({ ...prev, accords: json.accords }))
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'Erreur inconnue')
+    } finally {
+      setGeneratingAccords(false)
+    }
+  }
+
   const addSize = () => {
     const size = newSize.trim()
     if (size && !form.sizes.includes(size)) {
@@ -305,13 +420,13 @@ export default function NewProductPage() {
       <div className="flex items-center gap-4 mb-6">
         <Link
           href="/admin/produits"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-admin-surface-alt rounded-lg transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
           <h1 className="text-2xl font-semibold">Nouveau produit</h1>
-          <p className="text-gray-500">Créer un nouveau parfum</p>
+          <p className="text-admin-muted">Créer un nouveau parfum</p>
         </div>
       </div>
 
@@ -321,7 +436,7 @@ export default function NewProductPage() {
         </div>
       )}
 
-      <div className="flex gap-4 mb-6 border-b">
+      <div className="flex gap-4 mb-6 border-b border-admin-border">
         {[
           { id: 'info', label: 'Informations' },
           { id: 'media', label: 'Médias' },
@@ -333,7 +448,7 @@ export default function NewProductPage() {
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id
                 ? 'border-[#C9A962] text-[#C9A962]'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-admin-muted hover:text-admin-text'
             }`}
           >
             {tab.label}
@@ -353,12 +468,12 @@ export default function NewProductPage() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="bg-admin-surface rounded-xl shadow-sm p-6">
               <h2 className="text-lg font-medium mb-4">Informations générales</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-admin-text mb-2">
                     Nom du produit *
                   </label>
                   <input
@@ -372,26 +487,26 @@ export default function NewProductPage() {
                         slug: generateSlug(e.target.value)
                       })
                     }}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                     placeholder="Ex: Oud Royal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-admin-text mb-2">
                     Slug (URL)
                   </label>
                   <input
                     type="text"
                     value={form.slug}
                     onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] bg-gray-50"
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none bg-admin-surface-alt border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                     placeholder="oud-royal"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-admin-text mb-2">
                     Marque
                   </label>
                   <input
@@ -403,13 +518,13 @@ export default function NewProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-admin-text mb-2">
                     Catégorie
                   </label>
                   <select
                     value={form.category}
                     onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                   >
                     <option value="Eau de Parfum">Eau de Parfum</option>
                     <option value="Eau de Toilette">Eau de Toilette</option>
@@ -419,7 +534,7 @@ export default function NewProductPage() {
               </div>
 
               <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-admin-text mb-2">
                   Description courte
                 </label>
                 <input
@@ -432,7 +547,7 @@ export default function NewProductPage() {
               </div>
 
               <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-admin-text mb-2">
                   Description complète
                 </label>
                 <textarea
@@ -445,76 +560,105 @@ export default function NewProductPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-lg font-medium mb-4">Notes olfactives</h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {(['top', 'heart', 'base'] as const).map((type) => {
-                  const key = `notes_${type}` as keyof ProductForm
-                  const notes = form[key] as string[]
-                  return (
-                    <div key={type}>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Notes de {type === 'top' ? 'tête' : type === 'heart' ? 'coeur' : 'fond'}
-                      </label>
-                      <div className="flex flex-wrap gap-2 mb-2 min-h-[32px]">
-                        {notes.map((note, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
-                          >
-                            {note}
-                            <button
-                              type="button"
-                              onClick={() => removeNote(type, index)}
-                              className="text-gray-400 hover:text-red-500"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={newNote[type]}
-                          onChange={(e) => setNewNote({ ...newNote, [type]: e.target.value })}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              addNote(type)
-                            }
-                          }}
-                          className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-[#C9A962]"
-                          placeholder="Ajouter une note"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => addNote(type)}
-                          className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
+            <div className="bg-admin-surface rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-medium mb-1">Notes olfactives</h2>
+              <p className="text-xs text-admin-light mb-4">Colle les noms depuis Fragrantica — un par ligne ou séparés par des virgules</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {([
+                  { key: 'notes_top' as const,   label: 'Notes de tête',  placeholder: 'Bergamote\nCitron\nGingembre' },
+                  { key: 'notes_heart' as const, label: 'Notes de cœur',  placeholder: 'Rose\nJasmin\nPivoine' },
+                  { key: 'notes_base' as const,  label: 'Notes de fond',  placeholder: 'Cèdre\nVétiver\nMusc' },
+                ]).map(({ key, label, placeholder }) => (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-admin-text mb-2">{label}</label>
+                    <textarea
+                      rows={4}
+                      value={(form[key] as string[]).join('\n')}
+                      onChange={(e) => {
+                        const notes = e.target.value.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean)
+                        setForm({ ...form, [key]: notes })
+                      }}
+                      placeholder={placeholder}
+                      className="w-full px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg text-sm focus:outline-none focus:border-[#C9A962] resize-none font-mono"
+                    />
+                    {(form[key] as string[]).length > 0 && (
+                      <p className="text-xs text-admin-light mt-1">{(form[key] as string[]).length} note{(form[key] as string[]).length > 1 ? 's' : ''}</p>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="bg-admin-surface rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-medium mb-1">Accords olfactifs</h2>
+              <p className="text-xs text-admin-light mb-4">Colle les noms depuis Fragrantica — couleurs et intensités auto</p>
+              <textarea
+                value={accordsText}
+                onChange={(e) => setAccordsText(e.target.value)}
+                placeholder={'Boisé\nMusqué\nVanillé\nAmbré\nÉpicé'}
+                rows={5}
+                className="w-full px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg text-sm focus:outline-none focus:border-[#C9A962] font-mono resize-none mb-3"
+              />
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={applyAccordsFromText}
+                  disabled={!accordsText.trim()}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#19110B] text-white rounded-lg hover:bg-[#C9A962] transition-colors text-sm disabled:opacity-50"
+                >
+                  Appliquer
+                </button>
+                <button
+                  type="button"
+                  onClick={generateAccords}
+                  disabled={generatingAccords || !form.name}
+                  className="flex items-center gap-2 px-4 py-2 bg-admin-surface-alt rounded-lg hover:bg-admin-surface-alt transition-colors text-sm disabled:opacity-50"
+                >
+                  {generatingAccords ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" />Génération…</>
+                  ) : (
+                    <><span>✨</span>Générer avec l&apos;IA</>
+                  )}
+                </button>
+                {form.accords.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setForm({ ...form, accords: [] }); setAccordsText('') }}
+                    className="flex items-center gap-2 px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors text-sm"
+                  >
+                    <X className="w-4 h-4" />Effacer
+                  </button>
+                )}
+              </div>
+              {generateError && <p className="text-sm text-red-500 mt-3">{generateError}</p>}
+              {form.accords.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {form.accords.map((accord) => (
+                    <div key={accord.nom} className="flex items-center gap-3">
+                      <span className="text-sm text-admin-muted w-28 shrink-0 truncate">{accord.nom}</span>
+                      <div className="flex-1 h-5 bg-admin-surface-alt rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${accord.intensite}%`, backgroundColor: accord.couleur }} />
+                      </div>
+                      <span className="text-xs text-admin-light w-8 text-right shrink-0">{accord.intensite}%</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-admin-surface rounded-xl shadow-sm p-6">
               <h2 className="text-lg font-medium mb-4">Tailles disponibles</h2>
               <div className="flex flex-wrap gap-2 mb-4">
                 {form.sizes.map((size, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-admin-surface-alt rounded-lg"
                   >
                     {size}
                     <button
                       type="button"
                       onClick={() => removeSize(index)}
-                      className="text-gray-400 hover:text-red-500"
+                      className="text-admin-light hover:text-red-500"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -532,13 +676,13 @@ export default function NewProductPage() {
                       addSize()
                     }
                   }}
-                  className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-[#C9A962]"
+                  className="flex-1 px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg text-sm focus:outline-none focus:border-[#C9A962]"
                   placeholder="Ex: 30ml"
                 />
                 <button
                   type="button"
                   onClick={addSize}
-                  className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-admin-surface-alt rounded-lg hover:bg-admin-surface-alt transition-colors flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   Ajouter
@@ -552,7 +696,7 @@ export default function NewProductPage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-sm p-6"
+            className="bg-admin-surface rounded-xl shadow-sm p-6"
           >
             <h2 className="text-lg font-medium mb-4">Images du produit</h2>
 
@@ -561,7 +705,7 @@ export default function NewProductPage() {
                 {form.images.map((image, index) => (
                   <div
                     key={index}
-                    className="relative aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden group"
+                    className="relative aspect-[3/4] bg-admin-surface-alt rounded-lg overflow-hidden group"
                   >
                     <Image
                       src={image}
@@ -579,7 +723,7 @@ export default function NewProductPage() {
                         <button
                           type="button"
                           onClick={() => moveImage(index, 0)}
-                          className="p-2 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+                          className="p-2 bg-admin-surface rounded-lg hover:bg-admin-surface-alt transition-colors"
                           title="Définir comme principale"
                         >
                           <GripVertical className="w-4 h-4" />
@@ -601,20 +745,20 @@ export default function NewProductPage() {
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed rounded-xl p-12 text-center cursor-pointer hover:border-[#C9A962] transition-colors"
+              className="border-2 border-dashed border-admin-border rounded-xl p-12 text-center cursor-pointer hover:border-[#C9A962] transition-colors"
             >
               {uploading ? (
                 <div className="flex flex-col items-center">
                   <Loader2 className="w-12 h-12 text-[#C9A962] animate-spin mb-4" />
-                  <p className="text-gray-600">Upload en cours...</p>
+                  <p className="text-admin-muted">Upload en cours...</p>
                 </div>
               ) : (
                 <>
-                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-2">
+                  <Upload className="w-12 h-12 text-admin-light mx-auto mb-4" />
+                  <p className="text-admin-muted mb-2">
                     Cliquez pour sélectionner des images
                   </p>
-                  <p className="text-sm text-gray-400 mb-4">
+                  <p className="text-sm text-admin-light mb-4">
                     PNG, JPG jusqu&apos;à 5MB. Ratio 3:4 recommandé.
                   </p>
                 </>
@@ -630,10 +774,33 @@ export default function NewProductPage() {
             />
 
             <div className="mt-6">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-admin-muted">
                 La première image sera l&apos;image principale affichée dans les listes.
               </p>
             </div>
+
+            {[...form.notes_top, ...form.notes_heart, ...form.notes_base].length > 0 && (
+              <div className="mt-8 pt-8 border-t border-admin-border">
+                <h2 className="text-lg font-medium mb-1">Images des notes olfactives</h2>
+                <p className="text-sm text-admin-muted mb-4">
+                  Associez une URL d&apos;image à chaque note pour la pyramide olfactive.
+                </p>
+                <div className="space-y-3">
+                  {[...new Set([...form.notes_top, ...form.notes_heart, ...form.notes_base])].map((note) => (
+                    <div key={note} className="flex items-center gap-3">
+                      <span className="w-28 text-sm font-medium text-admin-text truncate shrink-0">{note}</span>
+                      <input
+                        type="url"
+                        value={form.note_images[note] || ''}
+                        onChange={(e) => updateNoteImage(note, e.target.value)}
+                        placeholder="https://..."
+                        className="flex-1 px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg text-sm focus:outline-none focus:border-[#C9A962]"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -643,7 +810,7 @@ export default function NewProductPage() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="bg-admin-surface rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium">Prix et stock par taille</h2>
                 <div className="flex items-center gap-4">
@@ -653,14 +820,14 @@ export default function NewProductPage() {
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                       form.unlimited_stock
                         ? 'bg-green-500 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        : 'bg-admin-surface-alt text-admin-muted hover:bg-admin-surface-alt'
                     }`}
                   >
                     {form.unlimited_stock ? 'Stock illimité' : 'Stock illimité'}
                   </button>
                   {!form.unlimited_stock && (
-                    <div className="text-sm text-gray-500">
-                      Stock total : <span className="font-medium text-gray-900">{form.stock}</span> unités
+                    <div className="text-sm text-admin-muted">
+                      Stock total : <span className="font-medium text-admin-text">{form.stock}</span> unités
                     </div>
                   )}
                 </div>
@@ -677,13 +844,13 @@ export default function NewProductPage() {
               {form.sizes.length > 0 ? (
                 <div className="space-y-4">
                   {form.sizes.map((size) => (
-                    <div key={size} className="p-4 bg-gray-50 rounded-lg">
+                    <div key={size} className="p-4 bg-admin-surface-alt rounded-lg">
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="font-medium text-gray-900">{size}</span>
+                        <span className="font-medium text-admin-text">{size}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">
+                          <label className="block text-xs font-medium text-admin-muted mb-1">
                             Prix
                           </label>
                           <div className="relative">
@@ -693,18 +860,18 @@ export default function NewProductPage() {
                               step="0.01"
                               value={form.price_by_size[size] ?? 0}
                               onChange={(e) => updatePriceForSize(size, parseFloat(e.target.value) || 0)}
-                              className="w-full px-3 py-2 pr-8 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                              className="w-full px-3 py-2 pr-8 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                               placeholder="0.00"
                             />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-light text-sm">€</span>
                           </div>
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-500 mb-1">
+                          <label className="block text-xs font-medium text-admin-muted mb-1">
                             Stock
                           </label>
                           {form.unlimited_stock ? (
-                            <div className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500">
+                            <div className="w-full px-3 py-2 border border-admin-border rounded-lg bg-admin-surface text-admin-muted">
                               Illimité
                             </div>
                           ) : (
@@ -713,7 +880,7 @@ export default function NewProductPage() {
                               min="0"
                               value={form.stock_by_size[size] ?? 0}
                               onChange={(e) => updateStockForSize(size, parseInt(e.target.value) || 0)}
-                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+                              className="w-full px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
                               placeholder="0"
                             />
                           )}
@@ -723,53 +890,53 @@ export default function NewProductPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-admin-muted">
                   <p>Aucune taille définie.</p>
                   <p className="text-sm">Ajoutez des tailles dans l&apos;onglet &quot;Informations&quot;.</p>
                 </div>
               )}
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="bg-admin-surface rounded-xl shadow-sm p-6">
               <h2 className="text-lg font-medium mb-4">Badges et visibilité</h2>
 
               <div className="space-y-4">
-                <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
+                <label className="flex items-center justify-between p-4 bg-admin-surface-alt rounded-lg cursor-pointer">
                   <div>
                     <p className="font-medium">Produit actif</p>
-                    <p className="text-sm text-gray-500">Le produit est visible sur le site</p>
+                    <p className="text-sm text-admin-muted">Le produit est visible sur le site</p>
                   </div>
                   <input
                     type="checkbox"
                     checked={form.is_active}
                     onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-300 accent-[#C9A962]"
+                    className="w-5 h-5 rounded border-admin-border accent-[#C9A962]"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
+                <label className="flex items-center justify-between p-4 bg-admin-surface-alt rounded-lg cursor-pointer">
                   <div>
                     <p className="font-medium">Nouveau</p>
-                    <p className="text-sm text-gray-500">Afficher le badge &quot;Nouveau&quot;</p>
+                    <p className="text-sm text-admin-muted">Afficher le badge &quot;Nouveau&quot;</p>
                   </div>
                   <input
                     type="checkbox"
                     checked={form.is_new}
                     onChange={(e) => setForm({ ...form, is_new: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-300 accent-[#C9A962]"
+                    className="w-5 h-5 rounded border-admin-border accent-[#C9A962]"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-4 bg-gray-50 rounded-lg cursor-pointer">
+                <label className="flex items-center justify-between p-4 bg-admin-surface-alt rounded-lg cursor-pointer">
                   <div>
                     <p className="font-medium">Bestseller</p>
-                    <p className="text-sm text-gray-500">Afficher le badge &quot;Bestseller&quot;</p>
+                    <p className="text-sm text-admin-muted">Afficher le badge &quot;Bestseller&quot;</p>
                   </div>
                   <input
                     type="checkbox"
                     checked={form.is_bestseller}
                     onChange={(e) => setForm({ ...form, is_bestseller: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-300 accent-[#C9A962]"
+                    className="w-5 h-5 rounded border-admin-border accent-[#C9A962]"
                   />
                 </label>
               </div>
@@ -777,10 +944,10 @@ export default function NewProductPage() {
           </motion.div>
         )}
 
-        <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t">
+        <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-admin-border">
           <Link
             href="/admin/produits"
-            className="px-6 py-2 border rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors"
           >
             Annuler
           </Link>

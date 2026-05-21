@@ -130,14 +130,14 @@ export default function AdminPaniersPage() {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Paniers actifs</h1>
-          <p className="text-gray-500">
+          <p className="text-admin-muted">
             Suivi des paniers en cours et abandonnés
           </p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
           Actualiser
@@ -146,45 +146,45 @@ export default function AdminPaniersPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="bg-admin-surface rounded-xl shadow-sm p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
               <ShoppingCart className="w-5 h-5" />
             </div>
-            <span className="text-sm text-gray-500">Total paniers</span>
+            <span className="text-sm text-admin-muted">Total paniers</span>
           </div>
           <p className="text-2xl font-semibold">{carts.length}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="bg-admin-surface rounded-xl shadow-sm p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-green-100 text-green-600 rounded-lg">
               <Clock className="w-5 h-5" />
             </div>
-            <span className="text-sm text-gray-500">Paniers actifs</span>
+            <span className="text-sm text-admin-muted">Paniers actifs</span>
           </div>
           <p className="text-2xl font-semibold">{activeCount}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="bg-admin-surface rounded-xl shadow-sm p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
               <AlertTriangle className="w-5 h-5" />
             </div>
-            <span className="text-sm text-gray-500">Abandonnés</span>
+            <span className="text-sm text-admin-muted">Abandonnés</span>
           </div>
           <p className="text-2xl font-semibold">{abandonedCount}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="bg-admin-surface rounded-xl shadow-sm p-4">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-[#C9A962]/20 text-[#C9A962] rounded-lg">
               <Euro className="w-5 h-5" />
             </div>
-            <span className="text-sm text-gray-500">Valeur totale</span>
+            <span className="text-sm text-admin-muted">Valeur totale</span>
           </div>
           <p className="text-2xl font-semibold">{totalValue.toFixed(2)} €</p>
-          <p className="text-sm text-gray-500">{totalItems} articles</p>
+          <p className="text-sm text-admin-muted">{totalItems} articles</p>
         </div>
       </div>
 
@@ -195,7 +195,7 @@ export default function AdminPaniersPage() {
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             filter === 'all'
               ? 'bg-[#19110B] text-white'
-              : 'bg-white border hover:bg-gray-50'
+              : 'bg-admin-surface border border-admin-border hover:bg-admin-surface-alt'
           }`}
         >
           Tous ({carts.length})
@@ -205,7 +205,7 @@ export default function AdminPaniersPage() {
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             filter === 'active'
               ? 'bg-green-600 text-white'
-              : 'bg-white border hover:bg-gray-50'
+              : 'bg-admin-surface border border-admin-border hover:bg-admin-surface-alt'
           }`}
         >
           Actifs ({activeCount})
@@ -215,7 +215,7 @@ export default function AdminPaniersPage() {
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             filter === 'abandoned'
               ? 'bg-orange-600 text-white'
-              : 'bg-white border hover:bg-gray-50'
+              : 'bg-admin-surface border border-admin-border hover:bg-admin-surface-alt'
           }`}
         >
           Abandonnés ({abandonedCount})
@@ -223,15 +223,15 @@ export default function AdminPaniersPage() {
       </div>
 
       {/* Carts List */}
-      <div className="bg-white rounded-xl shadow-sm">
+      <div className="bg-admin-surface rounded-xl shadow-sm">
         {filteredCarts.length > 0 ? (
-          <div className="divide-y">
+          <div className="divide-y divide-admin-border">
             {filteredCarts.map((cart) => {
               const abandoned = isAbandoned(cart)
               const isExpanded = expandedCart === cart.id
 
               return (
-                <div key={cart.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div key={cart.id} className="p-4 hover:bg-admin-surface-alt transition-colors">
                   <div
                     className="flex items-center gap-4 cursor-pointer"
                     onClick={() => setExpandedCart(isExpanded ? null : cart.id)}
@@ -258,12 +258,12 @@ export default function AdminPaniersPage() {
                             {cart.user_name}
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 font-medium text-gray-500">
+                          <span className="flex items-center gap-1 font-medium text-admin-muted">
                             <User className="w-4 h-4" />
                             Visiteur anonyme
                           </span>
                         )}
-                        <span className="text-gray-400">•</span>
+                        <span className="text-admin-light">•</span>
                         <span className="font-medium">
                           {cart.item_count} article{cart.item_count > 1 ? 's' : ''}
                         </span>
@@ -275,7 +275,7 @@ export default function AdminPaniersPage() {
                           {abandoned ? 'Abandonné' : 'Actif'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-4 text-sm text-admin-muted">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {getTimeSinceActivity(cart.last_activity)} d&apos;inactivité
@@ -295,7 +295,7 @@ export default function AdminPaniersPage() {
                     {/* Value */}
                     <div className="text-right">
                       <p className="text-xl font-semibold">{cart.subtotal.toFixed(2)} €</p>
-                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${isExpanded ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 text-admin-light transition-transform ml-auto ${isExpanded ? 'rotate-180' : ''}`} />
                     </div>
                   </div>
 
@@ -307,13 +307,13 @@ export default function AdminPaniersPage() {
                       exit={{ height: 0, opacity: 0 }}
                       className="mt-4 pt-4 border-t"
                     >
-                      <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
+                      <p className="text-xs text-admin-muted uppercase tracking-wider mb-3">
                         Articles dans le panier
                       </p>
                       <div className="space-y-3">
                         {cart.items.map((item, index) => (
                           <div key={index} className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden relative">
+                            <div className="w-12 h-12 bg-admin-surface-alt rounded overflow-hidden relative">
                               {item.image ? (
                                 <Image
                                   src={item.image}
@@ -323,13 +323,13 @@ export default function AdminPaniersPage() {
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
-                                  <Package className="w-6 h-6 text-gray-400" />
+                                  <Package className="w-6 h-6 text-admin-light" />
                                 </div>
                               )}
                             </div>
                             <div className="flex-1">
                               <p className="font-medium text-sm">{item.name}</p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-admin-muted">
                                 {item.size} × {item.quantity}
                               </p>
                             </div>
@@ -374,8 +374,8 @@ export default function AdminPaniersPage() {
         ) : (
           <div className="p-12 text-center">
             <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">Aucun panier</p>
-            <p className="text-sm text-gray-400">
+            <p className="text-admin-muted font-medium">Aucun panier</p>
+            <p className="text-sm text-admin-light">
               {filter === 'all'
                 ? 'Aucun panier actif pour le moment'
                 : filter === 'active'
@@ -392,14 +392,14 @@ export default function AdminPaniersPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl max-w-md w-full"
+            className="bg-admin-surface rounded-xl max-w-md w-full"
           >
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Détails utilisateur</h2>
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-admin-surface-alt rounded-lg transition-colors"
                 >
                   <XCircle className="w-5 h-5" />
                 </button>
@@ -427,26 +427,26 @@ export default function AdminPaniersPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Mail className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center gap-3 p-3 bg-admin-surface-alt rounded-lg">
+                  <Mail className="w-5 h-5 text-admin-light" />
                   <div>
-                    <p className="text-xs text-gray-500">Email</p>
+                    <p className="text-xs text-admin-muted">Email</p>
                     <p className="font-medium">{selectedUser.email}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Phone className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center gap-3 p-3 bg-admin-surface-alt rounded-lg">
+                  <Phone className="w-5 h-5 text-admin-light" />
                   <div>
-                    <p className="text-xs text-gray-500">Téléphone</p>
+                    <p className="text-xs text-admin-muted">Téléphone</p>
                     <p className="font-medium">{selectedUser.phone || 'Non renseigné'}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Calendar className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center gap-3 p-3 bg-admin-surface-alt rounded-lg">
+                  <Calendar className="w-5 h-5 text-admin-light" />
                   <div>
-                    <p className="text-xs text-gray-500">Date d&apos;inscription</p>
+                    <p className="text-xs text-admin-muted">Date d&apos;inscription</p>
                     <p className="font-medium">
                       {new Date(selectedUser.created_at).toLocaleDateString('fr-FR', {
                         day: '2-digit',

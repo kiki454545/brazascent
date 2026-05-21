@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
 import { Mail, Phone, MapPin, Send, MessageSquare, Loader2, Check, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -122,27 +121,18 @@ export default function ContactPage() {
     <div className="min-h-screen pt-28 pb-24">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16"
-        >
+        <div className="text-center mb-16 animate-fade-in-up">
           <h1 className="text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase mb-4">
             Contact
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Une question ? Un problème avec votre commande ? Notre équipe est là pour vous aider.
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* Contact Info */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-1"
-          >
+          <div className="lg:col-span-1 animate-fade-in-left">
             <div className="bg-cream p-8 h-full">
               <h2 className="text-xl tracking-[0.15em] uppercase mb-8">Informations</h2>
 
@@ -195,15 +185,10 @@ export default function ContactPage() {
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
 
           {/* Contact Form */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="lg:col-span-2"
-          >
+          <div className="lg:col-span-2 animate-fade-in-right">
             {success ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-8 text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -345,7 +330,7 @@ export default function ContactPage() {
                 </button>
               </form>
             )}
-          </motion.div>
+          </div>
         </div>
       </div>
     </div>

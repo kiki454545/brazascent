@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { MessageSquare, Plus, Clock, CheckCircle, AlertCircle, Loader2, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { AccountSidebar } from '@/components/AccountSidebar'
@@ -93,11 +92,7 @@ export default function TicketsPage() {
     <div className="min-h-screen pt-32 pb-24 bg-background">
       <div className="px-6 sm:px-10 lg:px-20">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-end justify-between mb-8 flex-wrap gap-4"
-        >
+        <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-light tracking-[0.15em] uppercase mb-2">
               Support
@@ -113,7 +108,7 @@ export default function TicketsPage() {
             <Plus className="w-4 h-4" />
             Nouveau ticket
           </Link>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
@@ -123,11 +118,7 @@ export default function TicketsPage() {
 
         {/* Tickets List */}
         {tickets.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16 bg-cream"
-          >
+          <div className="text-center py-16 bg-cream">
             <MessageSquare className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
             <h2 className="text-xl font-medium mb-2">Aucun ticket</h2>
             <p className="text-muted-foreground mb-6">
@@ -140,13 +131,9 @@ export default function TicketsPage() {
               <Plus className="w-4 h-4" />
               Créer un ticket
             </Link>
-          </motion.div>
+          </div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
-          >
+          <div className="space-y-4">
             {tickets.map((ticket, index) => {
               const status = statusLabels[ticket.status] || statusLabels.open
               const StatusIcon = status.icon
@@ -156,12 +143,7 @@ export default function TicketsPage() {
                   href={`/compte/tickets/${ticket.id}`}
                   className="block"
                 >
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="bg-white border border-border p-6 hover:border-primary hover:shadow-sm transition-all group"
-                  >
+                  <div className="bg-white border border-border p-6 hover:border-primary hover:shadow-sm transition-all group">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
@@ -185,11 +167,11 @@ export default function TicketsPage() {
                       </div>
                       <ChevronRight className="w-5 h-5 text-muted-foreground/60 group-hover:text-primary transition-colors flex-shrink-0" />
                     </div>
-                  </motion.div>
+                  </div>
                 </Link>
               )
             })}
-          </motion.div>
+          </div>
         )}
 
         {/* Back to account */}

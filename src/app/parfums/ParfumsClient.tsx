@@ -1,19 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { SlidersHorizontal, X, Search } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
-import { Benefits } from '@/components/Benefits'
-import { supabase } from '@/lib/supabase'
+import dynamic from 'next/dynamic'
+const Benefits = dynamic(() => import('@/components/Benefits').then(m => m.Benefits), { ssr: false })
 import { Product } from '@/types'
 
 interface Brand {
   id: string
   name: string
   slug: string
+}
+
+interface ParfumsClientProps {
+  initialProducts: Product[]
+  initialBrands: Brand[]
 }
 
 const categories = [
@@ -30,111 +35,17 @@ const sortOptions = [
   { id: 'name', name: 'Nom A-Z' },
 ]
 
-export default function ParfumsPage() {
+export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsClientProps) {
   const searchParams = useSearchParams()
   const initialSearch = searchParams.get('search') || ''
 
-  const [products, setProducts] = useState<Product[]>([])
-  const [brands, setBrands] = useState<Brand[]>([])
-  const [loading, setLoading] = useState(true)
+  const [products] = useState<Product[]>(initialProducts)
+  const [brands] = useState<Brand[]>(initialBrands)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState(initialSearch)
-
-  useEffect(() => {
-    let isMounted = true
-
-    // Forcer loading à true au démarrage
-    setLoading(true)
-    setProducts([])
-    setBrands([])
-
-    const isAbortError = (error: unknown): boolean => {
-      if (!error) return false
-      const message = (error as { message?: string }).message || String(error)
-      return message.includes('AbortError') || message.includes('aborted')
-    }
-
-    const fetchData = async () => {
-      try {
-        // Fetch products and brands in parallel
-        const [productsResponse, brandsResponse] = await Promise.all([
-          supabase
-            .from('products')
-            .select('*')
-            .order('display_order', { ascending: true }),
-          supabase
-            .from('brands')
-            .select('id, name, slug')
-            .order('name', { ascending: true })
-        ])
-
-        if (!isMounted) return
-
-        if (productsResponse.error) {
-          if (!isAbortError(productsResponse.error)) {
-            console.error('Error fetching products:', productsResponse.error.message)
-          }
-        } else if (productsResponse.data) {
-          const mappedProducts: Product[] = productsResponse.data.map((p: any) => {
-            const priceBySize = typeof p.price_by_size === 'string'
-              ? JSON.parse(p.price_by_size)
-              : (p.price_by_size || {})
-
-            const prices = Object.values(priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
-            const displayPrice = prices.length > 0 ? Math.min(...prices) : p.price
-
-            return {
-              id: p.id,
-              name: p.name,
-              slug: p.slug,
-              description: p.description || '',
-              shortDescription: p.short_description || '',
-              price: displayPrice,
-              originalPrice: p.original_price,
-              priceBySize,
-              images: p.images || [],
-              size: p.sizes || [],
-              category: p.category || 'unisexe',
-              collection: p.collection,
-              brand: p.brand || '',
-              notes: {
-                top: p.notes_top || [],
-                heart: p.notes_heart || [],
-                base: p.notes_base || []
-              },
-              stock: p.stock ?? 1,
-              inStock: (p.stock || 0) > 0,
-              new: p.is_new,
-              bestseller: p.is_bestseller,
-              featured: p.is_bestseller
-            }
-          })
-          setProducts(mappedProducts)
-        }
-
-        if (!brandsResponse.error && brandsResponse.data) {
-          setBrands(brandsResponse.data)
-        }
-      } catch (err) {
-        if (!isAbortError(err)) {
-          console.error('Error:', err)
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    fetchData()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
 
   const filteredProducts = products
     .filter((product) => selectedCategory === 'all' || product.category === selectedCategory)
@@ -165,9 +76,10 @@ export default function ParfumsPage() {
       {/* Hero Section */}
       <section className="relative h-[35vh] sm:h-[50vh] min-h-[240px] sm:min-h-[360px] overflow-hidden">
         <Image
-          src="/images/parfums-hero.jpg"
+          src="/images/parfums-hero.webp"
           alt="Nos Parfums"
           fill
+          sizes="100vw"
           className="object-cover"
           priority
         />
@@ -318,24 +230,16 @@ export default function ParfumsPage() {
           )}
 
           {/* Products grid */}
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
-                {filteredProducts.map((product, index) => (
-                  <ProductCard key={product.id} product={product} index={index} />
-                ))}
-              </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+            {filteredProducts.map((product, index) => (
+              <ProductCard key={product.id} product={product} index={index} />
+            ))}
+          </div>
 
-              {filteredProducts.length === 0 && (
-                <div className="text-center py-20">
-                  <p className="text-muted-foreground">Aucun parfum ne correspond à vos critères</p>
-                </div>
-              )}
-            </>
+          {filteredProducts.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground">Aucun parfum ne correspond à vos critères</p>
+            </div>
           )}
         </div>
       </section>

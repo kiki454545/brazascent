@@ -27,10 +27,12 @@ interface Product {
   stock_by_size?: Record<string, number>
   images: string[]
   stock: number
-  collection: string
+  category?: string
+  collection?: string
   is_new?: boolean
   is_bestseller?: boolean
   is_active?: boolean
+  is_promo?: boolean
   display_order?: number
 }
 
@@ -56,6 +58,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [deleteModal, setDeleteModal] = useState<string | null>(null)
   const [isFromSupabase, setIsFromSupabase] = useState(false)
@@ -187,7 +190,7 @@ export default function AdminProductsPage() {
     }
   }
 
-  const toggleProductBadge = async (productId: string, field: 'is_bestseller' | 'is_new' | 'out_of_stock') => {
+  const toggleProductBadge = async (productId: string, field: 'is_bestseller' | 'is_new' | 'out_of_stock' | 'is_promo' | 'is_active') => {
     const product = products.find(p => p.id === productId)
     if (!product) return
 
@@ -198,37 +201,33 @@ export default function AdminProductsPage() {
         updateData = { is_bestseller: !product.is_bestseller }
       } else if (field === 'is_new') {
         updateData = { is_new: !product.is_new }
+      } else if (field === 'is_promo') {
+        updateData = { is_promo: !product.is_promo }
+      } else if (field === 'is_active') {
+        updateData = { is_active: product.is_active === false ? true : false }
       } else if (field === 'out_of_stock') {
-        // Pour la rupture de stock, on met le stock à 0 ou on le restaure à 1
-        // Utiliser == pour matcher aussi undefined/null
         const isCurrentlyOutOfStock = product.stock === 0 || product.stock == null
         updateData = { stock: isCurrentlyOutOfStock ? 1 : 0 }
-        console.log('Toggle out_of_stock: current stock=', product.stock, ', isOutOfStock=', isCurrentlyOutOfStock, ', new stock=', updateData.stock)
       }
 
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from('products')
         .update(updateData)
         .eq('id', productId)
         .select()
-
-      console.log('Supabase update result:', { error, data, updateData })
 
       if (error) {
         console.error('Error toggling badge:', error)
         return
       }
 
-      // Mettre à jour l'état local
       setProducts(products.map(p => {
         if (p.id === productId) {
-          if (field === 'is_bestseller') {
-            return { ...p, is_bestseller: !p.is_bestseller }
-          } else if (field === 'is_new') {
-            return { ...p, is_new: !p.is_new }
-          } else if (field === 'out_of_stock') {
-            return { ...p, stock: (p.stock === 0 || p.stock == null) ? 1 : 0 }
-          }
+          if (field === 'is_bestseller') return { ...p, is_bestseller: !p.is_bestseller }
+          if (field === 'is_new') return { ...p, is_new: !p.is_new }
+          if (field === 'is_promo') return { ...p, is_promo: !p.is_promo }
+          if (field === 'is_active') return { ...p, is_active: p.is_active === false ? true : false }
+          if (field === 'out_of_stock') return { ...p, stock: (p.stock === 0 || p.stock == null) ? 1 : 0 }
         }
         return p
       }))
@@ -237,10 +236,13 @@ export default function AdminProductsPage() {
     }
   }
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.brand.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredProducts = products.filter(product => {
+    const matchSearch =
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.brand.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchCategory = !categoryFilter || product.category === categoryFilter
+    return matchSearch && matchCategory
+  })
 
   if (loading) {
     return (
@@ -256,7 +258,7 @@ export default function AdminProductsPage() {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Produits</h1>
-          <p className="text-gray-500">{products.length} produits au total</p>
+          <p className="text-admin-muted">{products.length} produits au total</p>
         </div>
         <Link
           href="/admin/produits/nouveau"
@@ -281,25 +283,28 @@ export default function AdminProductsPage() {
       )}
 
       {/* Search and filters */}
-      <div className="bg-white rounded-xl shadow-sm p-4">
+      <div className="bg-admin-surface rounded-xl shadow-sm p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-admin-light" />
             <input
               type="text"
               placeholder="Rechercher un produit..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full pl-10 pr-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
-          <select className="px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
+          >
             <option value="">Toutes les catégories</option>
-            <option value="signature">Signature</option>
-            <option value="les-absolus">Les Absolus</option>
-            <option value="lumiere">Lumière</option>
+            <option value="Eau de Parfum">Eau de Parfum</option>
+            <option value="Extrait de Parfum">Extrait de Parfum</option>
           </select>
-          <select className="px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]">
+          <select className="px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]">
             <option value="">Tous les statuts</option>
             <option value="in-stock">En stock</option>
             <option value="low-stock">Stock faible</option>
@@ -312,44 +317,44 @@ export default function AdminProductsPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-sm overflow-hidden"
+        className="bg-admin-surface rounded-xl shadow-sm overflow-hidden"
       >
         {filteredProducts.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-admin-surface-alt">
                 <tr>
                   <th className="px-6 py-3 text-left">
                     <input
                       type="checkbox"
                       checked={selectedProducts.length === filteredProducts.length}
                       onChange={handleSelectAll}
-                      className="w-4 h-4 rounded border-gray-300 accent-[#C9A962]"
+                      className="w-4 h-4 rounded border-admin-border accent-[#C9A962]"
                     />
                   </th>
-                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-center text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Ordre
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Produit
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-admin-border">
                 {filteredProducts.map((product, index) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
+                  <tr key={product.id} className="hover:bg-admin-surface-alt">
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
                         checked={selectedProducts.includes(product.id)}
                         onChange={() => handleSelectProduct(product.id)}
-                        className="w-4 h-4 rounded border-gray-300 accent-[#C9A962]"
+                        className="w-4 h-4 rounded border-admin-border accent-[#C9A962]"
                       />
                     </td>
                     <td className="px-3 py-4">
@@ -359,8 +364,8 @@ export default function AdminProductsPage() {
                           disabled={index === 0}
                           className={`p-1 rounded transition-colors ${
                             index === 0
-                              ? 'text-gray-200 cursor-not-allowed'
-                              : 'text-gray-400 hover:text-[#C9A962] hover:bg-gray-100'
+                              ? 'text-admin-light cursor-not-allowed'
+                              : 'text-admin-muted hover:text-[#C9A962] hover:bg-admin-surface-alt'
                           }`}
                           title="Monter"
                         >
@@ -371,8 +376,8 @@ export default function AdminProductsPage() {
                           disabled={index === filteredProducts.length - 1}
                           className={`p-1 rounded transition-colors ${
                             index === filteredProducts.length - 1
-                              ? 'text-gray-200 cursor-not-allowed'
-                              : 'text-gray-400 hover:text-[#C9A962] hover:bg-gray-100'
+                              ? 'text-admin-light cursor-not-allowed'
+                              : 'text-admin-muted hover:text-[#C9A962] hover:bg-admin-surface-alt'
                           }`}
                           title="Descendre"
                         >
@@ -382,7 +387,7 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 relative bg-gray-100 rounded-lg overflow-hidden">
+                        <div className="w-12 h-12 relative bg-admin-surface-alt rounded-lg overflow-hidden">
                           <Image
                             src={product.images[0]}
                             alt={product.name}
@@ -392,7 +397,7 @@ export default function AdminProductsPage() {
                         </div>
                         <div>
                           <p className="font-medium">{product.name}</p>
-                          <p className="text-sm text-gray-500">{product.brand}</p>
+                          <p className="text-sm text-admin-muted">{product.brand}</p>
                         </div>
                       </div>
                     </td>
@@ -409,7 +414,7 @@ export default function AdminProductsPage() {
                           className={`px-2 py-1 text-xs rounded transition-all ${
                             product.is_new
                               ? 'bg-[#C9A962]/20 text-[#C9A962] ring-1 ring-[#C9A962]'
-                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                              : 'bg-admin-surface-alt text-admin-light hover:bg-admin-surface-alt'
                           } ${!isFromSupabase ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                           title={product.is_new ? 'Retirer Nouveau' : 'Ajouter Nouveau'}
                         >
@@ -421,7 +426,7 @@ export default function AdminProductsPage() {
                           className={`px-2 py-1 text-xs rounded transition-all ${
                             product.is_bestseller
                               ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-400'
-                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                              : 'bg-admin-surface-alt text-admin-light hover:bg-admin-surface-alt'
                           } ${!isFromSupabase ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                           title={product.is_bestseller ? 'Retirer Bestseller' : 'Ajouter Bestseller'}
                         >
@@ -433,11 +438,35 @@ export default function AdminProductsPage() {
                           className={`px-2 py-1 text-xs rounded transition-all ${
                             product.stock === 0
                               ? 'bg-red-100 text-red-700 ring-1 ring-red-400'
-                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                              : 'bg-admin-surface-alt text-admin-light hover:bg-admin-surface-alt'
                           } ${!isFromSupabase ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                           title={product.stock === 0 ? 'Remettre en stock' : 'Mettre en rupture'}
                         >
                           Rupture
+                        </button>
+                        <button
+                          onClick={() => toggleProductBadge(product.id, 'is_promo')}
+                          disabled={!isFromSupabase}
+                          className={`px-2 py-1 text-xs rounded transition-all ${
+                            product.is_promo
+                              ? 'bg-red-100 text-red-700 ring-1 ring-red-400'
+                              : 'bg-admin-surface-alt text-admin-light hover:bg-admin-surface-alt'
+                          } ${!isFromSupabase ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                          title={product.is_promo ? 'Retirer Promo' : 'Mettre en Promo'}
+                        >
+                          Promo
+                        </button>
+                        <button
+                          onClick={() => toggleProductBadge(product.id, 'is_active')}
+                          disabled={!isFromSupabase}
+                          className={`px-2 py-1 text-xs rounded transition-all ${
+                            product.is_active === false
+                              ? 'bg-orange-100 text-orange-700 ring-1 ring-orange-400'
+                              : 'bg-admin-surface-alt text-admin-light hover:bg-admin-surface-alt'
+                          } ${!isFromSupabase ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                          title={product.is_active === false ? 'Rendre visible' : 'Masquer le produit'}
+                        >
+                          Masquer
                         </button>
                       </div>
                     </td>
@@ -446,7 +475,7 @@ export default function AdminProductsPage() {
                         <Link
                           href={`/parfum/${product.slug}`}
                           target="_blank"
-                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="p-2 text-admin-light hover:text-admin-muted transition-colors"
                           title="Voir sur le site"
                         >
                           <Eye className="w-4 h-4" />
@@ -454,14 +483,14 @@ export default function AdminProductsPage() {
                         {isFromSupabase ? (
                           <Link
                             href={`/admin/produits/${product.id}`}
-                            className="p-2 text-gray-400 hover:text-[#C9A962] transition-colors"
+                            className="p-2 text-admin-light hover:text-[#C9A962] transition-colors"
                             title="Modifier"
                           >
                             <Edit className="w-4 h-4" />
                           </Link>
                         ) : (
                           <span
-                            className="p-2 text-gray-300 cursor-not-allowed"
+                            className="p-2 text-admin-light cursor-not-allowed"
                             title="Ajoutez d'abord ce produit dans Supabase"
                           >
                             <Edit className="w-4 h-4" />
@@ -469,7 +498,7 @@ export default function AdminProductsPage() {
                         )}
                         <button
                           onClick={() => setDeleteModal(product.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                          className="p-2 text-admin-light hover:text-red-600 transition-colors"
                           title="Supprimer"
                           disabled={!isFromSupabase}
                         >
@@ -484,8 +513,8 @@ export default function AdminProductsPage() {
           </div>
         ) : (
           <div className="p-12 text-center">
-            <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">Aucun produit trouvé</p>
+            <Package className="w-12 h-12 text-admin-light mx-auto mb-4" />
+            <p className="text-admin-muted mb-4">Aucun produit trouvé</p>
             <Link
               href="/admin/produits/nouveau"
               className="inline-flex items-center gap-2 px-4 py-2 bg-[#19110B] text-white rounded-lg hover:bg-[#C9A962] transition-colors"
@@ -503,10 +532,10 @@ export default function AdminProductsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-6 max-w-md w-full mx-4"
+            className="bg-admin-surface rounded-xl p-6 max-w-md w-full mx-4"
           >
             <h3 className="text-lg font-medium mb-2">Supprimer ce produit ?</h3>
-            <p className="text-gray-500 mb-4">
+            <p className="text-admin-muted mb-4">
               Cette action est irréversible. Le produit sera définitivement supprimé.
             </p>
             {deleteError && (
@@ -521,7 +550,7 @@ export default function AdminProductsPage() {
                   setDeleteError(null)
                 }}
                 disabled={deleting}
-                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors disabled:opacity-50"
               >
                 Annuler
               </button>

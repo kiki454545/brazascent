@@ -22,11 +22,11 @@ const statusLabels: Record<string, { label: string; color: string; icon: any }> 
   open: { label: 'Ouvert', color: 'bg-blue-100 text-blue-700', icon: AlertCircle },
   in_progress: { label: 'En cours', color: 'bg-yellow-100 text-yellow-700', icon: Clock },
   resolved: { label: 'Résolu', color: 'bg-green-100 text-green-700', icon: CheckCircle },
-  closed: { label: 'Fermé', color: 'bg-gray-100 text-gray-700', icon: CheckCircle },
+  closed: { label: 'Fermé', color: 'bg-admin-surface-alt text-admin-text', icon: CheckCircle },
 }
 
 const priorityLabels: Record<string, { label: string; color: string }> = {
-  low: { label: 'Basse', color: 'text-gray-500' },
+  low: { label: 'Basse', color: 'text-admin-muted' },
   normal: { label: 'Normale', color: 'text-blue-500' },
   high: { label: 'Haute', color: 'text-orange-500' },
   urgent: { label: 'Urgente', color: 'text-red-500' },
@@ -111,12 +111,12 @@ export default function AdminTicketsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tickets Support</h1>
-          <p className="text-gray-500">Gérez les demandes des clients</p>
+          <h1 className="text-2xl font-bold text-admin-text">Tickets Support</h1>
+          <p className="text-admin-muted">Gérez les demandes des clients</p>
         </div>
         <button
           onClick={fetchTickets}
-          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-admin-muted hover:text-admin-text transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Actualiser
@@ -125,70 +125,70 @@ export default function AdminTicketsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
+        <div className="bg-admin-surface p-6 rounded-xl shadow-sm border border-admin-border">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-gray-100 rounded-lg">
-              <MessageSquare className="w-6 h-6 text-gray-600" />
+            <div className="p-3 bg-admin-surface-alt rounded-lg">
+              <MessageSquare className="w-6 h-6 text-admin-muted" />
             </div>
             <div>
               <p className="text-2xl font-bold">{ticketStats.total}</p>
-              <p className="text-sm text-gray-500">Total tickets</p>
+              <p className="text-sm text-admin-muted">Total tickets</p>
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
+        <div className="bg-admin-surface p-6 rounded-xl shadow-sm border border-admin-border">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-100 rounded-lg">
               <AlertCircle className="w-6 h-6 text-blue-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">{ticketStats.open}</p>
-              <p className="text-sm text-gray-500">Ouverts</p>
+              <p className="text-sm text-admin-muted">Ouverts</p>
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
+        <div className="bg-admin-surface p-6 rounded-xl shadow-sm border border-admin-border">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-yellow-100 rounded-lg">
               <Clock className="w-6 h-6 text-yellow-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">{ticketStats.inProgress}</p>
-              <p className="text-sm text-gray-500">En cours</p>
+              <p className="text-sm text-admin-muted">En cours</p>
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
+        <div className="bg-admin-surface p-6 rounded-xl shadow-sm border border-admin-border">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-100 rounded-lg">
               <CheckCircle className="w-6 h-6 text-green-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">{ticketStats.resolved}</p>
-              <p className="text-sm text-gray-500">Résolus</p>
+              <p className="text-sm text-admin-muted">Résolus</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border">
+      <div className="bg-admin-surface p-4 rounded-xl shadow-sm border border-admin-border">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-admin-light" />
             <input
               type="text"
               placeholder="Rechercher par sujet, email, nom..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full pl-10 pr-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
           <div className="flex gap-2">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] bg-white"
+              className="px-4 py-2 border rounded-lg focus:outline-none bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             >
               <option value="all">Tous les statuts</option>
               <option value="open">Ouverts</option>
@@ -199,7 +199,7 @@ export default function AdminTicketsPage() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] bg-white"
+              className="px-4 py-2 border rounded-lg focus:outline-none bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             >
               <option value="all">Toutes catégories</option>
               {Object.entries(categoryLabels).map(([value, label]) => (
@@ -211,61 +211,61 @@ export default function AdminTicketsPage() {
       </div>
 
       {/* Tickets List */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div className="bg-admin-surface rounded-xl shadow-sm border overflow-hidden">
         {filteredTickets.length === 0 ? (
           <div className="text-center py-16">
             <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Aucun ticket trouvé</p>
+            <p className="text-admin-muted">Aucun ticket trouvé</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-admin-surface-alt border-b border-admin-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Ticket
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Client
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Catégorie
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Priorité
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Action
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-admin-border">
                 {filteredTickets.map((ticket) => {
                   const status = statusLabels[ticket.status] || statusLabels.open
                   const priority = priorityLabels[ticket.priority] || priorityLabels.normal
                   const StatusIcon = status.icon
                   return (
-                    <tr key={ticket.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={ticket.id} className="hover:bg-admin-surface-alt transition-colors">
                       <td className="px-6 py-4">
                         <div className="max-w-xs">
                           <p className="font-medium text-gray-900 truncate">{ticket.subject}</p>
-                          <p className="text-sm text-gray-500 truncate">#{ticket.id.slice(0, 8)}</p>
+                          <p className="text-sm text-admin-muted truncate">#{ticket.id.slice(0, 8)}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-medium text-gray-900">{ticket.user_name || 'Anonyme'}</p>
-                          <p className="text-sm text-gray-500">{ticket.user_email}</p>
+                          <p className="font-medium text-admin-text">{ticket.user_name || 'Anonyme'}</p>
+                          <p className="text-sm text-admin-muted">{ticket.user_email}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-admin-muted">
                           {categoryLabels[ticket.category]}
                         </span>
                       </td>
@@ -281,7 +281,7 @@ export default function AdminTicketsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-500">{formatDate(ticket.updated_at)}</p>
+                        <p className="text-sm text-admin-muted">{formatDate(ticket.updated_at)}</p>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Link

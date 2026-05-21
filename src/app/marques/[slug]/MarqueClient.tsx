@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { ArrowLeft, Building2, Package } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
@@ -159,6 +158,7 @@ export default function BrandPage() {
             src={brand.logo}
             alt={brand.name}
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />
@@ -167,12 +167,7 @@ export default function BrandPage() {
         )}
         <div className="absolute inset-0 bg-black/50" />
         <div className="absolute inset-0 flex items-center justify-center text-center text-white px-6 pt-24 sm:pt-0">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-3xl"
-          >
+          <div className="max-w-3xl animate-fade-in-up">
             <span className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
               Maison
             </span>
@@ -184,7 +179,7 @@ export default function BrandPage() {
                 {brand.description}
               </p>
             )}
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -208,11 +203,7 @@ export default function BrandPage() {
       {/* Products Grid */}
       <section className="py-16 lg:py-24 bg-background">
         <div className="px-6 sm:px-10 lg:px-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-end justify-between mb-12 flex-wrap gap-4"
-          >
+          <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
             <div>
               <h2 className="text-2xl lg:text-3xl font-light tracking-[0.1em] uppercase">
                 Nos Parfums
@@ -228,7 +219,7 @@ export default function BrandPage() {
               <ArrowLeft className="w-4 h-4" />
               Toutes les marques
             </Link>
-          </motion.div>
+          </div>
 
           {products.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
@@ -237,11 +228,7 @@ export default function BrandPage() {
               ))}
             </div>
           ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-20"
-            >
+            <div className="text-center py-20">
               <Package className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
               <p className="text-muted-foreground mb-2">
                 Aucun produit disponible pour cette marque
@@ -249,7 +236,7 @@ export default function BrandPage() {
               <p className="text-sm text-muted-foreground/60">
                 Revenez bientôt pour découvrir nos nouveautés
               </p>
-            </motion.div>
+            </div>
           )}
         </div>
       </section>

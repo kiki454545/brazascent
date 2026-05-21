@@ -251,6 +251,7 @@ export default function PackDetailPage() {
                 src={pack.image}
                 alt={pack.name}
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
                 priority
               />
@@ -327,6 +328,7 @@ export default function PackDetailPage() {
                               src={product.images[0]}
                               alt={product.name}
                               fill
+                              sizes="64px"
                               className="object-cover"
                             />
                           )}

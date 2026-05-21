@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react'
 import { useWishlistStore } from '@/store/wishlist'
 import { useCartStore } from '@/store/cart'
@@ -90,10 +89,7 @@ export default function FavorisPage() {
     return (
       <div className="min-h-screen pt-32 pb-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <div className="animate-fade-in-up">
             <Heart className="w-20 h-20 text-muted-foreground/50 mx-auto mb-6" />
             <h1 className="text-3xl font-light tracking-[0.15em] uppercase mb-4">
               Votre liste de favoris est vide
@@ -108,7 +104,7 @@ export default function FavorisPage() {
               Découvrir nos parfums
               <ArrowRight className="w-4 h-4" />
             </Link>
-          </motion.div>
+          </div>
         </div>
       </div>
     )
@@ -117,10 +113,7 @@ export default function FavorisPage() {
   return (
     <div className="min-h-screen pt-32 pb-24 bg-background">
       <div className="px-6 sm:px-10 lg:px-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <div>
           {/* Header */}
           <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
             <div>
@@ -149,13 +142,7 @@ export default function FavorisPage() {
           {/* Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
             {wishlistProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="group"
-              >
+              <div key={product.id} className="group">
                 {/* Image */}
                 <div className="relative aspect-[3/4] bg-cream mb-4 overflow-hidden">
                   <Link href={`/parfum/${product.slug}`}>
@@ -212,7 +199,7 @@ export default function FavorisPage() {
                   </h3>
                   <p className="text-lg">{product.price} €</p>
                 </Link>
-              </motion.div>
+              </div>
             ))}
           </div>
 
@@ -233,7 +220,7 @@ export default function FavorisPage() {
           )}
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   )

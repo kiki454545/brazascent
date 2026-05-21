@@ -136,58 +136,58 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold">Utilisateurs</h1>
-        <p className="text-gray-500">{users.length} utilisateurs inscrits</p>
+        <p className="text-admin-muted">{users.length} utilisateurs inscrits</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-admin-surface rounded-xl shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-100 rounded-lg">
               <Users className="w-6 h-6 text-blue-600" />
             </div>
             <div>
               <p className="text-2xl font-semibold">{users.length}</p>
-              <p className="text-sm text-gray-500">Total utilisateurs</p>
+              <p className="text-sm text-admin-muted">Total utilisateurs</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-admin-surface rounded-xl shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-lg">
               <Shield className="w-6 h-6 text-purple-600" />
             </div>
             <div>
               <p className="text-2xl font-semibold">{adminCount}</p>
-              <p className="text-sm text-gray-500">Administrateurs</p>
+              <p className="text-sm text-admin-muted">Administrateurs</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-admin-surface rounded-xl shadow-sm p-6">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-100 rounded-lg">
               <Users className="w-6 h-6 text-green-600" />
             </div>
             <div>
               <p className="text-2xl font-semibold">{regularCount}</p>
-              <p className="text-sm text-gray-500">Clients</p>
+              <p className="text-sm text-admin-muted">Clients</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl shadow-sm p-4">
+      <div className="bg-admin-surface rounded-xl shadow-sm p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-admin-light" />
           <input
             type="text"
             placeholder="Rechercher par nom ou email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+            className="w-full pl-10 pr-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
           />
         </div>
       </div>
@@ -196,33 +196,33 @@ export default function AdminUsersPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-sm"
+        className="bg-admin-surface rounded-xl shadow-sm"
       >
         {filteredUsers.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-admin-surface-alt">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Utilisateur
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Contact
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Rôle
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Inscription
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-admin-border">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={user.id} className="hover:bg-admin-surface-alt">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#C9A962] rounded-full flex items-center justify-center text-white font-medium">
@@ -234,18 +234,18 @@ export default function AdminUsersPage() {
                               ? `${user.first_name || ''} ${user.last_name || ''}`
                               : 'Non renseigné'}
                           </p>
-                          <p className="text-sm text-gray-500">{user.email}</p>
+                          <p className="text-sm text-admin-muted">{user.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm">
-                        <div className="flex items-center gap-2 text-gray-500">
+                        <div className="flex items-center gap-2 text-admin-muted">
                           <Mail className="w-4 h-4" />
                           {user.email}
                         </div>
                         {user.phone && (
-                          <div className="flex items-center gap-2 text-gray-500 mt-1">
+                          <div className="flex items-center gap-2 text-admin-muted mt-1">
                             <Phone className="w-4 h-4" />
                             {user.phone}
                           </div>
@@ -259,13 +259,13 @@ export default function AdminUsersPage() {
                           Admin
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-admin-surface-alt text-admin-muted text-xs rounded-full">
                           Client
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <div className="flex items-center gap-2 text-sm text-admin-muted">
                         <Calendar className="w-4 h-4" />
                         {new Date(user.created_at).toLocaleDateString('fr-FR', {
                           day: '2-digit',
@@ -278,14 +278,14 @@ export default function AdminUsersPage() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => setSelectedUser(user)}
-                          className="p-2 text-gray-400 hover:text-[#C9A962] transition-colors"
+                          className="p-2 text-admin-light hover:text-[#C9A962] transition-colors"
                           title="Voir les détails"
                         >
                           <Eye className="w-5 h-5" />
                         </button>
                         <button
                           onClick={(e) => openActionMenu(e, user.id)}
-                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                          className="p-2 text-admin-light hover:text-admin-muted transition-colors"
                         >
                           <MoreVertical className="w-5 h-5" />
                         </button>
@@ -299,7 +299,7 @@ export default function AdminUsersPage() {
         ) : (
           <div className="p-12 text-center">
             <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Aucun utilisateur trouvé</p>
+            <p className="text-admin-muted">Aucun utilisateur trouvé</p>
           </div>
         )}
       </motion.div>
@@ -307,7 +307,7 @@ export default function AdminUsersPage() {
       {/* Action menu dropdown - position fixe */}
       {actionMenu && (
         <div
-          className="fixed w-48 bg-white rounded-lg shadow-xl border z-[100] py-1"
+          className="fixed w-48 bg-admin-surface rounded-lg shadow-xl border border-admin-border z-[100] py-1"
           style={{ top: actionMenu.y, left: actionMenu.x }}
         >
           {(() => {
@@ -319,7 +319,7 @@ export default function AdminUsersPage() {
                   toggleAdmin(user.id, user.is_admin)
                   setActionMenu(null)
                 }}
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-admin-surface-alt transition-colors"
               >
                 {user.is_admin ? (
                   <>
@@ -344,14 +344,14 @@ export default function AdminUsersPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl max-w-md w-full"
+            className="bg-admin-surface rounded-xl max-w-md w-full"
           >
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Détails utilisateur</h2>
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-admin-surface-alt rounded-lg transition-colors"
                 >
                   <XCircle className="w-5 h-5" />
                 </button>
@@ -379,26 +379,26 @@ export default function AdminUsersPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Mail className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center gap-3 p-3 bg-admin-surface-alt rounded-lg">
+                  <Mail className="w-5 h-5 text-admin-light" />
                   <div>
-                    <p className="text-xs text-gray-500">Email</p>
+                    <p className="text-xs text-admin-muted">Email</p>
                     <p className="font-medium">{selectedUser.email}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Phone className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center gap-3 p-3 bg-admin-surface-alt rounded-lg">
+                  <Phone className="w-5 h-5 text-admin-light" />
                   <div>
-                    <p className="text-xs text-gray-500">Téléphone</p>
+                    <p className="text-xs text-admin-muted">Téléphone</p>
                     <p className="font-medium">{selectedUser.phone || 'Non renseigné'}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Calendar className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center gap-3 p-3 bg-admin-surface-alt rounded-lg">
+                  <Calendar className="w-5 h-5 text-admin-light" />
                   <div>
-                    <p className="text-xs text-gray-500">Date d&apos;inscription</p>
+                    <p className="text-xs text-admin-muted">Date d&apos;inscription</p>
                     <p className="font-medium">
                       {new Date(selectedUser.created_at).toLocaleDateString('fr-FR', {
                         day: '2-digit',

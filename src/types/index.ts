@@ -1,3 +1,15 @@
+export interface MainAccord {
+  name: string
+  color: string
+  intensity: number
+}
+
+export interface Accord {
+  nom: string
+  intensite: number
+  couleur: string
+}
+
 export interface Product {
   id: string
   name: string
@@ -16,12 +28,16 @@ export interface Product {
     heart: string[]
     base: string[]
   }
+  mainAccords?: MainAccord[]
+  noteImages?: Record<string, string>
+  accords?: Accord[]
   size: string[]
   stock?: number
   inStock: boolean
   featured?: boolean
   new?: boolean
   bestseller?: boolean
+  promo?: boolean
 }
 
 export interface CartItem {

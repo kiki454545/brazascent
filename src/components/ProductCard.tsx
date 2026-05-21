@@ -84,6 +84,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             src={product.images[0]}
             alt={product.name}
             fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`object-cover transition-all duration-700 ${
               isHovered && product.images[1] ? 'opacity-0' : 'opacity-100'
             }`}
@@ -95,6 +96,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               src={product.images[1]}
               alt={product.name}
               fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className={`object-cover transition-all duration-700 absolute inset-0 ${
                 isHovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
               }`}
@@ -116,6 +118,11 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             {product.bestseller && !isOutOfStock && (
               <span className="px-3 py-1 bg-foreground text-background text-xs tracking-[0.15em] uppercase">
                 Best-seller
+              </span>
+            )}
+            {product.promo && !isOutOfStock && (
+              <span className="px-3 py-1 bg-red-600 text-white text-xs tracking-[0.15em] uppercase font-semibold">
+                Promo
               </span>
             )}
             {product.originalPrice && currentPrice < product.originalPrice && !isOutOfStock && (

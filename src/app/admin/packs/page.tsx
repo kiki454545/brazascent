@@ -350,7 +350,7 @@ export default function AdminPacksPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-semibold">Packs</h1>
-          <p className="text-gray-500">{packs.length} pack(s)</p>
+          <p className="text-admin-muted">{packs.length} pack(s)</p>
         </div>
         <button
           onClick={openCreateModal}
@@ -364,13 +364,13 @@ export default function AdminPacksPage() {
       {/* Search */}
       <div className="mb-6">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-admin-light" />
           <input
             type="text"
             placeholder="Rechercher un pack..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962] focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962] focus:border-transparent"
           />
         </div>
       </div>
@@ -382,7 +382,7 @@ export default function AdminPacksPage() {
             key={pack.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-lg shadow-sm overflow-hidden"
+            className="bg-admin-surface rounded-lg shadow-sm overflow-hidden"
           >
             <div className="relative aspect-square">
               {pack.image ? (
@@ -394,7 +394,7 @@ export default function AdminPacksPage() {
                 />
               ) : (
                 <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                  <Package className="w-12 h-12 text-gray-300" />
+                  <Package className="w-12 h-12 text-admin-light" />
                 </div>
               )}
               {pack.tag && (
@@ -415,20 +415,20 @@ export default function AdminPacksPage() {
             </div>
             <div className="p-4">
               <h3 className="font-medium mb-1">{pack.name}</h3>
-              <p className="text-sm text-gray-500 mb-2 line-clamp-2">{pack.description}</p>
+              <p className="text-sm text-admin-muted mb-2 line-clamp-2">{pack.description}</p>
               <div className="flex items-center gap-2 mb-3">
                 <span className="font-semibold">{pack.price} €</span>
                 {pack.original_price && (
-                  <span className="text-sm text-gray-400 line-through">{pack.original_price} €</span>
+                  <span className="text-sm text-admin-light line-through">{pack.original_price} €</span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mb-3">
+              <p className="text-xs text-admin-light mb-3">
                 {pack.product_ids?.length || 0} produit(s)
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => openEditModal(pack)}
-                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm border border-admin-border rounded hover:bg-admin-surface-alt transition-colors"
                 >
                   <Edit className="w-4 h-4" />
                   Modifier
@@ -448,7 +448,7 @@ export default function AdminPacksPage() {
       {filteredPacks.length === 0 && (
         <div className="text-center py-12">
           <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Aucun pack trouvé</p>
+          <p className="text-admin-muted">Aucun pack trouvé</p>
         </div>
       )}
 
@@ -458,15 +458,15 @@ export default function AdminPacksPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+            className="bg-admin-surface rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
           >
-            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-admin-surface border-b border-admin-border px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold">
                 {editingPack ? 'Modifier le pack' : 'Nouveau pack'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-admin-surface-alt rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -504,14 +504,14 @@ export default function AdminPacksPage() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploading}
-                      className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:border-[#C9A962] transition-colors"
+                      className="w-32 h-32 border-2 border-dashed border-admin-border rounded-lg flex flex-col items-center justify-center hover:border-[#C9A962] transition-colors"
                     >
                       {uploading ? (
-                        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                        <Loader2 className="w-6 h-6 animate-spin text-admin-light" />
                       ) : (
                         <>
-                          <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                          <span className="text-xs text-gray-500">Ajouter</span>
+                          <Upload className="w-6 h-6 text-admin-light mb-1" />
+                          <span className="text-xs text-admin-muted">Ajouter</span>
                         </>
                       )}
                     </button>
@@ -538,7 +538,7 @@ export default function AdminPacksPage() {
                       name: e.target.value,
                       slug: generateSlug(e.target.value)
                     }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
+                    className="w-full px-3 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
                     placeholder="Coffret Découverte"
                   />
                 </div>
@@ -548,7 +548,7 @@ export default function AdminPacksPage() {
                     type="text"
                     value={form.slug}
                     onChange={(e) => setForm(prev => ({ ...prev, slug: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
+                    className="w-full px-3 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
                     placeholder="coffret-decouverte"
                   />
                 </div>
@@ -561,7 +561,7 @@ export default function AdminPacksPage() {
                   value={form.description}
                   onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
+                  className="w-full px-3 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
                   placeholder="Description du pack..."
                 />
               </div>
@@ -575,7 +575,7 @@ export default function AdminPacksPage() {
                     step="0.01"
                     value={form.price}
                     onChange={(e) => setForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
+                    className="w-full px-3 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
                   />
                 </div>
                 <div>
@@ -585,7 +585,7 @@ export default function AdminPacksPage() {
                     step="0.01"
                     value={form.original_price || ''}
                     onChange={(e) => setForm(prev => ({ ...prev, original_price: parseFloat(e.target.value) || null }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
+                    className="w-full px-3 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
                     placeholder="Optionnel"
                   />
                 </div>
@@ -595,7 +595,7 @@ export default function AdminPacksPage() {
                     type="text"
                     value={form.tag}
                     onChange={(e) => setForm(prev => ({ ...prev, tag: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
+                    className="w-full px-3 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
                     placeholder="Bestseller, Nouveau..."
                   />
                 </div>
@@ -606,7 +606,7 @@ export default function AdminPacksPage() {
                 <label className="block text-sm font-medium mb-2">
                   Produits inclus * ({form.product_ids.length} sélectionné(s))
                 </label>
-                <div className="border border-gray-300 rounded-lg max-h-64 overflow-y-auto">
+                <div className="border border-admin-border rounded-lg max-h-64 overflow-y-auto">
                   {products.map((product) => {
                     const prices = product.price_by_size
                       ? Object.values(product.price_by_size).filter(p => p > 0)
@@ -615,7 +615,7 @@ export default function AdminPacksPage() {
                     return (
                       <label
                         key={product.id}
-                        className={`flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-0 ${
+                        className={`flex items-center gap-3 p-3 hover:bg-admin-surface-alt cursor-pointer border-b last:border-0 ${
                           form.product_ids.includes(product.id) ? 'bg-[#C9A962]/10' : ''
                         }`}
                       >
@@ -637,7 +637,7 @@ export default function AdminPacksPage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{product.name}</p>
-                          <p className="text-sm text-gray-500">Dès {minPrice || 0} €</p>
+                          <p className="text-sm text-admin-muted">Dès {minPrice || 0} €</p>
                         </div>
                       </label>
                     )
@@ -650,11 +650,11 @@ export default function AdminPacksPage() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="block text-sm font-medium">Contenu du pack (avec tailles)</label>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-admin-muted">
                       Total : {calculateTotalOriginalPrice().toFixed(2)} €
                     </span>
                   </div>
-                  <div className="border border-gray-300 rounded-lg divide-y">
+                  <div className="border border-admin-border rounded-lg divide-y">
                     {getSelectedProducts().map((product) => {
                       const selection = form.product_selections.find(s => s.productId === product.id)
                       const selectedSize = selection?.size || product.sizes?.[0] || ''
@@ -679,7 +679,7 @@ export default function AdminPacksPage() {
                             value={selectedSize}
                             onChange={(e) => updateProductSize(product.id, e.target.value)}
                             onClick={(e) => e.stopPropagation()}
-                            className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
+                            className="px-2 py-1 border border-admin-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A962]"
                           >
                             {product.sizes?.map((size) => (
                               <option key={size} value={size}>
@@ -693,7 +693,7 @@ export default function AdminPacksPage() {
                           <button
                             type="button"
                             onClick={() => toggleProductSelection(product.id)}
-                            className="p-1 text-gray-400 hover:text-red-500"
+                            className="p-1 text-admin-light hover:text-red-500"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -701,7 +701,7 @@ export default function AdminPacksPage() {
                       )
                     })}
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-admin-muted mt-2">
                     Astuce : Le prix barré peut correspondre au total des produits individuels ({calculateTotalOriginalPrice().toFixed(2)} €)
                   </p>
                 </div>
@@ -741,7 +741,7 @@ export default function AdminPacksPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-admin-border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors"
                 >
                   Annuler
                 </button>

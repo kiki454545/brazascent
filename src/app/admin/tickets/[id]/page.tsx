@@ -207,7 +207,7 @@ export default function AdminTicketDetailPage() {
   if (!ticket) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-500">Ticket non trouvé</p>
+        <p className="text-admin-muted">Ticket non trouvé</p>
         <Link href="/admin/tickets" className="text-[#C9A962] hover:underline mt-4 inline-block">
           Retour aux tickets
         </Link>
@@ -227,15 +227,15 @@ export default function AdminTicketDetailPage() {
             <ArrowLeft className="w-4 h-4" />
             Retour aux tickets
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">{ticket.subject}</h1>
-          <p className="text-gray-500">Ticket #{ticket.id.slice(0, 8)}</p>
+          <h1 className="text-2xl font-bold text-admin-text">{ticket.subject}</h1>
+          <p className="text-admin-muted">Ticket #{ticket.id.slice(0, 8)}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Messages */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-xl shadow-sm border p-6 min-h-[400px] max-h-[500px] overflow-y-auto">
+          <div className="bg-admin-surface rounded-xl shadow-sm border p-6 min-h-[400px] max-h-[500px] overflow-y-auto">
             <div className="space-y-6">
               {messages.map((message) => (
                 <div
@@ -244,7 +244,7 @@ export default function AdminTicketDetailPage() {
                 >
                   {message.sender_type === 'user' && (
                     <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                      <User className="w-5 h-5 text-gray-600" />
+                      <User className="w-5 h-5 text-admin-muted" />
                     </div>
                   )}
                   <div
@@ -278,7 +278,7 @@ export default function AdminTicketDetailPage() {
           </div>
 
           {/* Reply Form */}
-          <form onSubmit={handleSendMessage} className="bg-white rounded-xl shadow-sm border p-4">
+          <form onSubmit={handleSendMessage} className="bg-admin-surface rounded-xl shadow-sm border p-4">
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
@@ -306,33 +306,33 @@ export default function AdminTicketDetailPage() {
         {/* Sidebar */}
         <div className="space-y-4">
           {/* Client Info */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
+          <div className="bg-admin-surface rounded-xl shadow-sm border p-6">
             <h3 className="font-medium text-gray-900 mb-4">Informations client</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <User className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-600">{ticket.user_name || 'Non renseigné'}</span>
+                <User className="w-4 h-4 text-admin-light" />
+                <span className="text-sm text-admin-muted">{ticket.user_name || 'Non renseigné'}</span>
               </div>
               <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-gray-400" />
+                <Mail className="w-4 h-4 text-admin-light" />
                 <a href={`mailto:${ticket.user_email}`} className="text-sm text-[#C9A962] hover:underline">
                   {ticket.user_email}
                 </a>
               </div>
               <div className="flex items-center gap-3">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-600">{formatDate(ticket.created_at)}</span>
+                <Calendar className="w-4 h-4 text-admin-light" />
+                <span className="text-sm text-admin-muted">{formatDate(ticket.created_at)}</span>
               </div>
             </div>
           </div>
 
           {/* Ticket Details */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
+          <div className="bg-admin-surface rounded-xl shadow-sm border p-6">
             <h3 className="font-medium text-gray-900 mb-4">Détails du ticket</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-500 mb-2">Catégorie</label>
-                <p className="text-gray-900">{categoryLabels[ticket.category]}</p>
+                <p className="text-admin-text">{categoryLabels[ticket.category]}</p>
               </div>
 
               <div>
@@ -341,7 +341,7 @@ export default function AdminTicketDetailPage() {
                   value={ticket.status}
                   onChange={(e) => handleUpdateTicket('status', e.target.value)}
                   disabled={updating}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] bg-white disabled:opacity-50"
+                  className="w-full px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962] disabled:opacity-50"
                 >
                   {statusOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -357,7 +357,7 @@ export default function AdminTicketDetailPage() {
                   value={ticket.priority}
                   onChange={(e) => handleUpdateTicket('priority', e.target.value)}
                   disabled={updating}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] bg-white disabled:opacity-50"
+                  className="w-full px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962] disabled:opacity-50"
                 >
                   {priorityOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -370,7 +370,7 @@ export default function AdminTicketDetailPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
+          <div className="bg-admin-surface rounded-xl shadow-sm border p-6">
             <h3 className="font-medium text-gray-900 mb-4">Actions rapides</h3>
             <div className="space-y-2">
               <button
@@ -383,7 +383,7 @@ export default function AdminTicketDetailPage() {
               <button
                 onClick={() => handleUpdateTicket('status', 'closed')}
                 disabled={updating || ticket.status === 'closed'}
-                className="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="w-full py-2 px-4 bg-admin-surface-alt text-admin-text rounded-lg hover:bg-admin-surface-alt transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 Fermer le ticket
               </button>

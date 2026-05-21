@@ -118,7 +118,7 @@ export default function AdminDashboard() {
       case 'cancelled':
         return 'bg-red-100 text-red-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-admin-surface-alt text-admin-text'
     }
   }
 
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-white rounded-xl p-6 shadow-sm"
+            className="bg-admin-surface rounded-xl p-6 shadow-sm"
           >
             <div className="flex items-center justify-between mb-4">
               <div className={`p-3 rounded-lg ${stat.color}`}>
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
               )}
             </div>
             <p className="text-2xl font-semibold mb-1">{stat.value}</p>
-            <p className="text-sm text-gray-500">{stat.title}</p>
+            <p className="text-sm text-admin-muted">{stat.title}</p>
           </motion.div>
         ))}
       </div>
@@ -187,9 +187,9 @@ export default function AdminDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-white rounded-xl shadow-sm"
+        className="bg-admin-surface rounded-xl shadow-sm"
       >
-        <div className="p-6 border-b">
+        <div className="p-6 border-b border-admin-border">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium">Commandes récentes</h2>
             <a
@@ -204,28 +204,28 @@ export default function AdminDashboard() {
         {stats.recentOrders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-admin-surface-alt">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Commande
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Client
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Total
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider">
                     Date
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-admin-border">
                 {stats.recentOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
+                  <tr key={order.id} className="hover:bg-admin-surface-alt">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-medium">#{order.order_number}</span>
                     </td>
@@ -234,7 +234,7 @@ export default function AdminDashboard() {
                         <p className="text-sm font-medium">
                           {order.shipping_address?.firstName} {order.shipping_address?.lastName}
                         </p>
-                        <p className="text-sm text-gray-500">{order.shipping_address?.email}</p>
+                        <p className="text-sm text-admin-muted">{order.shipping_address?.email}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
                         {getStatusLabel(order.status)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-admin-muted">
                       {new Date(order.created_at).toLocaleDateString('fr-FR')}
                     </td>
                   </tr>
@@ -255,8 +255,8 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div className="p-12 text-center">
-            <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">Aucune commande pour le moment</p>
+            <ShoppingCart className="w-12 h-12 text-admin-light mx-auto mb-4" />
+            <p className="text-admin-muted">Aucune commande pour le moment</p>
           </div>
         )}
       </motion.div>
@@ -270,40 +270,40 @@ export default function AdminDashboard() {
       >
         <a
           href="/admin/produits/nouveau"
-          className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
+          className="bg-admin-surface rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
         >
           <div className="p-3 bg-[#C9A962]/10 rounded-lg">
             <Package className="w-6 h-6 text-[#C9A962]" />
           </div>
           <div>
             <p className="font-medium">Ajouter un produit</p>
-            <p className="text-sm text-gray-500">Créer un nouveau parfum</p>
+            <p className="text-sm text-admin-muted">Créer un nouveau parfum</p>
           </div>
         </a>
 
         <a
           href="/admin/commandes"
-          className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
+          className="bg-admin-surface rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
         >
           <div className="p-3 bg-blue-50 rounded-lg">
             <ShoppingCart className="w-6 h-6 text-blue-500" />
           </div>
           <div>
             <p className="font-medium">Gérer les commandes</p>
-            <p className="text-sm text-gray-500">Voir toutes les commandes</p>
+            <p className="text-sm text-admin-muted">Voir toutes les commandes</p>
           </div>
         </a>
 
         <a
           href="/admin/utilisateurs"
-          className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
+          className="bg-admin-surface rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
         >
           <div className="p-3 bg-purple-50 rounded-lg">
             <Users className="w-6 h-6 text-purple-500" />
           </div>
           <div>
             <p className="font-medium">Gérer les utilisateurs</p>
-            <p className="text-sm text-gray-500">Voir tous les clients</p>
+            <p className="text-sm text-admin-muted">Voir tous les clients</p>
           </div>
         </a>
       </motion.div>

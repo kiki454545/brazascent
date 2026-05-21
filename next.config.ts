@@ -5,8 +5,9 @@ const nextConfig: NextConfig = {
   // Désactiver le trailing slash pour éviter les redirections 307 sur les webhooks
   trailingSlash: false,
   images: {
-    // Désactiver l'optimisation Vercel pour éviter les erreurs 402 (quota dépassé)
-    unoptimized: true,
+    // Loader personnalisé : Supabase → render API, Unsplash → CDN natif, local → brut
+    // Aucun quota Vercel consommé (pas de passage par /_next/image)
+    loaderFile: './src/lib/image-loader.ts',
     remotePatterns: [
       {
         protocol: 'https',

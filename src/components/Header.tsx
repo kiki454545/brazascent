@@ -10,7 +10,11 @@ import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { useAuthStore } from '@/store/auth'
 import { useSettingsStore } from '@/store/settings'
-import { CartDrawer } from './CartDrawer'
+import dynamic from 'next/dynamic'
+const CartDrawer = dynamic(
+  () => import('./CartDrawer').then(m => m.CartDrawer),
+  { ssr: false }
+)
 import { ThemeToggle } from './ThemeToggle'
 import { supabase } from '@/lib/supabase'
 

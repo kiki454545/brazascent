@@ -75,10 +75,10 @@ export default function AdminLayout({
   // Afficher le loader pendant le chargement
   if (!mounted || !isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-admin-bg">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Chargement...</p>
+          <p className="text-admin-muted">Chargement...</p>
         </div>
       </div>
     )
@@ -87,9 +87,9 @@ export default function AdminLayout({
   // Rediriger si pas connecté
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-admin-bg">
         <div className="text-center">
-          <p className="text-gray-500">Redirection...</p>
+          <p className="text-admin-muted">Redirection...</p>
         </div>
       </div>
     )
@@ -98,10 +98,10 @@ export default function AdminLayout({
   // Attendre le profil
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-admin-bg">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Vérification des accès...</p>
+          <p className="text-admin-muted">Vérification des accès...</p>
         </div>
       </div>
     )
@@ -110,16 +110,16 @@ export default function AdminLayout({
   // Vérifier les droits admin
   if (!profile.is_admin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-admin-bg">
         <div className="text-center">
-          <p className="text-gray-500">Accès refusé. Redirection...</p>
+          <p className="text-admin-muted">Accès refusé. Redirection...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="admin min-h-screen bg-admin-bg">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -183,11 +183,11 @@ export default function AdminLayout({
       {/* Main content */}
       <div className="lg:ml-64">
         {/* Top bar */}
-        <header className="bg-white shadow-sm sticky top-0 z-30">
+        <header className="bg-admin-surface shadow-sm sticky top-0 z-30 border-b border-admin-border">
           <div className="flex items-center justify-between px-6 py-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+              className="lg:hidden p-2 hover:bg-admin-surface-alt rounded-lg"
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -205,7 +205,7 @@ export default function AdminLayout({
               <Link
                 href="/"
                 target="_blank"
-                className="text-sm text-gray-500 hover:text-[#C9A962]"
+                className="text-sm text-admin-muted hover:text-[#C9A962]"
               >
                 Voir le site
               </Link>
@@ -213,7 +213,7 @@ export default function AdminLayout({
                 <div className="w-8 h-8 bg-[#C9A962] rounded-full flex items-center justify-center text-white text-sm">
                   {profile.first_name?.[0] || profile.email[0].toUpperCase()}
                 </div>
-                <span className="text-sm font-medium hidden sm:block">
+                <span className="text-sm font-medium text-admin-text hidden sm:block">
                   {profile.first_name || profile.email}
                 </span>
               </div>

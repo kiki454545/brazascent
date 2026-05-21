@@ -174,7 +174,7 @@ export default function AdminVisiteursPage() {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Visiteurs</h1>
-          <p className="text-gray-500">
+          <p className="text-admin-muted">
             Suivi en temps réel des visiteurs du site
           </p>
         </div>
@@ -191,7 +191,7 @@ export default function AdminVisiteursPage() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
             Actualiser
@@ -202,72 +202,72 @@ export default function AdminVisiteursPage() {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-white rounded-xl shadow-sm p-4">
+          <div className="bg-admin-surface rounded-xl shadow-sm p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                 <Users className="w-5 h-5" />
               </div>
-              <span className="text-sm text-gray-500">Visiteurs uniques</span>
+              <span className="text-sm text-admin-muted">Visiteurs uniques</span>
             </div>
             <p className="text-2xl font-semibold">{stats.visitorsToday}</p>
-            <p className="text-xs text-gray-400">aujourd&apos;hui</p>
+            <p className="text-xs text-admin-light">aujourd&apos;hui</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-4">
+          <div className="bg-admin-surface rounded-xl shadow-sm p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
                 <TrendingUp className="w-5 h-5" />
               </div>
-              <span className="text-sm text-gray-500">Visites totales</span>
+              <span className="text-sm text-admin-muted">Visites totales</span>
             </div>
             <p className="text-2xl font-semibold">{stats.visitsToday || 0}</p>
-            <p className="text-xs text-gray-400">aujourd&apos;hui</p>
+            <p className="text-xs text-admin-light">aujourd&apos;hui</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-4">
+          <div className="bg-admin-surface rounded-xl shadow-sm p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-green-100 text-green-600 rounded-lg">
                 <Eye className="w-5 h-5" />
               </div>
-              <span className="text-sm text-gray-500">Pages vues</span>
+              <span className="text-sm text-admin-muted">Pages vues</span>
             </div>
             <p className="text-2xl font-semibold">{stats.pageviewsToday}</p>
-            <p className="text-xs text-gray-400">aujourd&apos;hui</p>
+            <p className="text-xs text-admin-light">aujourd&apos;hui</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-4">
+          <div className="bg-admin-surface rounded-xl shadow-sm p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
                 <BarChart3 className="w-5 h-5" />
               </div>
-              <span className="text-sm text-gray-500">Total visiteurs</span>
+              <span className="text-sm text-admin-muted">Total visiteurs</span>
             </div>
             <p className="text-2xl font-semibold">{stats.totalVisitors}</p>
-            <p className="text-xs text-gray-400">depuis le début</p>
+            <p className="text-xs text-admin-light">depuis le début</p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-4">
+          <div className="bg-admin-surface rounded-xl shadow-sm p-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-[#C9A962]/20 text-[#C9A962] rounded-lg">
                 <Globe className="w-5 h-5" />
               </div>
-              <span className="text-sm text-gray-500">Paniers actifs</span>
+              <span className="text-sm text-admin-muted">Paniers actifs</span>
             </div>
             <p className="text-2xl font-semibold">{stats.activeCarts}</p>
-            <p className="text-xs text-gray-400">{stats.totalCartValue.toFixed(2)} €</p>
+            <p className="text-xs text-admin-light">{stats.totalCartValue.toFixed(2)} €</p>
           </div>
         </div>
       )}
 
       {/* Top Pages */}
       {topPages.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="bg-admin-surface rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-semibold mb-4">Pages les plus visitées</h2>
           <div className="space-y-2">
             {topPages.slice(0, 10).map((page, index) => (
               <div key={page.page_url} className="flex items-center gap-3">
-                <span className="text-sm text-gray-400 w-6">{index + 1}.</span>
-                <div className="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+                <span className="text-sm text-admin-light w-6">{index + 1}.</span>
+                <div className="flex-1 bg-admin-surface-alt rounded-full h-6 overflow-hidden">
                   <div
                     className="h-full bg-[#C9A962]/30 flex items-center px-3"
                     style={{ width: `${Math.min((page.view_count / topPages[0].view_count) * 100, 100)}%` }}
@@ -283,12 +283,12 @@ export default function AdminVisiteursPage() {
       )}
 
       {/* Tabs */}
-      <div className="bg-white rounded-xl shadow-sm">
+      <div className="bg-admin-surface rounded-xl shadow-sm">
         <div className="flex border-b">
           <button
             onClick={() => setActiveTab('visitors')}
             className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-colors relative ${
-              activeTab === 'visitors' ? 'text-[#C9A962]' : 'text-gray-500 hover:text-gray-700'
+              activeTab === 'visitors' ? 'text-[#C9A962]' : 'text-admin-muted hover:text-admin-text'
             }`}
           >
             <Users className="w-5 h-5" />
@@ -300,7 +300,7 @@ export default function AdminVisiteursPage() {
           <button
             onClick={() => setActiveTab('pageviews')}
             className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-colors relative ${
-              activeTab === 'pageviews' ? 'text-[#C9A962]' : 'text-gray-500 hover:text-gray-700'
+              activeTab === 'pageviews' ? 'text-[#C9A962]' : 'text-admin-muted hover:text-admin-text'
             }`}
           >
             <Eye className="w-5 h-5" />
@@ -312,7 +312,7 @@ export default function AdminVisiteursPage() {
           <button
             onClick={() => setActiveTab('history')}
             className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium transition-colors relative ${
-              activeTab === 'history' ? 'text-[#C9A962]' : 'text-gray-500 hover:text-gray-700'
+              activeTab === 'history' ? 'text-[#C9A962]' : 'text-admin-muted hover:text-admin-text'
             }`}
           >
             <Calendar className="w-5 h-5" />
@@ -326,13 +326,13 @@ export default function AdminVisiteursPage() {
         {/* Search */}
         <div className="p-4 border-b">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-admin-light" />
             <input
               type="text"
               placeholder="Rechercher par IP, navigateur, OS, ville..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
+              className="w-full pl-10 pr-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
         </div>
@@ -346,13 +346,13 @@ export default function AdminVisiteursPage() {
                 const isExpanded = expandedVisitor === visitor.id
 
                 return (
-                  <div key={visitor.id} className="p-4 hover:bg-gray-50 transition-colors">
+                  <div key={visitor.id} className="p-4 hover:bg-admin-surface-alt transition-colors">
                     <div
                       className="flex items-center gap-4 cursor-pointer"
                       onClick={() => setExpandedVisitor(isExpanded ? null : visitor.id)}
                     >
                       {/* Device Icon */}
-                      <div className="p-2 bg-gray-100 rounded-lg">
+                      <div className="p-2 bg-admin-surface-alt rounded-lg">
                         {getDeviceIcon(visitor.device_type)}
                       </div>
 
@@ -360,11 +360,11 @@ export default function AdminVisiteursPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-mono text-sm">{visitor.ip_address}</span>
-                          <span className="px-2 py-0.5 bg-gray-100 rounded text-xs">
+                          <span className="px-2 py-0.5 bg-admin-surface-alt rounded text-xs">
                             {visitor.browser} / {visitor.os}
                           </span>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-4 text-sm text-admin-muted">
                           <span className="flex items-center gap-1">
                             <Eye className="w-3 h-3" />
                             {visitor.visit_count} visites
@@ -385,7 +385,7 @@ export default function AdminVisiteursPage() {
                       {/* Pages count */}
                       <div className="text-right">
                         <p className="text-sm font-medium">{visitorPageViews.length} pages</p>
-                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 text-admin-light transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                       </div>
                     </div>
 
@@ -397,12 +397,12 @@ export default function AdminVisiteursPage() {
                         exit={{ height: 0, opacity: 0 }}
                         className="mt-4 pl-12"
                       >
-                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Pages visitées</p>
+                        <p className="text-xs text-admin-muted uppercase tracking-wider mb-2">Pages visitées</p>
                         <div className="space-y-1 max-h-40 overflow-auto">
                           {visitorPageViews.slice(0, 20).map((pv) => (
                             <div key={pv.id} className="flex items-center justify-between text-sm py-1">
-                              <span className="text-gray-700 truncate flex-1">{formatPageUrl(pv.page_url)}</span>
-                              <span className="text-gray-400 text-xs ml-2">
+                              <span className="text-admin-text truncate flex-1">{formatPageUrl(pv.page_url)}</span>
+                              <span className="text-admin-light text-xs ml-2">
                                 {new Date(pv.created_at).toLocaleTimeString('fr-FR')}
                               </span>
                             </div>
@@ -416,7 +416,7 @@ export default function AdminVisiteursPage() {
             ) : (
               <div className="p-12 text-center">
                 <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Aucun visiteur trouvé</p>
+                <p className="text-admin-muted">Aucun visiteur trouvé</p>
               </div>
             )}
           </div>
@@ -427,18 +427,18 @@ export default function AdminVisiteursPage() {
           <div className="divide-y max-h-[600px] overflow-auto">
             {pageviews.length > 0 ? (
               pageviews.map((pv) => (
-                <div key={pv.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div key={pv.id} className="p-4 hover:bg-admin-surface-alt transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="p-2 bg-green-100 text-green-600 rounded-lg">
                       <ExternalLink className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{formatPageUrl(pv.page_url)}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-admin-muted">
                         {new Date(pv.created_at).toLocaleString('fr-FR')}
                       </p>
                     </div>
-                    <span className="font-mono text-xs text-gray-400">
+                    <span className="font-mono text-xs text-admin-light">
                       {pv.visitor_id.substring(0, 8)}...
                     </span>
                   </div>
@@ -447,7 +447,7 @@ export default function AdminVisiteursPage() {
             ) : (
               <div className="p-12 text-center">
                 <Eye className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Aucune page vue</p>
+                <p className="text-admin-muted">Aucune page vue</p>
               </div>
             )}
           </div>
@@ -458,7 +458,7 @@ export default function AdminVisiteursPage() {
           <div className="divide-y max-h-[600px] overflow-auto">
             {dailyHistory.length > 0 ? (
               dailyHistory.map((day) => (
-                <div key={day.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div key={day.id} className="p-4 hover:bg-admin-surface-alt transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-[#C9A962]/10 text-[#C9A962] rounded-lg">
                       <Calendar className="w-5 h-5" />
@@ -487,7 +487,7 @@ export default function AdminVisiteursPage() {
                         </span>
                       </div>
                       {(day.new_visitors > 0 || day.returning_visitors > 0) && (
-                        <div className="flex gap-4 mt-1 text-xs text-gray-500">
+                        <div className="flex gap-4 mt-1 text-xs text-admin-muted">
                           <span>{day.new_visitors} nouveaux</span>
                           <span>{day.returning_visitors} récurrents</span>
                         </div>
@@ -500,7 +500,7 @@ export default function AdminVisiteursPage() {
                         </p>
                       )}
                       {(day.abandoned_carts > 0 || day.converted_carts > 0) && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-admin-muted mt-1">
                           {day.converted_carts > 0 && (
                             <span className="text-green-600">{day.converted_carts} convertis</span>
                           )}
@@ -517,7 +517,7 @@ export default function AdminVisiteursPage() {
                       {Object.entries(day.device_breakdown).map(([device, count]) => (
                         <span
                           key={device}
-                          className="px-2 py-1 bg-gray-100 rounded text-xs flex items-center gap-1"
+                          className="px-2 py-1 bg-admin-surface-alt rounded text-xs flex items-center gap-1"
                         >
                           {device === 'mobile' ? <Smartphone className="w-3 h-3" /> :
                            device === 'tablet' ? <Tablet className="w-3 h-3" /> :
@@ -540,11 +540,11 @@ export default function AdminVisiteursPage() {
             ) : (
               <div className="p-12 text-center">
                 <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 font-medium">Aucun historique disponible</p>
-                <p className="text-sm text-gray-400 mt-2">
+                <p className="text-admin-muted font-medium">Aucun historique disponible</p>
+                <p className="text-sm text-admin-light mt-2">
                   Les statistiques journalières seront archivées chaque nuit à minuit.
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-admin-light mt-1">
                   Assurez-vous d&apos;avoir exécuté le SQL pour créer les tables daily_stats et daily_visits.
                 </p>
               </div>

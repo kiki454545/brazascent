@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS products (
   notes_top TEXT[] DEFAULT '{}',
   notes_heart TEXT[] DEFAULT '{}',
   notes_base TEXT[] DEFAULT '{}',
+  main_accords JSONB DEFAULT '[]'::jsonb,
+  note_images JSONB DEFAULT '{}'::jsonb,
   is_new BOOLEAN DEFAULT FALSE,
   is_bestseller BOOLEAN DEFAULT FALSE,
   stock INTEGER DEFAULT 100,

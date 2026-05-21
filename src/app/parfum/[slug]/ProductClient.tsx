@@ -5,12 +5,14 @@ import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Heart, Minus, Plus, ChevronRight, Truck, Gift, Share2, Check, Star, ShieldCheck, RotateCcw, CreditCard } from 'lucide-react'
+import { Heart, Minus, Plus, ChevronRight, Share2, Check, Star, CreditCard } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
+import dynamic from 'next/dynamic'
+const OlfactivePyramid = dynamic(() => import('@/components/OlfactivePyramid'), { ssr: false })
+const ScentAccords = dynamic(() => import('@/components/ScentAccords'), { ssr: false })
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
-import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
 
 interface SupabaseProductRow {
@@ -30,6 +32,9 @@ interface SupabaseProductRow {
   notes_top?: string[] | null
   notes_heart?: string[] | null
   notes_base?: string[] | null
+  main_accords?: Array<{ name: string; color: string; intensity: number }> | null
+  note_images?: Record<string, string> | null
+  accords?: Array<{ nom: string; intensite: number; couleur: string }> | null
   stock?: number | null
   is_new?: boolean
   is_bestseller?: boolean
@@ -55,7 +60,6 @@ export default function ProductPage() {
 
   const { addItem, openCart } = useCartStore()
   const { toggleItem, isInWishlist } = useWishlistStore()
-  const { settings } = useSettingsStore()
 
   useEffect(() => {
     let isMounted = true
@@ -109,6 +113,9 @@ export default function ProductPage() {
             heart: data.notes_heart || [],
             base: data.notes_base || []
           },
+          mainAccords: data.main_accords || [],
+          noteImages: data.note_images || {},
+          accords: data.accords || [],
           stock: data.stock ?? 1,
           inStock: (data.stock || 0) > 0,
           new: data.is_new,
@@ -251,9 +258,9 @@ export default function ProductPage() {
 
   const currentPrice = getSizePrice(selectedSize)
   const sprayEstimates: Record<string, string> = {
-    '2ml': '≈ 45 sprays',
-    '5ml': '≈ 110 sprays',
-    '10ml': '≈ 220 sprays',
+    '2ml': '≈ 40 sprays',
+    '5ml': '≈ 90 sprays',
+    '10ml': '≈ 180 sprays',
   }
   const preferredSizeOrder = ['2ml', '5ml', '10ml']
   const orderedSizes = [...product.size].sort((a, b) => {
@@ -405,37 +412,36 @@ export default function ProductPage() {
                       key={size}
                       onClick={() => !isSizeOutOfStock && setSelectedSize(size)}
                       disabled={isSizeOutOfStock}
-                      className={`min-h-36 p-4 border-2 text-left transition-all relative ${
+                      className={`group relative min-h-32 overflow-hidden border p-4 text-left transition-all duration-300 sm:min-h-40 ${
                         isSizeOutOfStock
-                          ? 'border-border bg-muted text-muted-foreground/60 cursor-not-allowed'
+                          ? 'border-border bg-muted/60 text-muted-foreground/60 cursor-not-allowed'
                           : selectedSize === size
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border bg-background hover:border-foreground/40'
+                          ? 'border-primary bg-primary/[0.06] shadow-[0_18px_45px_rgba(201,169,98,0.16)]'
+                          : 'border-border bg-background hover:border-primary/60 hover:shadow-[0_14px_36px_rgba(0,0,0,0.06)]'
                       }`}
                     >
                       {selectedSize === size && !isSizeOutOfStock && (
-                        <span
-                          aria-hidden
-                          className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary"
-                        />
+                        <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white">
+                          <Check className="h-3 w-3" />
+                        </span>
                       )}
-                      <span className="block text-lg font-medium tracking-[0.08em] uppercase">
+                      <span className="block text-lg font-medium tracking-[0.08em] uppercase text-foreground">
                         {size}
                       </span>
-                      <span className="block text-2xl font-light mt-3">
+                      <span className="mt-3 block text-2xl font-light text-foreground">
                         {getSizePrice(size).toLocaleString('fr-FR')} €
                       </span>
                       {sprays && (
-                        <span className="block text-sm mt-2 text-muted-foreground">
+                        <span className="mt-3 block text-sm text-muted-foreground">
                           {sprays}
                         </span>
                       )}
-                      <span className={`block text-xs mt-1 ${
+                      <span className={`mt-4 inline-flex border px-2 py-1 text-[11px] uppercase tracking-[0.12em] ${
                         isSizeOutOfStock
-                          ? 'text-red-500 font-medium'
+                          ? 'border-red-200 text-red-500 font-medium'
                           : sizeStock <= 5 && !unlimitedStock
-                          ? 'text-orange-500'
-                          : 'text-green-600 dark:text-green-500'
+                          ? 'border-orange-200 text-orange-500'
+                          : 'border-primary/20 text-muted-foreground'
                       }`}>
                         {isSizeOutOfStock ? 'Rupture' : unlimitedStock ? 'En stock' : sizeStock <= 5 ? `Plus que ${sizeStock}` : `${sizeStock} en stock`}
                       </span>
@@ -479,7 +485,7 @@ export default function ProductPage() {
               ) : (
                 <button
                   onClick={handleAddToCart}
-                  className="btn-luxury flex-1 py-5 bg-primary text-white text-sm font-medium tracking-[0.15em] uppercase hover:bg-foreground transition-colors shadow-lg"
+                  className="btn-luxury flex-1 border border-primary bg-primary px-6 py-5 text-sm font-medium uppercase tracking-[0.18em] text-white shadow-[0_18px_40px_rgba(201,169,98,0.28)] transition-all hover:bg-foreground hover:shadow-[0_22px_48px_rgba(0,0,0,0.18)]"
                 >
                   Ajouter au panier
                 </button>
@@ -538,22 +544,14 @@ export default function ProductPage() {
             )}
 
             {/* Trust block */}
-            <div className="border-t border-b py-6 space-y-4">
-              <div className="flex items-center gap-4">
-                <Truck className="w-5 h-5 text-primary" />
-                <span className="text-sm">Livraison offerte dès {settings.freeShippingThreshold}€</span>
+            <div className="mb-8 grid gap-3 border-y border-border/70 py-5 text-sm text-muted-foreground sm:grid-cols-2">
+              <div className="flex items-center gap-3">
+                <Check className="h-4 w-4 text-primary" />
+                <span>100% authentique</span>
               </div>
-              <div className="flex items-center gap-4">
-                <Gift className="w-5 h-5 text-primary" />
-                <span className="text-sm">Échantillons offerts dès 120€ d&apos;achat</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <ShieldCheck className="w-5 h-5 text-primary" />
-                <span className="text-sm">Paiement sécurisé par Stripe</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <RotateCcw className="w-5 h-5 text-primary" />
-                <span className="text-sm">Retours possibles sous 14 jours</span>
+              <div className="flex items-center gap-3">
+                <Check className="h-4 w-4 text-primary" />
+                <span>Expédition rapide depuis la France</span>
               </div>
             </div>
 
@@ -563,36 +561,20 @@ export default function ProductPage() {
               <p className="text-muted-foreground leading-relaxed">{product.description}</p>
             </div>
 
-            {/* Notes */}
-            <div className="mt-8">
-              <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Notes Olfactives</h2>
-              <div className="grid grid-cols-3 gap-6">
-                <div>
-                  <p className="text-sm text-primary uppercase tracking-wider mb-2">Tête</p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {product.notes.top.map((note) => (
-                      <li key={note}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-sm text-primary uppercase tracking-wider mb-2">Cœur</p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {product.notes.heart.map((note) => (
-                      <li key={note}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-sm text-primary uppercase tracking-wider mb-2">Fond</p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {product.notes.base.map((note) => (
-                      <li key={note}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
+            {/* Accords olfactifs (IA) */}
+            {product.accords && product.accords.length > 0 && (
+              <div className="mt-8">
+                <ScentAccords accords={product.accords} />
               </div>
-            </div>
+            )}
+
+            {/* Pyramide olfactive */}
+            {(product.notes.top.length > 0 || product.notes.heart.length > 0 || product.notes.base.length > 0) && (
+              <div className="mt-8">
+                <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Pyramide olfactive</h2>
+                <OlfactivePyramid notes={product.notes} noteImages={product.noteImages} />
+              </div>
+            )}
           </motion.div>
         </div>
       </section>
@@ -616,7 +598,7 @@ export default function ProductPage() {
           ) : (
             <button
               onClick={handleAddToCart}
-              className="w-full py-4 bg-primary text-white text-sm font-medium tracking-[0.15em] uppercase"
+              className="w-full border border-primary bg-primary py-4 text-sm font-medium uppercase tracking-[0.18em] text-white shadow-[0_14px_34px_rgba(201,169,98,0.26)] transition-colors hover:bg-foreground"
             >
               Ajouter au panier
             </button>

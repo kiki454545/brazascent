@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { ArrowLeft, Send, Loader2, Clock, CheckCircle, AlertCircle, User, Shield } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -189,11 +188,7 @@ export default function TicketDetailPage() {
     <div className="min-h-screen pt-28 pb-24">
       <div className="max-w-4xl mx-auto px-6 lg:px-12">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <div className="mb-8">
           <Link
             href="/compte/tickets"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-4"
@@ -218,15 +213,10 @@ export default function TicketDetailPage() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Messages */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-cream p-6 mb-6 min-h-[400px] max-h-[500px] overflow-y-auto"
-        >
+        <div className="bg-cream p-6 mb-6 min-h-[400px] max-h-[500px] overflow-y-auto">
           <div className="space-y-6">
             {messages.map((message) => (
               <div
@@ -266,14 +256,11 @@ export default function TicketDetailPage() {
             ))}
             <div ref={messagesEndRef} />
           </div>
-        </motion.div>
+        </div>
 
         {/* Reply Form */}
         {ticket.status !== 'closed' ? (
-          <motion.form
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+          <form
             onSubmit={handleSendMessage}
             className="flex gap-4"
           >
@@ -295,7 +282,7 @@ export default function TicketDetailPage() {
                 <Send className="w-5 h-5" />
               )}
             </button>
-          </motion.form>
+          </form>
         ) : (
           <div className="text-center py-6 bg-muted rounded-lg">
             <p className="text-muted-foreground">Ce ticket est fermé et ne peut plus recevoir de messages.</p>

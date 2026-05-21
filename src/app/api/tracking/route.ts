@@ -3,11 +3,25 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { z } from 'zod'
 
-// Client Supabase avec service role pour bypass RLS
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return {
+      supabaseAdmin: null,
+      error: NextResponse.json(
+        { error: 'Configuration Supabase tracking manquante' },
+        { status: 503 }
+      ),
+    }
+  }
+
+  return {
+    supabaseAdmin: createClient(supabaseUrl, supabaseServiceRoleKey),
+    error: null,
+  }
+}
 
 // SÉCURITÉ: Schémas de validation Zod
 const cartItemSchema = z.object({
@@ -98,6 +112,9 @@ function generateSessionId(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const { supabaseAdmin, error: configError } = getSupabaseAdmin()
+    if (configError) return configError
+
     const body = await request.json()
 
     // SÉCURITÉ: Validation Zod des entrées
@@ -326,6 +343,9 @@ export async function POST(request: NextRequest) {
 // GET pour les stats admin
 export async function GET(request: NextRequest) {
   try {
+    const { supabaseAdmin, error: configError } = getSupabaseAdmin()
+    if (configError) return configError
+
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
 
