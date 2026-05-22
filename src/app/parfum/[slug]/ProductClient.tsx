@@ -155,18 +155,47 @@ export default function ProductPage() {
 
         if (!isMounted) return
 
-        // Récupérer les produits similaires
+        // Récupérer les produits similaires (par marque OU catégorie, puis score par notes)
+        const brandFilter = data.brand ? `brand.eq.${data.brand},` : ''
         const { data: relatedData } = await supabase
           .from('products')
           .select('*')
-          .eq('category', data.category)
+          .or(`${brandFilter}category.eq.${data.category}`)
           .neq('id', data.id)
-          .limit(4)
+          .eq('is_active', true)
+          .limit(20)
 
         if (!isMounted) return
 
         if (relatedData) {
-          const mappedRelated: Product[] = (relatedData as SupabaseProductRow[]).map((p) => {
+          // Construire un ensemble des notes du produit courant pour comparaison rapide
+          const currentNotes = new Set([
+            ...(data.notes_top || []),
+            ...(data.notes_heart || []),
+            ...(data.notes_base || []),
+            ...(data.main_accords?.map((a: { name: string }) => a.name) || []),
+          ].map((n: string) => n.toLowerCase()))
+
+          // Scorer chaque candidat
+          const scored = (relatedData as SupabaseProductRow[]).map((p) => {
+            let score = 0
+            if (p.brand && p.brand === data.brand) score += 5
+            if (p.category === data.category) score += 1
+            const candidateNotes = [
+              ...(p.notes_top || []),
+              ...(p.notes_heart || []),
+              ...(p.notes_base || []),
+              ...(p.main_accords?.map((a) => typeof a === 'string' ? a : (a as { name: string }).name) || []),
+            ].map((n: string) => n.toLowerCase())
+            for (const note of candidateNotes) {
+              if (currentNotes.has(note)) score += 2
+            }
+            return { p, score }
+          })
+          scored.sort((a, b) => b.score - a.score)
+          const topRelated = scored.slice(0, 4).map(({ p }) => p)
+
+          const mappedRelated: Product[] = (topRelated as SupabaseProductRow[]).map((p) => {
             const relatedPriceBySize = typeof p.price_by_size === 'string'
               ? JSON.parse(p.price_by_size)
               : (p.price_by_size || {})
