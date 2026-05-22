@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import {
   Mail,
   Users,
@@ -323,7 +323,7 @@ export default function AdminNewsletterPage() {
             <Users className="w-5 h-5" />
             Abonnés
             {activeTab === 'subscribers' && (
-              <motion.div
+              <m.div
                 layoutId="tab-indicator"
                 className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]"
               />
@@ -340,7 +340,7 @@ export default function AdminNewsletterPage() {
             <Send className="w-5 h-5" />
             Envoyer un email
             {activeTab === 'compose' && (
-              <motion.div
+              <m.div
                 layoutId="tab-indicator"
                 className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]"
               />
@@ -357,7 +357,7 @@ export default function AdminNewsletterPage() {
             <Clock className="w-5 h-5" />
             Historique
             {activeTab === 'history' && (
-              <motion.div
+              <m.div
                 layoutId="tab-indicator"
                 className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]"
               />
@@ -556,14 +556,14 @@ Vous pouvez utiliser du HTML basique pour la mise en forme."
       {/* Preview Modal */}
       <AnimatePresence>
         {previewEmail && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
             onClick={() => setPreviewEmail(null)}
           >
-            <motion.div
+            <m.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
@@ -586,8 +586,8 @@ Vous pouvez utiliser du HTML basique pour la mise en forme."
                 </div>
                 <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewEmail.content) }} />
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
 

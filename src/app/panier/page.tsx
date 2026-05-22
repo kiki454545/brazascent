@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { Minus, Plus, X, ShoppingBag, ArrowRight, Truck, Gift, Shield, AlertTriangle } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { CartItem } from '@/types'
@@ -36,7 +36,7 @@ export default function PanierPage() {
     return (
       <div className="min-h-screen pt-32 pb-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
@@ -54,7 +54,7 @@ export default function PanierPage() {
               Découvrir nos parfums
               <ArrowRight className="w-4 h-4" />
             </Link>
-          </motion.div>
+          </m.div>
         </div>
       </div>
     )
@@ -63,13 +63,13 @@ export default function PanierPage() {
   return (
     <div className="min-h-screen pt-32 pb-24">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <motion.h1
+        <m.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl font-light tracking-[0.15em] uppercase text-center mb-12"
         >
           Votre Panier
-        </motion.h1>
+        </m.h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* Cart items */}
@@ -105,7 +105,7 @@ export default function PanierPage() {
               {items.map((item, index) => {
                 const itemOutOfStock = isProductOutOfStock(item.product)
                 return (
-                  <motion.div
+                  <m.div
                     key={`${item.product.id}-${item.selectedSize}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -194,7 +194,7 @@ export default function PanierPage() {
                         </div>
                       )}
                     </div>
-                  </motion.div>
+                  </m.div>
                 )
               })}
             </div>
@@ -202,7 +202,7 @@ export default function PanierPage() {
 
           {/* Summary */}
           <div className="lg:col-span-1">
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -275,7 +275,7 @@ export default function PanierPage() {
                   <span>Paiement sécurisé</span>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         </div>
       </div>

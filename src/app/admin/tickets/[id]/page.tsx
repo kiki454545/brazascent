@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { ArrowLeft, Send, Loader2, Clock, CheckCircle, AlertCircle, User, Shield, Mail, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -34,11 +34,11 @@ const statusOptions = [
   { value: 'open', label: 'Ouvert', color: 'bg-blue-100 text-blue-700' },
   { value: 'in_progress', label: 'En cours', color: 'bg-yellow-100 text-yellow-700' },
   { value: 'resolved', label: 'Résolu', color: 'bg-green-100 text-green-700' },
-  { value: 'closed', label: 'Fermé', color: 'bg-gray-100 text-gray-700' },
+  { value: 'closed', label: 'Fermé', color: 'bg-admin-surface-alt text-admin-muted' },
 ]
 
 const priorityOptions = [
-  { value: 'low', label: 'Basse', color: 'text-gray-500' },
+  { value: 'low', label: 'Basse', color: 'text-admin-muted' },
   { value: 'normal', label: 'Normale', color: 'text-blue-500' },
   { value: 'high', label: 'Haute', color: 'text-orange-500' },
   { value: 'urgent', label: 'Urgente', color: 'text-red-500' },
@@ -222,7 +222,7 @@ export default function AdminTicketDetailPage() {
         <div>
           <Link
             href="/admin/tickets"
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors mb-2"
+            className="inline-flex items-center gap-2 text-admin-muted hover:text-admin-text transition-colors mb-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Retour aux tickets
@@ -243,7 +243,7 @@ export default function AdminTicketDetailPage() {
                   className={`flex gap-4 ${message.sender_type === 'admin' ? 'justify-end' : 'justify-start'}`}
                 >
                   {message.sender_type === 'user' && (
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-admin-surface-alt flex items-center justify-center flex-shrink-0">
                       <User className="w-5 h-5 text-admin-muted" />
                     </div>
                   )}
@@ -251,18 +251,18 @@ export default function AdminTicketDetailPage() {
                     className={`max-w-[70%] ${
                       message.sender_type === 'admin'
                         ? 'bg-[#C9A962] text-white'
-                        : 'bg-gray-100'
+                        : 'bg-admin-surface-alt'
                     } p-4 rounded-lg`}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`font-medium text-sm ${message.sender_type === 'admin' ? 'text-white' : 'text-gray-900'}`}>
+                      <span className={`font-medium text-sm ${message.sender_type === 'admin' ? 'text-white' : 'text-admin-text'}`}>
                         {message.sender_type === 'admin' ? 'Vous' : message.sender_name}
                       </span>
                     </div>
-                    <p className={`text-sm whitespace-pre-wrap ${message.sender_type === 'admin' ? 'text-white/90' : 'text-gray-700'}`}>
+                    <p className={`text-sm whitespace-pre-wrap ${message.sender_type === 'admin' ? 'text-white/90' : 'text-admin-muted'}`}>
                       {message.message}
                     </p>
-                    <p className={`text-xs mt-2 ${message.sender_type === 'admin' ? 'text-white/60' : 'text-gray-400'}`}>
+                    <p className={`text-xs mt-2 ${message.sender_type === 'admin' ? 'text-white/60' : 'text-admin-light'}`}>
                       {formatMessageDate(message.created_at)}
                     </p>
                   </div>
@@ -284,7 +284,7 @@ export default function AdminTicketDetailPage() {
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Écrivez votre réponse..."
               rows={4}
-              className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-[#C9A962] resize-none mb-4"
+              className="w-full px-4 py-3 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962] resize-none mb-4"
             />
             <div className="flex justify-end">
               <button
@@ -307,7 +307,7 @@ export default function AdminTicketDetailPage() {
         <div className="space-y-4">
           {/* Client Info */}
           <div className="bg-admin-surface rounded-xl shadow-sm border p-6">
-            <h3 className="font-medium text-gray-900 mb-4">Informations client</h3>
+            <h3 className="font-medium text-admin-text mb-4">Informations client</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <User className="w-4 h-4 text-admin-light" />
@@ -328,15 +328,15 @@ export default function AdminTicketDetailPage() {
 
           {/* Ticket Details */}
           <div className="bg-admin-surface rounded-xl shadow-sm border p-6">
-            <h3 className="font-medium text-gray-900 mb-4">Détails du ticket</h3>
+            <h3 className="font-medium text-admin-text mb-4">Détails du ticket</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-2">Catégorie</label>
+                <label className="block text-sm font-medium text-admin-muted mb-2">Catégorie</label>
                 <p className="text-admin-text">{categoryLabels[ticket.category]}</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-2">Statut</label>
+                <label className="block text-sm font-medium text-admin-muted mb-2">Statut</label>
                 <select
                   value={ticket.status}
                   onChange={(e) => handleUpdateTicket('status', e.target.value)}
@@ -352,7 +352,7 @@ export default function AdminTicketDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-2">Priorité</label>
+                <label className="block text-sm font-medium text-admin-muted mb-2">Priorité</label>
                 <select
                   value={ticket.priority}
                   onChange={(e) => handleUpdateTicket('priority', e.target.value)}
@@ -371,7 +371,7 @@ export default function AdminTicketDetailPage() {
 
           {/* Quick Actions */}
           <div className="bg-admin-surface rounded-xl shadow-sm border p-6">
-            <h3 className="font-medium text-gray-900 mb-4">Actions rapides</h3>
+            <h3 className="font-medium text-admin-text mb-4">Actions rapides</h3>
             <div className="space-y-2">
               <button
                 onClick={() => handleUpdateTicket('status', 'resolved')}

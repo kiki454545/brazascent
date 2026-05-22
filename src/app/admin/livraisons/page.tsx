@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { Plus, Edit, Trash2, Truck, Upload, X, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -212,7 +212,7 @@ export default function ShippingMethodsAdminPage() {
         </button>
       </div>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -294,7 +294,7 @@ export default function ShippingMethodsAdminPage() {
             <p className="text-admin-muted">Aucune méthode de livraison configurée</p>
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Modal édition */}
       {showModal && (

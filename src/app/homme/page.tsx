@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 export default async function HommePage() {
   const { data } = await supabase
     .from('products')
-    .select('*')
+    .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order')
     .eq('is_active', true)
     .eq('category', 'homme')
     .order('display_order', { ascending: true })

@@ -46,7 +46,7 @@ export default async function ParfumsPage() {
   const [productsRes, brandsRes] = await Promise.all([
     supabase
       .from('products')
-      .select('*')
+      .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order')
       .eq('is_active', true)
       .order('display_order', { ascending: true }),
     supabase

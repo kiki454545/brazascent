@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { CheckCircle, Package, ArrowRight, Mail } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 
@@ -49,20 +49,20 @@ export default function CheckoutSuccessPage() {
   return (
     <div className="min-h-screen pt-32 pb-24 bg-background">
       <div className="max-w-2xl mx-auto px-6">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-cream p-8 md:p-12 shadow-sm text-center"
         >
           {/* Success icon */}
-          <motion.div
+          <m.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"
           >
             <CheckCircle className="w-10 h-10 text-green-600" />
-          </motion.div>
+          </m.div>
 
           <h1 className="text-2xl md:text-3xl tracking-[0.1em] uppercase mb-4">
             Commande confirmée
@@ -130,7 +130,7 @@ export default function CheckoutSuccessPage() {
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </div>
   )

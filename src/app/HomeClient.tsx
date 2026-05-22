@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { LazyMotion, domAnimation, m, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
@@ -171,7 +171,6 @@ function HeroBestsellersSlider({ products }: { products: Product[] }) {
   }
 
   return (
-    <LazyMotion features={domAnimation}>
     <div className="relative w-full h-full overflow-hidden">
       <AnimatePresence mode="popLayout" initial={false}>
         <m.div
@@ -219,7 +218,6 @@ function HeroBestsellersSlider({ products }: { products: Product[] }) {
         ))}
       </div>
     </div>
-    </LazyMotion>
   )
 }
 
@@ -316,11 +314,9 @@ export default function HomeClient({ featuredProducts, newProducts }: HomeClient
             </div>
             <Link href="#comment-ca-marche" aria-label="Comment ça marche" className="hidden lg:flex absolute bottom-10 left-20 z-10 flex-col items-center gap-3 text-white/70 hover:text-primary transition-colors group">
               <span className="text-[11px] tracking-[0.35em] uppercase">Comment ça marche</span>
-              <LazyMotion features={domAnimation}>
-                <m.div animate={{ y: [0, 6, 0] }} transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}>
-                  <ChevronDown className="w-5 h-5" strokeWidth={1.5} />
-                </m.div>
-              </LazyMotion>
+              <m.div animate={{ y: [0, 6, 0] }} transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}>
+                <ChevronDown className="w-5 h-5" strokeWidth={1.5} />
+              </m.div>
             </Link>
           </div>
 
@@ -520,7 +516,6 @@ export default function HomeClient({ featuredProducts, newProducts }: HomeClient
           </div>
         </div>
         <div className="relative">
-          <LazyMotion features={domAnimation}>
           <m.div className="flex gap-6" animate={{ x: ['0%', '-50%'] }} transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}>
             {[...reviews, ...reviews].map((review, index) => (
               <div key={index} className="flex-shrink-0 w-80 p-6 bg-cream border border-border">
@@ -530,7 +525,6 @@ export default function HomeClient({ featuredProducts, newProducts }: HomeClient
               </div>
             ))}
           </m.div>
-          </LazyMotion>
         </div>
       </section>
 

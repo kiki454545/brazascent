@@ -35,7 +35,7 @@ export default function AdminError({
     <div className="min-h-[400px] flex items-center justify-center">
       <div className="text-center p-8 bg-admin-surface rounded-lg shadow-sm max-w-md">
         <h2 className="text-xl font-medium mb-4">Erreur</h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-admin-muted mb-6">
           Une erreur est survenue lors du chargement de cette page.
         </p>
         <button

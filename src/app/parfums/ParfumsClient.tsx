@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { SlidersHorizontal, X, Search } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import dynamic from 'next/dynamic'
@@ -85,7 +85,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
         />
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 flex items-center justify-center text-center text-white px-6 pt-24 sm:pt-0">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -100,7 +100,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
             <p className="text-sm sm:text-lg font-light max-w-xl mx-auto">
               Découvrez notre sélection de fragrances d&apos;exception
             </p>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 
@@ -174,7 +174,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
 
           {/* Filter panel */}
           {isFilterOpen && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -226,7 +226,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                   ))}
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           )}
 
           {/* Products grid */}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import {
   Users,
   Eye,
@@ -294,7 +294,7 @@ export default function AdminVisiteursPage() {
             <Users className="w-5 h-5" />
             Visiteurs ({filteredVisitors.length})
             {activeTab === 'visitors' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]" />
+              <m.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]" />
             )}
           </button>
           <button
@@ -306,7 +306,7 @@ export default function AdminVisiteursPage() {
             <Eye className="w-5 h-5" />
             Pages vues ({pageviews.length})
             {activeTab === 'pageviews' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]" />
+              <m.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]" />
             )}
           </button>
           <button
@@ -318,7 +318,7 @@ export default function AdminVisiteursPage() {
             <Calendar className="w-5 h-5" />
             Historique ({dailyHistory.length})
             {activeTab === 'history' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]" />
+              <m.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C9A962]" />
             )}
           </button>
         </div>
@@ -391,7 +391,7 @@ export default function AdminVisiteursPage() {
 
                     {/* Expanded: Pages visitées */}
                     {isExpanded && visitorPageViews.length > 0 && (
-                      <motion.div
+                      <m.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -408,14 +408,14 @@ export default function AdminVisiteursPage() {
                             </div>
                           ))}
                         </div>
-                      </motion.div>
+                      </m.div>
                     )}
                   </div>
                 )
               })
             ) : (
               <div className="p-12 text-center">
-                <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <Users className="w-12 h-12 text-admin-light mx-auto mb-4" />
                 <p className="text-admin-muted">Aucun visiteur trouvé</p>
               </div>
             )}
@@ -446,7 +446,7 @@ export default function AdminVisiteursPage() {
               ))
             ) : (
               <div className="p-12 text-center">
-                <Eye className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <Eye className="w-12 h-12 text-admin-light mx-auto mb-4" />
                 <p className="text-admin-muted">Aucune page vue</p>
               </div>
             )}
@@ -539,7 +539,7 @@ export default function AdminVisiteursPage() {
               ))
             ) : (
               <div className="p-12 text-center">
-                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <Calendar className="w-12 h-12 text-admin-light mx-auto mb-4" />
                 <p className="text-admin-muted font-medium">Aucun historique disponible</p>
                 <p className="text-sm text-admin-light mt-2">
                   Les statistiques journalières seront archivées chaque nuit à minuit.

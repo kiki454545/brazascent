@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import {
   Search,
   Users,
@@ -193,7 +193,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Users table */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-admin-surface rounded-xl shadow-sm"
@@ -298,11 +298,11 @@ export default function AdminUsersPage() {
           </div>
         ) : (
           <div className="p-12 text-center">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <Users className="w-12 h-12 text-admin-light mx-auto mb-4" />
             <p className="text-admin-muted">Aucun utilisateur trouvé</p>
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Action menu dropdown - position fixe */}
       {actionMenu && (
@@ -341,7 +341,7 @@ export default function AdminUsersPage() {
       {/* User detail modal */}
       {selectedUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-admin-surface rounded-xl max-w-md w-full"
@@ -436,7 +436,7 @@ export default function AdminUsersPage() {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import {
   ArrowLeft,
   Upload,
@@ -463,7 +463,7 @@ export default function NewProductPage() {
 
       <form onSubmit={handleSubmit}>
         {activeTab === 'info' && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
@@ -689,11 +689,11 @@ export default function NewProductPage() {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {activeTab === 'media' && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-admin-surface rounded-xl shadow-sm p-6"
@@ -801,11 +801,11 @@ export default function NewProductPage() {
                 </div>
               </div>
             )}
-          </motion.div>
+          </m.div>
         )}
 
         {activeTab === 'inventory' && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
@@ -941,7 +941,7 @@ export default function NewProductPage() {
                 </label>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-admin-border">

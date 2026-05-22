@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import {
   Plus,
   Search,
@@ -314,7 +314,7 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Products table */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-admin-surface rounded-xl shadow-sm overflow-hidden"
@@ -524,12 +524,12 @@ export default function AdminProductsPage() {
             </Link>
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Delete confirmation modal */}
       {deleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-admin-surface rounded-xl p-6 max-w-md w-full mx-4"
@@ -569,7 +569,7 @@ export default function AdminProductsPage() {
                 )}
               </button>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </div>

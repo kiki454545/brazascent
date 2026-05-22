@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import { Search, User, ShoppingBag, Heart, Menu, X, ChevronRight, LogOut, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
@@ -243,7 +243,7 @@ export function Header() {
             <div className="flex items-center gap-4 lg:gap-6">
               <button
                 onClick={() => setIsMenuOpen(true)}
-                className={`py-2 -ml-2 pl-2 pr-2 transition-colors duration-300 ${
+                className={`min-w-[44px] min-h-[44px] flex items-center justify-center py-2 -ml-2 pl-2 pr-2 transition-colors duration-300 ${
                   isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
                 }`}
                 aria-label="Menu"
@@ -253,7 +253,7 @@ export function Header() {
 
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className={`p-2 transition-colors duration-300 ${
+                className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2 transition-colors duration-300 ${
                   isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
                 }`}
                 aria-label="Rechercher"
@@ -306,7 +306,7 @@ export function Header() {
 
               <button
                 onClick={openCart}
-                className={`py-2 pl-2 -mr-2 pr-2 transition-colors duration-300 relative ${
+                className={`min-w-[44px] min-h-[44px] flex items-center justify-center py-2 pl-2 -mr-2 pr-2 transition-colors duration-300 relative ${
                   isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
                 }`}
                 aria-label="Panier"
@@ -328,7 +328,7 @@ export function Header() {
         {isMenuOpen && (
           <>
             {/* Overlay sombre */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -338,7 +338,7 @@ export function Header() {
             />
 
             {/* Panel menu */}
-            <motion.div
+            <m.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -360,7 +360,7 @@ export function Header() {
               <div className="h-[calc(100%-4rem)] overflow-y-auto">
                 <nav className="p-6">
                   {navigation.map((item, index) => (
-                    <motion.div
+                    <m.div
                       key={item.name}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -374,7 +374,7 @@ export function Header() {
                         {item.name}
                         <ChevronRight className="w-5 h-5 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                       </Link>
-                    </motion.div>
+                    </m.div>
                   ))}
                 </nav>
 
@@ -461,7 +461,7 @@ export function Header() {
                   <p className="text-sm text-muted-foreground">{settings.storeEmail}</p>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>
@@ -469,7 +469,7 @@ export function Header() {
       {/* Search overlay - Style Louis Vuitton */}
       <AnimatePresence>
         {isSearchOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -628,7 +628,7 @@ export function Header() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 

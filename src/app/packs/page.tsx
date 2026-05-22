@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { Gift, Loader2 } from 'lucide-react'
 import { Benefits } from '@/components/Benefits'
 import { supabase } from '@/lib/supabase'
@@ -136,7 +136,7 @@ export default function PacksPage() {
         />
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 flex items-center justify-center text-center text-white px-6 pt-24 sm:pt-0">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -151,7 +151,7 @@ export default function PacksPage() {
             <p className="text-sm sm:text-lg font-light max-w-xl mx-auto">
               Explorez une sélection de packs soigneusement composés pour vous faire voyager à travers différentes maisons et univers olfactifs.
             </p>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 
@@ -166,7 +166,7 @@ export default function PacksPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
               {packs.map((pack, index) => (
-                <motion.div
+                <m.div
                   key={pack.id}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -222,7 +222,7 @@ export default function PacksPage() {
                   >
                     Ajouter au panier
                   </button>
-                </motion.div>
+                </m.div>
               ))}
             </div>
           )}

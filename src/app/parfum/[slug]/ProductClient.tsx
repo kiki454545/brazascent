@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { Heart, Minus, Plus, ChevronRight, Share2, Check, Star, CreditCard } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
@@ -291,7 +291,7 @@ export default function ProductPage() {
       <section className="px-6 sm:px-10 lg:px-20 py-8 lg:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Images */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
@@ -354,10 +354,10 @@ export default function ProductPage() {
                 ))}
               </div>
             )}
-          </motion.div>
+          </m.div>
 
           {/* Product Info */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -575,7 +575,7 @@ export default function ProductPage() {
                 <OlfactivePyramid notes={product.notes} noteImages={product.noteImages} />
               </div>
             )}
-          </motion.div>
+          </m.div>
         </div>
       </section>
 

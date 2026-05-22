@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { CheckCircle, Package, Mail, ArrowRight } from 'lucide-react'
 
 function ConfirmationContent() {
@@ -22,7 +22,7 @@ function ConfirmationContent() {
   return (
     <div className="min-h-screen pt-32 pb-24 bg-background">
       <div className="max-w-2xl mx-auto px-6 text-center">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -88,10 +88,10 @@ function ConfirmationContent() {
               Continuer mes achats
             </Link>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Benefits reminder */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -121,7 +121,7 @@ function ConfirmationContent() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { DM_Serif_Display, Montserrat } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/components/AuthProvider"
@@ -8,6 +8,7 @@ import { MainLayout } from "@/components/MainLayout"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { GlobalErrorHandler } from "@/components/GlobalErrorHandler"
 import { TrackingProvider } from "@/components/TrackingProvider"
+import ClientMotionProvider from "@/components/ClientMotionProvider"
 
 const dmSerif = DM_Serif_Display({
   variable: "--font-serif-display",
@@ -72,6 +73,13 @@ export const metadata: Metadata = {
   },
 }
 
+export const viewport: Viewport = {
+  themeColor: '#C9A84C',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -104,7 +112,9 @@ export default function RootLayout({
               <AuthProvider>
                 <SettingsProvider>
                   <TrackingProvider>
-                    <MainLayout>{children}</MainLayout>
+                    <ClientMotionProvider>
+                      <MainLayout>{children}</MainLayout>
+                    </ClientMotionProvider>
                   </TrackingProvider>
                 </SettingsProvider>
               </AuthProvider>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import { X, Minus, Plus, ShoppingBag, AlertTriangle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -54,7 +54,7 @@ export function CartDrawer() {
       {isOpen && (
         <>
           {/* Overlay */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -63,7 +63,7 @@ export function CartDrawer() {
           />
 
           {/* Drawer */}
-          <motion.div
+          <m.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -248,7 +248,7 @@ export function CartDrawer() {
                 </div>
               </div>
             )}
-          </motion.div>
+          </m.div>
         </>
       )}
     </AnimatePresence>

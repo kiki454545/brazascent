@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import {
   Store,
   Truck,
@@ -386,7 +386,7 @@ export default function AdminSettingsPage() {
       )}
 
       {/* Store info */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-admin-surface rounded-xl shadow-sm p-6"
@@ -462,10 +462,10 @@ export default function AdminSettingsPage() {
             />
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Shipping */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -533,10 +533,10 @@ export default function AdminSettingsPage() {
             />
           </label>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Bandeau d'annonces */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -579,7 +579,7 @@ export default function AdminSettingsPage() {
                 message.enabled ? 'bg-admin-surface border-admin-border' : 'bg-admin-surface-alt border-admin-border'
               }`}
             >
-              <GripVertical className="w-4 h-4 text-gray-300 cursor-grab" />
+              <GripVertical className="w-4 h-4 text-admin-light cursor-grab" />
               <input
                 type="checkbox"
                 checked={message.enabled}
@@ -635,10 +635,10 @@ export default function AdminSettingsPage() {
             Aucun message d&apos;annonce. Ajoutez-en pour afficher des promotions ou informations importantes.
           </p>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Notifications */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -667,7 +667,7 @@ export default function AdminSettingsPage() {
 
           {/* Section emails de notification */}
           {settings.enableNotifications && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -744,7 +744,7 @@ export default function AdminSettingsPage() {
                   Aucun email configuré. Ajoutez au moins une adresse pour recevoir les notifications de commandes.
                 </p>
               )}
-            </motion.div>
+            </m.div>
           )}
 
           <label className="flex items-center justify-between p-4 bg-admin-surface-alt rounded-lg cursor-pointer">
@@ -773,12 +773,12 @@ export default function AdminSettingsPage() {
             />
           </label>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Sticky save bar */}
       <AnimatePresence>
         {hasChanges && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
@@ -826,20 +826,20 @@ export default function AdminSettingsPage() {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* Exit confirmation modal */}
       <AnimatePresence>
         {showExitModal && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           >
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -888,8 +888,8 @@ export default function AdminSettingsPage() {
                   Rester sur la page
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

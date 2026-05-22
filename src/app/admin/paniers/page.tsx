@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Image from 'next/image'
 import {
   ShoppingCart,
@@ -301,7 +301,7 @@ export default function AdminPaniersPage() {
 
                   {/* Expanded: Cart Items */}
                   {isExpanded && cart.items && cart.items.length > 0 && (
-                    <motion.div
+                    <m.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
@@ -365,7 +365,7 @@ export default function AdminPaniersPage() {
                           </a>
                         )}
                       </div>
-                    </motion.div>
+                    </m.div>
                   )}
                 </div>
               )
@@ -373,7 +373,7 @@ export default function AdminPaniersPage() {
           </div>
         ) : (
           <div className="p-12 text-center">
-            <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <ShoppingCart className="w-12 h-12 text-admin-light mx-auto mb-4" />
             <p className="text-admin-muted font-medium">Aucun panier</p>
             <p className="text-sm text-admin-light">
               {filter === 'all'
@@ -389,7 +389,7 @@ export default function AdminPaniersPage() {
       {/* User detail modal */}
       {selectedUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-admin-surface rounded-xl max-w-md w-full"
@@ -468,7 +468,7 @@ export default function AdminPaniersPage() {
                 </a>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { m, useInView } from 'framer-motion'
 
 interface Accord {
   nom: string
@@ -31,21 +31,21 @@ export default function ScentAccords({ accords }: Props) {
               {accord.nom}
             </span>
             <div className="flex-1 h-8 bg-muted rounded-full overflow-hidden relative">
-              <motion.div
+              <m.div
                 className="absolute inset-y-0 left-0 rounded-full"
                 style={{ backgroundColor: accord.couleur }}
                 initial={{ width: 0 }}
                 animate={inView ? { width: `${accord.intensite}%` } : { width: 0 }}
                 transition={{ duration: 0.9, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
               />
-              <motion.span
+              <m.span
                 className="absolute inset-y-0 left-3 flex items-center text-xs font-medium text-white/90 mix-blend-screen"
                 initial={{ opacity: 0 }}
                 animate={inView ? { opacity: 1 } : { opacity: 0 }}
                 transition={{ duration: 0.4, delay: i * 0.08 + 0.5 }}
               >
                 {accord.nom}
-              </motion.span>
+              </m.span>
             </div>
             <span className="text-xs text-muted-foreground w-9 text-right shrink-0">
               {accord.intensite}%

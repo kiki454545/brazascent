@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import {
   TrendingUp,
   ShoppingCart,
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
       {/* Stats cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
-          <motion.div
+          <m.div
             key={stat.title}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -178,12 +178,12 @@ export default function AdminDashboard() {
             </div>
             <p className="text-2xl font-semibold mb-1">{stat.value}</p>
             <p className="text-sm text-admin-muted">{stat.title}</p>
-          </motion.div>
+          </m.div>
         ))}
       </div>
 
       {/* Recent orders */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
@@ -259,10 +259,10 @@ export default function AdminDashboard() {
             <p className="text-admin-muted">Aucune commande pour le moment</p>
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Quick actions */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
@@ -306,7 +306,7 @@ export default function AdminDashboard() {
             <p className="text-sm text-admin-muted">Voir tous les clients</p>
           </div>
         </a>
-      </motion.div>
+      </m.div>
     </div>
   )
 }

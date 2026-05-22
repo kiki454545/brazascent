@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import {
   Plus,
   Search,
@@ -378,7 +378,7 @@ export default function AdminPacksPage() {
       {/* Packs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredPacks.map((pack) => (
-          <motion.div
+          <m.div
             key={pack.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -393,7 +393,7 @@ export default function AdminPacksPage() {
                   className="object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                <div className="w-full h-full bg-admin-surface-alt flex items-center justify-center">
                   <Package className="w-12 h-12 text-admin-light" />
                 </div>
               )}
@@ -441,13 +441,13 @@ export default function AdminPacksPage() {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         ))}
       </div>
 
       {filteredPacks.length === 0 && (
         <div className="text-center py-12">
-          <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <Package className="w-12 h-12 text-admin-light mx-auto mb-4" />
           <p className="text-admin-muted">Aucun pack trouvé</p>
         </div>
       )}
@@ -455,7 +455,7 @@ export default function AdminPacksPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-admin-surface rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
@@ -759,7 +759,7 @@ export default function AdminPacksPage() {
                 </button>
               </div>
             </form>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </div>

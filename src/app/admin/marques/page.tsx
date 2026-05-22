@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import {
   Plus,
   Search,
@@ -242,7 +242,7 @@ export default function AdminBrandsPage() {
       </div>
 
       {/* Brands grid */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -310,13 +310,13 @@ export default function AdminBrandsPage() {
             )}
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Create/Edit Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -419,7 +419,7 @@ export default function AdminBrandsPage() {
                   </button>
                 </div>
               </form>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>
@@ -427,7 +427,7 @@ export default function AdminBrandsPage() {
       {/* Delete confirmation modal */}
       {deleteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-admin-surface rounded-xl p-6 max-w-md w-full mx-4"
@@ -450,7 +450,7 @@ export default function AdminBrandsPage() {
                 Supprimer
               </button>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </div>

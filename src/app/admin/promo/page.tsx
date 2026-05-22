@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import {
   Plus,
   Search,
@@ -285,7 +285,7 @@ export default function PromoCodesPage() {
         </div>
       ) : filteredCodes.length === 0 ? (
         <div className="text-center py-12 bg-admin-surface rounded-lg shadow-sm">
-          <Tag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <Tag className="w-12 h-12 text-admin-light mx-auto mb-4" />
           <p className="text-admin-muted">Aucun code promo trouvé</p>
         </div>
       ) : (
@@ -427,7 +427,7 @@ export default function PromoCodesPage() {
       {/* Modal Création/Edition */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-admin-surface rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
@@ -596,14 +596,14 @@ export default function PromoCodesPage() {
                 </button>
               </div>
             </form>
-          </motion.div>
+          </m.div>
         </div>
       )}
 
       {/* Modal Logs d'utilisation */}
       {showUsageModal && selectedCode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-admin-surface rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
@@ -630,7 +630,7 @@ export default function PromoCodesPage() {
                 </div>
               ) : usageLogs.length === 0 ? (
                 <div className="text-center py-12">
-                  <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <Clock className="w-12 h-12 text-admin-light mx-auto mb-4" />
                   <p className="text-admin-muted">Aucune utilisation enregistrée</p>
                 </div>
               ) : (
@@ -685,7 +685,7 @@ export default function PromoCodesPage() {
                 </button>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       )}
     </div>

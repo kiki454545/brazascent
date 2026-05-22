@@ -22,6 +22,7 @@ import {
   Truck
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 const adminNav = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -202,6 +203,7 @@ export default function AdminLayout({
             </div>
 
             <div className="flex items-center gap-4">
+              <ThemeToggle className="text-admin-muted hover:text-[#C9A962]" />
               <Link
                 href="/"
                 target="_blank"

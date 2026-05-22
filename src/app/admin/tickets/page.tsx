@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { MessageSquare, Search, Filter, Clock, CheckCircle, AlertCircle, ChevronRight, Loader2, RefreshCw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -214,7 +214,7 @@ export default function AdminTicketsPage() {
       <div className="bg-admin-surface rounded-xl shadow-sm border overflow-hidden">
         {filteredTickets.length === 0 ? (
           <div className="text-center py-16">
-            <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <MessageSquare className="w-16 h-16 text-admin-light mx-auto mb-4" />
             <p className="text-admin-muted">Aucun ticket trouvé</p>
           </div>
         ) : (
@@ -254,7 +254,7 @@ export default function AdminTicketsPage() {
                     <tr key={ticket.id} className="hover:bg-admin-surface-alt transition-colors">
                       <td className="px-6 py-4">
                         <div className="max-w-xs">
-                          <p className="font-medium text-gray-900 truncate">{ticket.subject}</p>
+                          <p className="font-medium text-admin-text truncate">{ticket.subject}</p>
                           <p className="text-sm text-admin-muted truncate">#{ticket.id.slice(0, 8)}</p>
                         </div>
                       </td>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { ChevronRight, Truck, Gift, Loader2, Package, Info } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cart'
@@ -241,7 +241,7 @@ export default function PackDetailPage() {
       <section className="px-6 sm:px-10 lg:px-20 py-8 lg:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Image */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
@@ -270,10 +270,10 @@ export default function PackDetailPage() {
                 )}
               </div>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Pack Info */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -385,7 +385,7 @@ export default function PackDetailPage() {
                 <span className="text-sm">Emballage cadeau offert</span>
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 

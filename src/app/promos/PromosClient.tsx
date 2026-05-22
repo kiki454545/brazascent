@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { Flame, Tag, ArrowRight } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { supabase } from '@/lib/supabase'
@@ -130,7 +130,7 @@ export default function PromosClient() {
         </div>
 
         <div className="relative max-w-6xl mx-auto px-6 lg:px-12 text-center">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -151,16 +151,16 @@ export default function PromosClient() {
             </p>
 
             {maxDiscount > 0 && (
-              <motion.div
+              <m.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.3, type: 'spring' }}
                 className="inline-block px-8 py-3 bg-white text-red-700 text-2xl lg:text-3xl font-bold tracking-wider"
               >
                 Jusqu'à -{maxDiscount}%
-              </motion.div>
+              </m.div>
             )}
-          </motion.div>
+          </m.div>
         </div>
       </section>
 

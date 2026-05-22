@@ -43,13 +43,13 @@ export default async function HomePage() {
   const [bestsellersRes, newProductsRes] = await Promise.all([
     supabase
       .from('products')
-      .select('*')
+      .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order')
       .eq('is_active', true)
       .eq('is_bestseller', true)
       .order('display_order', { ascending: true }),
     supabase
       .from('products')
-      .select('*')
+      .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order')
       .eq('is_active', true)
       .eq('is_new', true)
       .order('display_order', { ascending: true }),

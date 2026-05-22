@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { Heart, ShoppingBag } from 'lucide-react'
 import { Product } from '@/types'
 import { useCartStore } from '@/store/cart'
@@ -66,7 +66,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   }
 
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -180,7 +180,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               {/* Add to cart button */}
               <button
                 onClick={handleAddToCart}
-                className="btn-luxury w-full py-2 bg-foreground text-background text-xs tracking-[0.15em] uppercase flex items-center justify-center gap-2 hover:bg-primary transition-colors"
+                className="btn-luxury w-full min-h-[44px] py-2 bg-foreground text-background text-xs tracking-[0.15em] uppercase flex items-center justify-center gap-2 hover:bg-primary transition-colors"
               >
                 <ShoppingBag className="w-4 h-4" />
                 Ajouter au panier
@@ -212,6 +212,6 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           </div>
         </div>
       </Link>
-    </motion.div>
+    </m.div>
   )
 }

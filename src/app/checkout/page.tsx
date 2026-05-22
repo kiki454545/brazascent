@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { ArrowLeft, CreditCard, Truck, Shield, Check, ChevronDown, MapPin, Plus, Tag, X, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
@@ -407,7 +407,7 @@ export default function CheckoutPage() {
 
             {/* Step 1: Information */}
             {currentStep === 'information' && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="bg-cream p-8 shadow-sm"
@@ -506,7 +506,7 @@ export default function CheckoutPage() {
                               setShippingAddress({ ...shippingAddress, firstName: e.target.value })
                             }
                             required
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
                           />
                         </div>
                         <div>
@@ -518,7 +518,7 @@ export default function CheckoutPage() {
                               setShippingAddress({ ...shippingAddress, lastName: e.target.value })
                             }
                             required
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
                           />
                         </div>
                       </div>
@@ -532,7 +532,7 @@ export default function CheckoutPage() {
                             setShippingAddress({ ...shippingAddress, email: e.target.value })
                           }
                           required
-                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
+                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
                         />
                       </div>
 
@@ -546,7 +546,7 @@ export default function CheckoutPage() {
                           }
                           required
                           placeholder="123 rue Example"
-                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
+                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
                         />
                       </div>
 
@@ -560,7 +560,7 @@ export default function CheckoutPage() {
                               setShippingAddress({ ...shippingAddress, postalCode: e.target.value })
                             }
                             required
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
                           />
                         </div>
                         <div>
@@ -572,7 +572,7 @@ export default function CheckoutPage() {
                               setShippingAddress({ ...shippingAddress, city: e.target.value })
                             }
                             required
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
                           />
                         </div>
                         <div className="col-span-2 sm:col-span-1">
@@ -582,7 +582,7 @@ export default function CheckoutPage() {
                             onChange={(e) =>
                               setShippingAddress({ ...shippingAddress, country: e.target.value })
                             }
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
                           >
                             <option value="France">France</option>
                             <option value="Belgique">Belgique</option>
@@ -607,7 +607,7 @@ export default function CheckoutPage() {
                       }
                       required
                       placeholder="+33 6 00 00 00 00"
-                      className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none"
+                      className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Le transporteur peut vous contacter pour la livraison
@@ -621,12 +621,12 @@ export default function CheckoutPage() {
                     Continuer vers la livraison
                   </button>
                 </form>
-              </motion.div>
+              </m.div>
             )}
 
             {/* Step 2: Shipping */}
             {currentStep === 'shipping' && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="bg-cream p-8 shadow-sm"
@@ -741,12 +741,12 @@ export default function CheckoutPage() {
                     </button>
                   </div>
                 </form>
-              </motion.div>
+              </m.div>
             )}
 
             {/* Step 3: Payment */}
             {currentStep === 'payment' && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="bg-cream p-8 shadow-sm"
@@ -831,7 +831,7 @@ export default function CheckoutPage() {
                     </button>
                   </div>
                 </form>
-              </motion.div>
+              </m.div>
             )}
 
             {/* Security badges */}
@@ -913,7 +913,7 @@ export default function CheckoutPage() {
                           setPromoError(null)
                         }}
                         placeholder="Entrer le code"
-                        className="flex-1 px-3 py-2 border border-border text-sm focus:border-primary focus:outline-none uppercase"
+                        className="flex-1 px-3 py-2 border border-border text-base focus:border-primary focus:outline-none uppercase"
                       />
                       <button
                         onClick={handleApplyPromoCode}

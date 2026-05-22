@@ -41,17 +41,13 @@ export function middleware(request: NextRequest) {
   return response
 }
 
-// Configuration: appliquer le middleware à toutes les routes sauf webhooks
+// Configuration: appliquer uniquement sur les routes sensibles (auth, admin, checkout, api admin)
+// Les pages publiques (/parfums, /marques, etc.) sont servies sans passer par le middleware
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - api/webhook (webhooks Stripe - éviter les redirections)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|api/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/admin/:path*',
+    '/compte/:path*',
+    '/checkout/:path*',
+    '/api/admin/:path*',
   ],
 }

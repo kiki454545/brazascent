@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
@@ -47,7 +47,7 @@ export default function FemmePage({ initialProducts }: FemmeClientProps) {
         />
         <div className="absolute inset-0 bg-black/30" />
         <div className="absolute inset-0 flex items-center justify-center text-white text-center">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -61,7 +61,7 @@ export default function FemmePage({ initialProducts }: FemmeClientProps) {
             <p className="text-lg font-light max-w-xl mx-auto">
               Des fragrances féminines empreintes de délicatesse et de caractère
             </p>
-          </motion.div>
+          </m.div>
         </div>
       </section>
 
