@@ -11,6 +11,7 @@ import { useCartStore } from '@/store/cart'
 import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
 import { Benefits } from '@/components/Benefits'
+import TrustBadges from '@/components/TrustBadges'
 import { Product } from '@/types'
 
 interface ProductSelection {
@@ -374,17 +375,8 @@ export default function PackDetailPage() {
               </button>
             </div>
 
-            {/* Services */}
-            <div className="border-t border-b py-6 space-y-4">
-              <div className="flex items-center gap-4">
-                <Truck className="w-5 h-5 text-primary" />
-                <span className="text-sm">Livraison offerte dès {settings.freeShippingThreshold}€</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <Gift className="w-5 h-5 text-primary" />
-                <span className="text-sm">Emballage cadeau offert</span>
-              </div>
-            </div>
+            {/* Trust badges */}
+            <TrustBadges />
           </m.div>
         </div>
       </section>

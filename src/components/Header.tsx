@@ -102,6 +102,16 @@ export function Header() {
   const [searchResults, setSearchResults] = useState<SearchProduct[]>([])
   const [bestSellers, setBestSellers] = useState<SearchProduct[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [isBannerDismissed, setIsBannerDismissed] = useState(false)
+
+  useEffect(() => {
+    setIsBannerDismissed(localStorage.getItem('banner-dismissed') === '1')
+  }, [])
+
+  const dismissBanner = () => {
+    setIsBannerDismissed(true)
+    localStorage.setItem('banner-dismissed', '1')
+  }
   const { items, openCart } = useCartStore()
   const { items: wishlistItems } = useWishlistStore()
   const { user, profile, signOut } = useAuthStore()
@@ -230,11 +240,22 @@ export function Header() {
         }`}
       >
         {/* Top bar - Carrousel d'annonces (toujours noir, indépendant du thème) */}
-        <div className={`text-center py-2 text-xs tracking-[0.2em] uppercase transition-colors duration-500 text-white ${
-          isScrolled ? 'bg-black' : 'bg-black/90'
-        }`}>
-          <AnnouncementCarousel />
-        </div>
+        {!isBannerDismissed && (
+          <div className={`relative flex items-center py-2 text-xs tracking-[0.2em] uppercase transition-colors duration-500 text-white ${
+            isScrolled ? 'bg-black' : 'bg-black/90'
+          }`}>
+            <div className="flex-1 overflow-hidden text-center">
+              <AnnouncementCarousel />
+            </div>
+            <button
+              onClick={dismissBanner}
+              aria-label="Fermer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors p-1"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Main header */}
         <div className="px-6 sm:px-10 lg:px-20">

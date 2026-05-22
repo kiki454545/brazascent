@@ -54,6 +54,14 @@ export function Footer() {
       } else {
         setStatus('success')
         setMessage('Merci ! Vous êtes maintenant inscrit à notre newsletter')
+
+        // Email de bienvenue
+        fetch('/api/email/newsletter-welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        }).catch(console.error)
+
         setEmail('')
         setTimeout(() => {
           setStatus('idle')

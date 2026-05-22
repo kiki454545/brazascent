@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { m } from 'framer-motion'
-import { Heart, Minus, Plus, ChevronRight, Share2, Check, Star, CreditCard } from 'lucide-react'
+import { m, AnimatePresence } from 'framer-motion'
+import { Heart, Minus, Plus, ChevronRight, Share2, Check, Star, CreditCard, Truck, X, ZoomIn } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 import dynamic from 'next/dynamic'
 const OlfactivePyramid = dynamic(() => import('@/components/OlfactivePyramid'), { ssr: false })
 const ScentAccords = dynamic(() => import('@/components/ScentAccords'), { ssr: false })
+import TrustBadges from '@/components/TrustBadges'
+const ReviewSection = dynamic(() => import('@/components/ReviewSection'), { ssr: false })
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { ProductCard } from '@/components/ProductCard'
@@ -34,6 +36,7 @@ interface SupabaseProductRow {
   notes_base?: string[] | null
   main_accords?: Array<{ name: string; color: string; intensity: number }> | null
   note_images?: Record<string, string> | null
+  pyramid_image?: string | null
   accords?: Array<{ nom: string; intensite: number; couleur: string }> | null
   stock?: number | null
   is_new?: boolean
@@ -53,6 +56,7 @@ export default function ProductPage() {
   const [globalStock, setGlobalStock] = useState<number>(1)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const [selectedSize, setSelectedSize] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [copied, setCopied] = useState(false)
@@ -72,12 +76,22 @@ export default function ProductPage() {
 
     const fetchProduct = async () => {
       try {
-        // Récupérer le produit par slug
-        const { data, error } = await supabase
-          .from('products')
-          .select('*')
-          .eq('slug', slug)
-          .single()
+        // Récupérer le produit et les images de notes en parallèle
+        const [{ data, error }, { data: noteImagesData }, { data: accordColorsData }] = await Promise.all([
+          supabase.from('products').select('*').eq('slug', slug).single(),
+          supabase.from('note_images').select('note_name, image_url'),
+          supabase.from('accord_colors').select('accord_name, bg_color, text_color'),
+        ])
+
+        const globalAccordColors: Record<string, { bg: string; text: string }> = {}
+        for (const row of accordColorsData || []) {
+          globalAccordColors[row.accord_name] = { bg: row.bg_color, text: row.text_color }
+        }
+
+        const globalNoteImages: Record<string, string> = {}
+        for (const row of noteImagesData || []) {
+          if (row.image_url) globalNoteImages[row.note_name] = row.image_url
+        }
 
         if (!isMounted) return
 
@@ -114,8 +128,13 @@ export default function ProductPage() {
             base: data.notes_base || []
           },
           mainAccords: data.main_accords || [],
-          noteImages: data.note_images || {},
-          accords: data.accords || [],
+          noteImages: { ...globalNoteImages, ...(data.note_images || {}) },
+          pyramidImage: data.pyramid_image || undefined,
+          accords: (data.accords || []).map((a: { nom: string; intensite: number; couleur: string }) => {
+            const global = globalAccordColors[a.nom]
+              ?? Object.entries(globalAccordColors).find(([k]) => a.nom.toLowerCase().includes(k.toLowerCase()))?.[1]
+            return global ? { ...a, couleur: global.bg } : a
+          }),
           stock: data.stock ?? 1,
           inStock: (data.stock || 0) > 0,
           new: data.is_new,
@@ -207,6 +226,18 @@ export default function ProductPage() {
     setCanUseApplePay(Boolean(applePaySession?.canMakePayments?.()))
   }, [])
 
+  // Gestion clavier lightbox
+  useEffect(() => {
+    if (!isLightboxOpen || !product) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsLightboxOpen(false)
+      if (e.key === 'ArrowRight') setSelectedImage((i) => (i + 1) % product.images.length)
+      if (e.key === 'ArrowLeft') setSelectedImage((i) => (i - 1 + product.images.length) % product.images.length)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isLightboxOpen, product])
+
   if (loading) {
     return (
       <div className="min-h-screen pt-32 flex items-center justify-center">
@@ -297,14 +328,20 @@ export default function ProductPage() {
             transition={{ duration: 0.6 }}
           >
             {/* Main image */}
-            <div className="relative aspect-square bg-cream mb-4 overflow-hidden">
+            <div
+              className="relative aspect-square bg-cream mb-4 overflow-hidden cursor-zoom-in group"
+              onClick={() => setIsLightboxOpen(true)}
+            >
               <Image
                 src={product.images[selectedImage]}
                 alt={product.name}
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
                 priority
               />
+              <div className="absolute top-3 right-3 p-2 bg-background/70 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                <ZoomIn className="w-4 h-4" />
+              </div>
 
               {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
@@ -543,16 +580,20 @@ export default function ProductPage() {
               <p className="text-sm text-green-600 mt-2">Lien copié !</p>
             )}
 
+            {/* Délai d'expédition */}
+            {!isGloballyOutOfStock && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+                <Truck className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>
+                  Expédié sous <strong className="text-foreground">24–48h</strong> · Livraison offerte dès{' '}
+                  <strong className="text-foreground">150 €</strong>
+                </span>
+              </div>
+            )}
+
             {/* Trust block */}
-            <div className="mb-8 grid gap-3 border-y border-border/70 py-5 text-sm text-muted-foreground sm:grid-cols-2">
-              <div className="flex items-center gap-3">
-                <Check className="h-4 w-4 text-primary" />
-                <span>100% authentique</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Check className="h-4 w-4 text-primary" />
-                <span>Expédition rapide depuis la France</span>
-              </div>
+            <div className="mb-8">
+              <TrustBadges />
             </div>
 
             {/* Description */}
@@ -569,10 +610,22 @@ export default function ProductPage() {
             )}
 
             {/* Pyramide olfactive */}
-            {(product.notes.top.length > 0 || product.notes.heart.length > 0 || product.notes.base.length > 0) && (
+            {(product.pyramidImage || product.notes.top.length > 0 || product.notes.heart.length > 0 || product.notes.base.length > 0) && (
               <div className="mt-8">
                 <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Pyramide olfactive</h2>
-                <OlfactivePyramid notes={product.notes} noteImages={product.noteImages} />
+                {product.pyramidImage ? (
+                  <div className="rounded-2xl overflow-hidden" style={{ background: '#0c0906' }}>
+                    <Image
+                      src={product.pyramidImage}
+                      alt={`Pyramide olfactive — ${product.name}`}
+                      width={800}
+                      height={600}
+                      className="w-full h-auto object-contain"
+                    />
+                  </div>
+                ) : (
+                  <OlfactivePyramid notes={product.notes} noteImages={product.noteImages} />
+                )}
               </div>
             )}
           </m.div>
@@ -606,6 +659,9 @@ export default function ProductPage() {
         </div>
       </div>
 
+      {/* Reviews */}
+      <ReviewSection productId={product.id} />
+
       {/* Related Products */}
       {relatedProducts.length > 0 && (
         <section className="py-16 lg:py-24 bg-cream">
@@ -621,6 +677,81 @@ export default function ProductPage() {
           </div>
         </section>
       )}
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {isLightboxOpen && product && (
+          <m.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center"
+            onClick={() => setIsLightboxOpen(false)}
+          >
+            {/* Close */}
+            <button
+              className="absolute top-4 right-4 p-3 text-white/70 hover:text-white transition-colors"
+              onClick={() => setIsLightboxOpen(false)}
+              aria-label="Fermer"
+            >
+              <X className="w-7 h-7" />
+            </button>
+
+            {/* Previous */}
+            {product.images.length > 1 && (
+              <button
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 text-white/70 hover:text-white transition-colors"
+                onClick={(e) => { e.stopPropagation(); setSelectedImage((i) => (i - 1 + product.images.length) % product.images.length) }}
+                aria-label="Image précédente"
+              >
+                <ChevronRight className="w-8 h-8 rotate-180" />
+              </button>
+            )}
+
+            {/* Image */}
+            <m.div
+              key={selectedImage}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.25 }}
+              className="relative w-full max-w-3xl aspect-square mx-16"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Image
+                src={product.images[selectedImage]}
+                alt={product.name}
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            </m.div>
+
+            {/* Next */}
+            {product.images.length > 1 && (
+              <button
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-white/70 hover:text-white transition-colors"
+                onClick={(e) => { e.stopPropagation(); setSelectedImage((i) => (i + 1) % product.images.length) }}
+                aria-label="Image suivante"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
+            )}
+
+            {/* Dots */}
+            {product.images.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                {product.images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => { e.stopPropagation(); setSelectedImage(i) }}
+                    className={`w-2 h-2 rounded-full transition-colors ${i === selectedImage ? 'bg-primary' : 'bg-white/30'}`}
+                  />
+                ))}
+              </div>
+            )}
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -25,12 +25,17 @@ Réponds UNIQUEMENT avec un JSON valide, sans texte avant ou après :
 
 Règles :
 - intensite entre 40 et 95
-- couleur en hexadécimal cohérente avec l'accord :
-  Boisé: #8B6B14, Frais: #4A9EBF, Floral: #E8A0BF,
-  Musqué: #C4A882, Épicé: #C4541A, Vanillé: #F5C842,
-  Oriental: #8B3A3A, Agrume: #F4A523, Aquatique: #2E86AB,
-  Poudré: #D4A5A5, Vert: #5A8A3C, Gourmand: #8B4513,
-  Ambré: #CC7722, Chypré: #6B8E23, Fougère: #4A7B4F
+- Utilise EXACTEMENT ces couleurs officielles Fragrantica selon l'accord choisi :
+  Boisé:#8B6914, Cèdre:#A0764A, Santal:#C4956A, Vétiver:#6B5C3E, Patchouli:#6B4C11, Oud:#4A2E0E,
+  Floral:#E8A0BF, Rose:#E8607A, Jasmin:#F0E68C, Fleur blanche:#F5F0E8, Iris:#9B8EC4, Pivoine:#FF9EB5,
+  Oriental:#C4541A, Ambré:#CC7722, Vanille:#F5C842, Gourmand:#8B4513, Caramel:#C68642, Miel:#D4A017,
+  Musqué:#C4A882, Poudré:#D4A5A5, Doux:#E8C4C4, Crémeux:#F0D9B5,
+  Épicé:#8B2500, Poivre:#5C3317, Cannelle:#8B4513, Cardamome:#6B4226,
+  Frais:#4A9EBF, Agrume:#F4A523, Citron:#FFF44F, Bergamote:#D4E157, Aquatique:#2E86AB, Marin:#1A6B8A, Ozonic:#87CEEB,
+  Vert:#5A8A3C, Aromatique:#7B9E5E, Fougère:#4A7B4F, Lavande:#967BB6, Herbal:#6B8E5E,
+  Chypré:#6B8E23, Cuir:#8B4A2F, Fumé:#696969, Animalic:#7B5E3E,
+  Fruité:#FF6B6B, Framboise:#C71585, Pêche:#FFCBA4, Cassis:#4B0082,
+  Résineux:#8B6914, Encens:#704214, Myrrhe:#8B4513, Balsamique:#6B3A2A
 - Les 4-6 accords les plus représentatifs du parfum
 - Trié par intensité décroissante`
 

@@ -30,6 +30,7 @@ export interface Product {
   }
   mainAccords?: MainAccord[]
   noteImages?: Record<string, string>
+  pyramidImage?: string
   accords?: Accord[]
   size: string[]
   stock?: number

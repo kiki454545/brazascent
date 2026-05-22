@@ -56,6 +56,7 @@ interface ProductForm {
   notes_base: string[]
   main_accords: Accord[]
   note_images: Record<string, string>
+  pyramid_image: string
   accords: AccordIA[]
   images: string[]
   stock: number
@@ -71,9 +72,14 @@ export default function EditProductPage() {
   const params = useParams()
   const productId = params.id as string
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const pyramidFileInputRef = useRef<HTMLInputElement>(null)
+  const noteFileInputRef = useRef<HTMLInputElement>(null)
+  const pendingNoteRef = useRef<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [uploadingPyramid, setUploadingPyramid] = useState(false)
+  const [uploadingNote, setUploadingNote] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'info' | 'media' | 'inventory'>('info')
 
@@ -94,6 +100,7 @@ export default function EditProductPage() {
     notes_base: [],
     main_accords: [],
     note_images: {},
+    pyramid_image: '',
     accords: [],
     images: [],
     stock: 150,
@@ -109,9 +116,17 @@ export default function EditProductPage() {
   const [generatingAccords, setGeneratingAccords] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
   const [accordsText, setAccordsText] = useState('')
+  const [savingAccords, setSavingAccords] = useState(false)
+  const [accordsSaved, setAccordsSaved] = useState(false)
+  const [globalAccordColors, setGlobalAccordColors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchProduct()
+    supabase.from('accord_colors').select('accord_name, bg_color').then(({ data }) => {
+      const map: Record<string, string> = {}
+      for (const row of data || []) map[row.accord_name] = row.bg_color
+      setGlobalAccordColors(map)
+    })
   }, [productId])
 
   const fetchProduct = async () => {
@@ -156,6 +171,7 @@ export default function EditProductPage() {
           notes_base: data.notes_base || [],
           main_accords: data.main_accords || [],
           note_images: data.note_images || {},
+          pyramid_image: data.pyramid_image || '',
           accords: data.accords || [],
           images: data.images || [],
           stock: data.stock || 0,
@@ -214,6 +230,7 @@ export default function EditProductPage() {
         notes_base: form.notes_base,
         main_accords: form.main_accords,
         note_images: form.note_images,
+        pyramid_image: form.pyramid_image || null,
         accords: form.accords,
         images: form.images,
         stock: form.stock,
@@ -325,6 +342,93 @@ export default function EditProductPage() {
     }
   }
 
+  const handlePyramidUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingPyramid(true)
+    setError(null)
+
+    try {
+      if (!file.type.startsWith('image/')) throw new Error('Seules les images sont acceptées')
+      if (file.size > 10 * 1024 * 1024) throw new Error('La taille maximale est de 10MB')
+
+      const fileExt = file.name.split('.').pop()
+      const fileName = `pyramid-${productId}-${Date.now()}.${fileExt}`
+      const filePath = `products/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('products')
+        .getPublicUrl(filePath)
+
+      setForm((prev) => ({ ...prev, pyramid_image: publicUrl }))
+
+      // Sauvegarder immédiatement en base
+      await supabase.from('products').update({ pyramid_image: publicUrl }).eq('id', productId)
+    } catch (err) {
+      if (!isAbortError(err)) {
+        setError(err instanceof Error ? err.message : 'Erreur upload pyramide')
+      }
+    } finally {
+      setUploadingPyramid(false)
+      if (pyramidFileInputRef.current) pyramidFileInputRef.current.value = ''
+    }
+  }
+
+  const removePyramidImage = async () => {
+    setForm((prev) => ({ ...prev, pyramid_image: '' }))
+    await supabase.from('products').update({ pyramid_image: null }).eq('id', productId)
+  }
+
+  const triggerNoteUpload = (note: string) => {
+    pendingNoteRef.current = note
+    noteFileInputRef.current?.click()
+  }
+
+  const handleNoteImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    const note = pendingNoteRef.current
+    if (!file || !note) return
+
+    setUploadingNote(note)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const safeName = note.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '-')
+      const filePath = `notes/${productId}-${safeName}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(filePath)
+
+      const updated = { ...form.note_images, [note]: publicUrl }
+      setForm((prev) => ({ ...prev, note_images: updated }))
+      await supabase.from('products').update({ note_images: updated }).eq('id', productId)
+    } catch (err) {
+      if (!isAbortError(err)) setError(err instanceof Error ? err.message : 'Erreur upload note')
+    } finally {
+      setUploadingNote(null)
+      pendingNoteRef.current = null
+      if (noteFileInputRef.current) noteFileInputRef.current.value = ''
+    }
+  }
+
+  const removeNoteImage = async (note: string) => {
+    const updated = { ...form.note_images }
+    delete updated[note]
+    setForm((prev) => ({ ...prev, note_images: updated }))
+    await supabase.from('products').update({ note_images: updated }).eq('id', productId)
+  }
+
   const removeImage = (index: number) => {
     setForm({ ...form, images: form.images.filter((_, i) => i !== index) })
   }
@@ -425,10 +529,10 @@ export default function EditProductPage() {
     if (names.length === 0) return
     const step = names.length > 1 ? Math.round(45 / (names.length - 1)) : 0
     const accords = names.map((nom, i) => {
-      const key = nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      // Cherche dans la table globale (exact puis partiel)
       const couleur =
-        ACCORD_COLORS[nom.toLowerCase()] ||
-        ACCORD_COLORS[key] ||
+        globalAccordColors[nom] ??
+        Object.entries(globalAccordColors).find(([k]) => nom.toLowerCase().includes(k.toLowerCase()))?.[1] ??
         '#C9A962'
       return { nom, intensite: Math.round(88 - i * step), couleur }
     })
@@ -451,6 +555,24 @@ export default function EditProductPage() {
       setGenerateError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setGeneratingAccords(false)
+    }
+  }
+
+  const saveAccords = async () => {
+    setSavingAccords(true)
+    setAccordsSaved(false)
+    try {
+      const { error: saveError } = await supabase
+        .from('products')
+        .update({ accords: form.accords })
+        .eq('id', productId)
+      if (saveError) throw saveError
+      setAccordsSaved(true)
+      setTimeout(() => setAccordsSaved(false), 3000)
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'Erreur sauvegarde')
+    } finally {
+      setSavingAccords(false)
     }
   }
 
@@ -700,59 +822,6 @@ export default function EditProductPage() {
               </div>
             </div>
 
-            <div className="bg-admin-surface rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-lg font-medium">Accords principaux</h2>
-                  <p className="text-xs text-admin-light mt-0.5">Intensité 0–100 · couleur hexadécimale</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={addAccord}
-                  className="flex items-center gap-2 px-4 py-2 bg-admin-surface-alt rounded-lg hover:bg-admin-surface-alt transition-colors text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  Ajouter
-                </button>
-              </div>
-              {form.main_accords.length === 0 && (
-                <p className="text-sm text-admin-light">Aucun accord. Cliquez sur Ajouter pour commencer.</p>
-              )}
-              <div className="space-y-3">
-                {form.main_accords.map((accord, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <input
-                      type="text"
-                      value={accord.name}
-                      onChange={(e) => updateAccord(index, 'name', e.target.value)}
-                      placeholder="Nom de l'accord"
-                      className="flex-1 px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg text-sm focus:outline-none focus:border-[#C9A962]"
-                    />
-                    <input
-                      type="color"
-                      value={accord.color}
-                      onChange={(e) => updateAccord(index, 'color', e.target.value)}
-                      className="w-10 h-10 rounded cursor-pointer border border-admin-border p-0.5"
-                      title="Couleur"
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={accord.intensity}
-                      onChange={(e) => updateAccord(index, 'intensity', Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                      className="w-20 px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg text-sm focus:outline-none focus:border-[#C9A962]"
-                      placeholder="Intensité"
-                    />
-                    <span className="text-xs text-admin-light shrink-0">%</span>
-                    <button type="button" onClick={() => removeAccord(index)} className="p-2 text-admin-light hover:text-red-500">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Accords olfactifs */}
             <div className="bg-admin-surface rounded-xl shadow-sm p-6">
               <h2 className="text-lg font-medium mb-1">Accords olfactifs</h2>
@@ -820,6 +889,23 @@ export default function EditProductPage() {
                       <span className="text-xs text-admin-light w-8 text-right shrink-0">{accord.intensite}%</span>
                     </div>
                   ))}
+                  <div className="pt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={saveAccords}
+                      disabled={savingAccords}
+                      className="flex items-center gap-2 px-4 py-2 bg-[#C9A962] text-black rounded-lg hover:bg-[#b8943f] transition-colors text-sm font-medium disabled:opacity-50"
+                    >
+                      {savingAccords ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" />Sauvegarde…</>
+                      ) : (
+                        <><Save className="w-4 h-4" />Sauvegarder les accords</>
+                      )}
+                    </button>
+                    {accordsSaved && (
+                      <span className="text-sm text-green-600">✓ Accords sauvegardés</span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -957,28 +1043,15 @@ export default function EditProductPage() {
               </p>
             </div>
 
-            {[...form.notes_top, ...form.notes_heart, ...form.notes_base].length > 0 && (
-              <div className="mt-8 pt-8 border-t border-admin-border">
-                <h2 className="text-lg font-medium mb-1">Images des notes olfactives</h2>
-                <p className="text-sm text-admin-muted mb-4">
-                  Associez une URL d&apos;image à chaque note pour la pyramide olfactive.
-                </p>
-                <div className="space-y-3">
-                  {[...new Set([...form.notes_top, ...form.notes_heart, ...form.notes_base])].map((note) => (
-                    <div key={note} className="flex items-center gap-3">
-                      <span className="w-28 text-sm font-medium text-admin-text truncate shrink-0">{note}</span>
-                      <input
-                        type="url"
-                        value={form.note_images[note] || ''}
-                        onChange={(e) => updateNoteImage(note, e.target.value)}
-                        placeholder="https://..."
-                        className="flex-1 px-3 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg text-sm focus:outline-none focus:border-[#C9A962]"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="mt-8 pt-8 border-t border-admin-border">
+              <p className="text-sm text-admin-muted">
+                Les images des notes olfactives sont gérées globalement dans{' '}
+                <a href="/admin/notes-olfactives" className="text-[#C9A962] hover:underline font-medium">
+                  Admin › Notes olfactives
+                </a>
+                {' '}— elles s&apos;appliquent automatiquement à tous les parfums.
+              </p>
+            </div>
           </m.div>
         )}
 

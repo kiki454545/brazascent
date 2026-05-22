@@ -6,6 +6,7 @@ import { X, Minus, Plus, ShoppingBag, AlertTriangle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCartStore } from '@/store/cart'
+import { FreeShippingBar } from '@/components/FreeShippingBar'
 
 // Vérifier si un produit est en rupture (stock = 0 exactement)
 const isProductOutOfStock = (product: { stock?: number }) => {
@@ -79,6 +80,9 @@ export function CartDrawer() {
                 <X className="w-6 h-6" />
               </button>
             </div>
+
+            {/* Barre livraison gratuite */}
+            {items.length > 0 && <FreeShippingBar total={total} />}
 
             {/* Items */}
             <div className="flex-1 overflow-y-auto">

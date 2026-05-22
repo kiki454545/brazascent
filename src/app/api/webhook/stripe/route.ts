@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { sendAdminOrderNotification } from '@/lib/email'
 
 // Client Supabase admin pour bypasser RLS
 const supabaseAdmin = createClient(
@@ -302,19 +303,32 @@ export async function POST(request: NextRequest) {
 
       console.log('Order created successfully:', order?.order_number)
 
-      // Envoyer l'email de confirmation
+      // Envoyer l'email de confirmation au client + notification à l'admin
       if (order && session.customer_email) {
         const total = session.amount_total ? session.amount_total / 100 : subtotal + shippingCost
-        await sendOrderConfirmationEmail(
-          session.customer_email,
-          order.order_number,
-          orderItemsForEmail,
-          shippingData,
-          subtotal,
-          shippingCost,
-          total,
-          shippingMethodTitle
-        )
+        const customerName = shippingData
+          ? `${shippingData.firstName || ''} ${shippingData.lastName || ''}`.trim()
+          : session.customer_email
+
+        await Promise.all([
+          sendOrderConfirmationEmail(
+            session.customer_email,
+            order.order_number,
+            orderItemsForEmail,
+            shippingData,
+            subtotal,
+            shippingCost,
+            total,
+            shippingMethodTitle
+          ),
+          sendAdminOrderNotification({
+            orderNumber: order.order_number,
+            customerName: customerName || session.customer_email,
+            customerEmail: session.customer_email,
+            total,
+            itemCount: orderItemsForEmail.length,
+          }),
+        ])
       }
     } catch (error) {
       console.error('Error processing webhook:', error)

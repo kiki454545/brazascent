@@ -203,7 +203,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             {product.shortDescription}
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
-            <span className="font-medium">{currentPrice.toLocaleString('fr-FR')} €</span>
+            <span className="text-sm font-medium">{currentPrice.toLocaleString('fr-FR')} €</span>
             {product.originalPrice && currentPrice < product.originalPrice && (
               <span className="text-sm text-muted-foreground/60 line-through">
                 {product.originalPrice.toLocaleString('fr-FR')} €

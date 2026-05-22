@@ -39,8 +39,19 @@ function mapProduct(p: any): Product {
   }
 }
 
+export interface HomePack {
+  id: string
+  name: string
+  slug: string
+  description: string
+  price: number
+  original_price: number | null
+  image: string
+  tag: string | null
+}
+
 export default async function HomePage() {
-  const [bestsellersRes, newProductsRes] = await Promise.all([
+  const [bestsellersRes, newProductsRes, packsRes] = await Promise.all([
     supabase
       .from('products')
       .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order')
@@ -53,10 +64,16 @@ export default async function HomePage() {
       .eq('is_active', true)
       .eq('is_new', true)
       .order('display_order', { ascending: true }),
+    supabase
+      .from('packs')
+      .select('id, name, slug, description, price, original_price, image, tag')
+      .eq('is_active', true)
+      .limit(3),
   ])
 
   const featuredProducts = (bestsellersRes.data || []).map(mapProduct)
   const newProducts = (newProductsRes.data || []).map(mapProduct)
+  const packs = (packsRes.data || []) as HomePack[]
 
-  return <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} />
+  return <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} packs={packs} />
 }

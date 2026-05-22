@@ -6,6 +6,7 @@ import { m } from 'framer-motion'
 import { Minus, Plus, X, ShoppingBag, ArrowRight, Truck, Gift, Shield, AlertTriangle } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { CartItem } from '@/types'
+import { FreeShippingBar } from '@/components/FreeShippingBar'
 
 // Obtenir le prix d'un article selon sa taille
 const getItemPrice = (item: CartItem) => {
@@ -226,11 +227,7 @@ export default function PanierPage() {
                   </span>
                 </div>
 
-                {subtotal < 150 && (
-                  <p className="text-sm text-muted-foreground">
-                    Plus que {(150 - subtotal).toLocaleString('fr-FR')} € pour la livraison offerte
-                  </p>
-                )}
+                <FreeShippingBar total={subtotal} />
               </div>
 
               <div className="border-t pt-4 mb-8">

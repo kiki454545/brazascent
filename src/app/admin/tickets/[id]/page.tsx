@@ -157,6 +157,18 @@ export default function AdminTicketDetailPage() {
 
       if (error) throw error
 
+      // Notifier le client par email
+      fetch('/api/email/ticket-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerEmail: ticket.user_email,
+          customerName: ticket.user_name,
+          ticketSubject: ticket.subject,
+          adminMessage: newMessage.trim(),
+        }),
+      }).catch(console.error)
+
       // Si le ticket est ouvert, le passer en cours
       if (ticket.status === 'open') {
         await handleUpdateTicket('status', 'in_progress')

@@ -209,7 +209,9 @@ export default function AdminOrdersPage() {
         admin_notes: editForm.admin_notes || null
       }
 
-      if (editForm.status === 'shipped' && !selectedOrder.shipped_at) {
+      const isNewShipment = editForm.status === 'shipped' && !selectedOrder.shipped_at
+
+      if (isNewShipment) {
         updateData.shipped_at = new Date().toISOString()
       }
       if (editForm.status === 'completed' && !selectedOrder.delivered_at) {
@@ -227,6 +229,15 @@ export default function AdminOrdersPage() {
           order.id === selectedOrder.id ? updatedOrder : order
         ))
         setSelectedOrder(updatedOrder)
+
+        // Envoyer email d'expédition si nouvelle mise en expédition
+        if (isNewShipment) {
+          fetch('/api/email/shipping', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: selectedOrder.id }),
+          }).catch(console.error)
+        }
       }
     } catch (error) {
       console.error('Error saving order:', error)

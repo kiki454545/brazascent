@@ -43,13 +43,44 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
   const [brands] = useState<Brand[]>(initialBrands)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedBrand, setSelectedBrand] = useState('all')
+  const [selectedFormat, setSelectedFormat] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState(initialSearch)
 
+  // Plage de prix dynamique
+  const allPrices = products.map((p) => {
+    if (p.priceBySize) {
+      const vals = Object.values(p.priceBySize).filter((v) => v > 0)
+      if (vals.length > 0) return Math.min(...vals)
+    }
+    return p.price
+  })
+  const globalMin = Math.floor(Math.min(...allPrices, 0))
+  const globalMax = Math.ceil(Math.max(...allPrices, 200))
+  const [priceRange, setPriceRange] = useState<[number, number]>([globalMin, globalMax])
+
+  const formats = ['2ml', '5ml', '10ml']
+
+  const getProductMinPrice = (product: Product) => {
+    if (product.priceBySize) {
+      const vals = Object.values(product.priceBySize).filter((v) => v > 0)
+      if (vals.length > 0) return Math.min(...vals)
+    }
+    return product.price
+  }
+
   const filteredProducts = products
     .filter((product) => selectedCategory === 'all' || product.category === selectedCategory)
     .filter((product) => selectedBrand === 'all' || product.brand === selectedBrand)
+    .filter((product) => {
+      if (selectedFormat === 'all') return true
+      return product.size?.some((s) => s.toLowerCase() === selectedFormat.toLowerCase())
+    })
+    .filter((product) => {
+      const price = getProductMinPrice(product)
+      return price >= priceRange[0] && price <= priceRange[1]
+    })
     .filter((product) => {
       if (!searchQuery.trim()) return true
       const query = searchQuery.toLowerCase()
@@ -61,15 +92,22 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
     .sort((a, b) => {
       switch (sortBy) {
         case 'price-asc':
-          return a.price - b.price
+          return getProductMinPrice(a) - getProductMinPrice(b)
         case 'price-desc':
-          return b.price - a.price
+          return getProductMinPrice(b) - getProductMinPrice(a)
         case 'name':
           return a.name.localeCompare(b.name)
         default:
           return b.new ? 1 : -1
       }
     })
+
+  const activeFilterCount = [
+    selectedCategory !== 'all',
+    selectedBrand !== 'all',
+    selectedFormat !== 'all',
+    priceRange[0] > globalMin || priceRange[1] < globalMax,
+  ].filter(Boolean).length
 
   return (
     <div className="min-h-screen">
@@ -117,6 +155,11 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                 >
                   <SlidersHorizontal className="w-4 h-4" />
                   Filtrer
+                  {activeFilterCount > 0 && (
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-[10px]">
+                      {activeFilterCount}
+                    </span>
+                  )}
                 </button>
 
                 <span className="text-sm text-muted-foreground">
@@ -208,7 +251,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
               </div>
 
               {/* Filtre par catégorie */}
-              <div>
+              <div className="mb-6">
                 <span className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-3 block">Catégorie</span>
                 <div className="flex flex-wrap gap-2 sm:gap-3">
                   {categories.map((category) => (
@@ -224,6 +267,61 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                       {category.name}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Filtre par format */}
+              <div className="mb-6">
+                <span className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-3 block">Format</span>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  <button
+                    onClick={() => setSelectedFormat('all')}
+                    className={`px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm tracking-wider border transition-colors ${
+                      selectedFormat === 'all' ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'
+                    }`}
+                  >
+                    Tous
+                  </button>
+                  {formats.map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setSelectedFormat(f)}
+                      className={`px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm tracking-wider border transition-colors ${
+                        selectedFormat === f ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtre par prix */}
+              <div>
+                <span className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-3 block">
+                  Prix — de {priceRange[0]} € à {priceRange[1]} €
+                </span>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min={globalMin}
+                    max={globalMax}
+                    value={priceRange[0]}
+                    onChange={(e) => setPriceRange([Math.min(Number(e.target.value), priceRange[1] - 1), priceRange[1]])}
+                    className="flex-1 accent-primary"
+                  />
+                  <input
+                    type="range"
+                    min={globalMin}
+                    max={globalMax}
+                    value={priceRange[1]}
+                    onChange={(e) => setPriceRange([priceRange[0], Math.max(Number(e.target.value), priceRange[0] + 1)])}
+                    className="flex-1 accent-primary"
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>{globalMin} €</span>
+                  <span>{globalMax} €</span>
                 </div>
               </div>
             </m.div>

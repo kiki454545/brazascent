@@ -19,7 +19,9 @@ import {
   Tag,
   Eye,
   ShoppingBag,
-  Truck
+  Truck,
+  Flower2,
+  Star
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -29,11 +31,14 @@ const adminNav = [
   { name: 'Visiteurs', href: '/admin/visiteurs', icon: Eye },
   { name: 'Paniers', href: '/admin/paniers', icon: ShoppingBag },
   { name: 'Produits', href: '/admin/produits', icon: Package },
+  { name: 'Notes olfactives', href: '/admin/notes-olfactives', icon: Flower2 },
+  { name: 'Accords olfactifs', href: '/admin/accords-olfactifs', icon: Flower2 },
   { name: 'Packs', href: '/admin/packs', icon: Gift },
   { name: 'Marques', href: '/admin/marques', icon: Building2 },
   { name: 'Commandes', href: '/admin/commandes', icon: ShoppingCart },
   { name: 'Livraisons', href: '/admin/livraisons', icon: Truck },
   { name: 'Codes Promo', href: '/admin/promo', icon: Tag },
+  { name: 'Avis clients', href: '/admin/avis', icon: Star },
   { name: 'Tickets', href: '/admin/tickets', icon: MessageSquare },
   { name: 'Newsletter', href: '/admin/newsletter', icon: Mail },
   { name: 'Utilisateurs', href: '/admin/utilisateurs', icon: Users },

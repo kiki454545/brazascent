@@ -7,6 +7,7 @@ import { m, AnimatePresence } from 'framer-motion'
 import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
+import { HomePack } from './page'
 
 export interface DraggableCarouselHandle {
   scrollByAmount: (amount: number) => void
@@ -277,9 +278,10 @@ const reviews = [
 interface HomeClientProps {
   featuredProducts: Product[]
   newProducts: Product[]
+  packs: HomePack[]
 }
 
-export default function HomeClient({ featuredProducts, newProducts }: HomeClientProps) {
+export default function HomeClient({ featuredProducts, newProducts, packs }: HomeClientProps) {
   const bestsellersCarouselRef = useRef<DraggableCarouselHandle>(null)
   const newProductsCarouselRef = useRef<DraggableCarouselHandle>(null)
   const scrollStep = 320
@@ -426,6 +428,75 @@ export default function HomeClient({ featuredProducts, newProducts }: HomeClient
           <p className="text-center text-muted-foreground py-10">Aucune nouveauté pour le moment</p>
         )}
       </section>
+
+      {/* Coffrets & Packs */}
+      {packs.length > 0 && (
+        <section className="py-20 lg:py-28 bg-foreground text-background">
+          <div className="px-6 sm:px-10 lg:px-20">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+              <div>
+                <span className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">Idées cadeaux</span>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase">Coffrets</h2>
+                <div className="w-24 h-px bg-primary mt-6" />
+              </div>
+              <Link href="/packs" className="inline-flex items-center gap-3 text-sm tracking-[0.2em] uppercase hover:text-primary transition-colors group">
+                Voir tous les coffrets <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+              {packs.map((pack, index) => {
+                const discount = pack.original_price
+                  ? Math.round((1 - pack.price / pack.original_price) * 100)
+                  : 0
+                return (
+                  <m.div
+                    key={pack.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <Link href={`/packs/${pack.slug}`} className="group block">
+                      <div className="relative aspect-square overflow-hidden bg-cream mb-4">
+                        <Image
+                          src={pack.image}
+                          alt={pack.name}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute top-4 left-4 flex flex-col gap-2">
+                          {pack.tag && (
+                            <span className="px-3 py-1 bg-primary text-white text-xs tracking-[0.15em] uppercase">
+                              {pack.tag}
+                            </span>
+                          )}
+                          {discount > 0 && (
+                            <span className="px-3 py-1 bg-background text-foreground text-xs tracking-[0.15em] uppercase">
+                              -{discount}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-light tracking-wide mb-1 group-hover:text-primary transition-colors">
+                        {pack.name}
+                      </h3>
+                      <p className="text-sm text-background/60 mb-2 line-clamp-2">{pack.description}</p>
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium">{pack.price.toLocaleString('fr-FR')} €</span>
+                        {pack.original_price && (
+                          <span className="text-sm text-background/40 line-through">
+                            {pack.original_price.toLocaleString('fr-FR')} €
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  </m.div>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Comment ça marche */}
       <section id="comment-ca-marche" className="py-20 lg:py-32 bg-cream">
