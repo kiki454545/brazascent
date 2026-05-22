@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { GlobalErrorHandler } from "@/components/GlobalErrorHandler"
 import { TrackingProvider } from "@/components/TrackingProvider"
 import ClientMotionProvider from "@/components/ClientMotionProvider"
+import { NewsletterPopup } from "@/components/NewsletterPopup"
 
 const dmSerif = DM_Serif_Display({
   variable: "--font-serif-display",
@@ -114,6 +115,7 @@ export default function RootLayout({
                   <TrackingProvider>
                     <ClientMotionProvider>
                       <MainLayout>{children}</MainLayout>
+                      <NewsletterPopup />
                     </ClientMotionProvider>
                   </TrackingProvider>
                 </SettingsProvider>

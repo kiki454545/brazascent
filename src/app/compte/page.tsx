@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Gift } from 'lucide-react'
 import { AccountSidebar } from '@/components/AccountSidebar'
 import { useAuthStore } from '@/store/auth'
+import { supabase } from '@/lib/supabase'
 
 type Tab = 'login' | 'register'
 
@@ -27,6 +28,8 @@ export default function ComptePage() {
 
   // Edit mode for profile
   const [isEditing, setIsEditing] = useState(false)
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0)
+  const [loyaltyHistory, setLoyaltyHistory] = useState<{ reason: string; points: number; created_at: string }[]>([])
 
   useEffect(() => {
     if (!isInitialized) {
@@ -43,6 +46,22 @@ export default function ComptePage() {
       setPhone(profile.phone || '')
     }
   }, [profile])
+
+  useEffect(() => {
+    if (!user) return
+    supabase
+      .from('loyalty_points')
+      .select('points, reason, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        if (data) {
+          setLoyaltyPoints(data.reduce((sum, r) => sum + r.points, 0))
+          setLoyaltyHistory(data)
+        }
+      })
+  }, [user])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -228,6 +247,45 @@ export default function ComptePage() {
                         </div>
                       </div>
                     </div>
+                  )}
+                </div>
+
+                {/* Programme fidélité */}
+                <div className="bg-cream p-8 shadow-sm mt-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <Gift className="w-5 h-5 text-primary" />
+                    <h2 className="text-xl tracking-[0.1em] uppercase">Programme Fidélité</h2>
+                  </div>
+
+                  <div className="flex items-center gap-6 p-5 border border-primary/20 bg-primary/5 mb-5">
+                    <div className="text-center">
+                      <p className="text-3xl font-light text-primary">{loyaltyPoints}</p>
+                      <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground mt-1">Points</p>
+                    </div>
+                    <div className="flex-1 text-sm text-muted-foreground leading-relaxed">
+                      <p>Vous gagnez <strong className="text-foreground">1 point par euro</strong> dépensé.</p>
+                      <p className="mt-1">Les points seront bientôt échangeables contre des réductions.</p>
+                    </div>
+                  </div>
+
+                  {loyaltyHistory.length > 0 && (
+                    <div>
+                      <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-3">Historique récent</p>
+                      <div className="space-y-2">
+                        {loyaltyHistory.map((entry, i) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b border-border/50 text-sm">
+                            <span className="text-muted-foreground">{entry.reason}</span>
+                            <span className="text-primary font-medium">+{entry.points} pts</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {loyaltyPoints === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Passez votre première commande pour commencer à cumuler des points !
+                    </p>
                   )}
                 </div>
               </div>

@@ -247,6 +247,64 @@ export async function sendTicketReplyEmail({
   }
 }
 
+export async function sendStockAlertEmail({
+  email,
+  productName,
+  productSlug,
+  productImage,
+}: {
+  email: string
+  productName: string
+  productSlug: string
+  productImage?: string
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const html = wrapEmail(`
+    <tr>
+      <td style="padding: 40px; text-align: center;">
+        <h2 style="margin: 0 0 10px; color: #19110B; font-size: 24px; font-weight: 400;">
+          De retour en stock !
+        </h2>
+        <p style="margin: 0; color: #666; font-size: 15px; line-height: 1.7;">
+          Un produit de votre liste d'alertes est à nouveau disponible.
+        </p>
+      </td>
+    </tr>
+    ${productImage ? `
+    <tr>
+      <td style="padding: 0 40px 20px; text-align: center;">
+        <img src="${productImage}" alt="${productName}" style="width: 160px; height: 200px; object-fit: cover;" />
+      </td>
+    </tr>` : ''}
+    <tr>
+      <td style="padding: 0 40px 30px; text-align: center;">
+        <h3 style="margin: 0 0 20px; color: #19110B; font-size: 20px; font-weight: 300; letter-spacing: 0.1em;">
+          ${productName}
+        </h3>
+        <a href="https://brazascent.com/parfum/${productSlug}" style="display: inline-block; padding: 14px 32px; background-color: #C9A962; color: #19110B; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">
+          Commander maintenant
+        </a>
+        <p style="margin: 16px 0 0; color: #999; font-size: 12px;">
+          Les stocks sont limités, ne tardez pas !
+        </p>
+      </td>
+    </tr>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: 'Braza Scent <commandes@brazascent.com>',
+      to: email,
+      subject: `${productName} est de retour en stock !`,
+      html,
+    })
+  } catch (error) {
+    console.error('Erreur envoi email alerte stock:', error)
+  }
+}
+
 export async function sendNewsletterWelcomeEmail(email: string) {
   const resend = getResend()
   if (!resend) return

@@ -13,6 +13,7 @@ const OlfactivePyramid = dynamic(() => import('@/components/OlfactivePyramid'), 
 const ScentAccords = dynamic(() => import('@/components/ScentAccords'), { ssr: false })
 import TrustBadges from '@/components/TrustBadges'
 const ReviewSection = dynamic(() => import('@/components/ReviewSection'), { ssr: false })
+import { StockAlertForm } from '@/components/StockAlertForm'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { useSettingsStore } from '@/store/settings'
@@ -514,6 +515,13 @@ export default function ProductPage() {
                 </button>
               </div>
             </div>
+
+            {/* Alerte retour en stock */}
+            {isGloballyOutOfStock && (
+              <div className="mb-6">
+                <StockAlertForm productId={product.id} />
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-4 mb-4">

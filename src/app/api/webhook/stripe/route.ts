@@ -303,6 +303,24 @@ export async function POST(request: NextRequest) {
 
       console.log('Order created successfully:', order?.order_number)
 
+      // Créditer les points de fidélité (1 point par euro dépensé)
+      if (order && userId) {
+        const pointsToCredit = Math.floor(subtotal)
+        if (pointsToCredit > 0) {
+          await supabaseAdmin
+            .from('loyalty_points')
+            .insert({
+              user_id: userId,
+              points: pointsToCredit,
+              reason: `Commande #${order.order_number}`,
+              order_id: order.id,
+            })
+            .then(({ error }) => {
+              if (error) console.error('Error crediting loyalty points:', error)
+            })
+        }
+      }
+
       // Envoyer l'email de confirmation au client + notification à l'admin
       if (order && session.customer_email) {
         const total = session.amount_total ? session.amount_total / 100 : subtotal + shippingCost

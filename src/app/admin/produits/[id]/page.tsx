@@ -78,6 +78,7 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [originalStock, setOriginalStock] = useState(0)
   const [uploadingPyramid, setUploadingPyramid] = useState(false)
   const [uploadingNote, setUploadingNote] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -181,6 +182,7 @@ export default function EditProductPage() {
           is_promo: data.is_promo ?? false,
           unlimited_stock: data.unlimited_stock ?? false
         })
+        setOriginalStock(data.stock || 0)
       }
     } catch (err) {
       if (!isAbortError(err)) {
@@ -267,6 +269,15 @@ export default function EditProductPage() {
       if (updateError) {
         console.error('Supabase error details:', JSON.stringify(updateError, null, 2))
         throw new Error(updateError.message || 'Erreur lors de la mise à jour dans la base de données')
+      }
+
+      // Déclencher les alertes stock si le produit repasse en stock
+      if (originalStock === 0 && form.stock > 0) {
+        fetch('/api/stock-alert/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId }),
+        }).catch(console.error)
       }
 
       router.push('/admin/produits')

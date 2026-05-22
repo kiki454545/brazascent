@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react'
+import { Heart, ShoppingBag, Trash2, ArrowRight, Share2, Check } from 'lucide-react'
 import { useWishlistStore } from '@/store/wishlist'
 import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
@@ -17,6 +17,7 @@ export default function FavorisPage() {
   const { user } = useAuthStore()
   const [wishlistProducts, setWishlistProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [shared, setShared] = useState(false)
 
   // Charger les produits depuis Supabase
   useEffect(() => {
@@ -125,12 +126,26 @@ export default function FavorisPage() {
               </p>
             </div>
             {wishlistProducts.length > 0 && (
-              <button
-                onClick={clearWishlist}
-                className="text-sm text-muted-foreground hover:text-red-600 transition-colors"
-              >
-                Vider la liste
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/favoris/partage?ids=${wishlistIds.join(',')}`
+                    navigator.clipboard.writeText(url)
+                    setShared(true)
+                    setTimeout(() => setShared(false), 2500)
+                  }}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {shared ? <Check className="w-4 h-4 text-green-600" /> : <Share2 className="w-4 h-4" />}
+                  {shared ? 'Lien copié !' : 'Partager ma liste'}
+                </button>
+                <button
+                  onClick={clearWishlist}
+                  className="text-sm text-muted-foreground hover:text-red-600 transition-colors"
+                >
+                  Vider la liste
+                </button>
+              </div>
             )}
           </div>
 
