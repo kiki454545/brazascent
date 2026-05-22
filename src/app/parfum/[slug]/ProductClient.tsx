@@ -15,6 +15,7 @@ import TrustBadges from '@/components/TrustBadges'
 const ReviewSection = dynamic(() => import('@/components/ReviewSection'), { ssr: false })
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
+import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
 
 interface SupabaseProductRow {
@@ -64,6 +65,7 @@ export default function ProductPage() {
 
   const { addItem, openCart } = useCartStore()
   const { toggleItem, isInWishlist } = useWishlistStore()
+  const { settings } = useSettingsStore()
 
   useEffect(() => {
     let isMounted = true
@@ -586,7 +588,7 @@ export default function ProductPage() {
                 <Truck className="w-4 h-4 text-primary flex-shrink-0" />
                 <span>
                   Expédié sous <strong className="text-foreground">24–48h</strong> · Livraison offerte dès{' '}
-                  <strong className="text-foreground">150 €</strong>
+                  <strong className="text-foreground">{settings.freeShippingThreshold || 150} €</strong>
                 </span>
               </div>
             )}

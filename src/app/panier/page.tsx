@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { m } from 'framer-motion'
 import { Minus, Plus, X, ShoppingBag, ArrowRight, Truck, Gift, Shield, AlertTriangle } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
+import { useSettingsStore } from '@/store/settings'
 import { CartItem } from '@/types'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
 
@@ -24,9 +25,12 @@ const isProductOutOfStock = (product: { stock?: number }) => {
 
 export default function PanierPage() {
   const { items, removeItem, updateQuantity, getTotal, clearCart } = useCartStore()
+  const { settings } = useSettingsStore()
 
   const subtotal = getTotal()
-  const shipping = subtotal >= 150 ? 0 : 9.90
+  const freeThreshold = settings.freeShippingThreshold || 150
+  const standardPrice = settings.standardShippingPrice || 9.90
+  const shipping = subtotal >= freeThreshold ? 0 : standardPrice
   const total = subtotal + shipping
 
   // Vérifier s'il y a des produits en rupture dans le panier
@@ -261,7 +265,7 @@ export default function PanierPage() {
               <div className="mt-8 pt-8 border-t space-y-4">
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <Truck className="w-5 h-5 text-primary" />
-                  <span>Livraison offerte dès 150€</span>
+                  <span>Livraison offerte dès {freeThreshold}€</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <Gift className="w-5 h-5 text-primary" />
