@@ -46,6 +46,23 @@ export default function CheckoutSuccessPage() {
     }
   }, [sessionId])
 
+  if (!loading && !sessionId) {
+    return (
+      <div className="min-h-screen pt-32 pb-24 bg-background flex items-center justify-center">
+        <div className="max-w-md mx-auto px-6 text-center">
+          <h1 className="text-2xl tracking-[0.1em] uppercase mb-4">Page introuvable</h1>
+          <p className="text-muted-foreground mb-8">
+            Aucune commande associée à cette page.
+          </p>
+          <Link href="/parfums" className="inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors">
+            Découvrir nos parfums
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen pt-32 pb-24 bg-background">
       <div className="max-w-2xl mx-auto px-6">

@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { requireAdmin, unauthorizedResponse } from '@/lib/require-admin'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
+  const admin = await requireAdmin()
+  if (!admin) return unauthorizedResponse()
+
   const { nom, marque } = await req.json()
 
   if (!nom) {

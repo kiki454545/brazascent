@@ -84,8 +84,12 @@ export default function PanierPage() {
                 {items.length} article{items.length > 1 ? 's' : ''}
               </span>
               <button
-                onClick={clearCart}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                onClick={() => {
+                  if (window.confirm('Vider le panier ? Cette action est irréversible.')) {
+                    clearCart()
+                  }
+                }}
+                className="text-sm text-muted-foreground hover:text-red-600 transition-colors"
               >
                 Vider le panier
               </button>

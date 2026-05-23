@@ -4,6 +4,15 @@ import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { sendAdminOrderNotification } from '@/lib/email'
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 // Client Supabase admin pour bypasser RLS
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,8 +42,8 @@ async function sendOrderConfirmationEmail(
     const itemsHtml = orderItems.map(item => `
       <tr>
         <td style="padding: 12px; border-bottom: 1px solid #eee;">
-          <strong>${item.product_name}</strong><br>
-          <span style="color: #666; font-size: 14px;">Taille: ${item.size}</span>
+          <strong>${escapeHtml(item.product_name)}</strong><br>
+          <span style="color: #666; font-size: 14px;">Taille: ${escapeHtml(item.size)}</span>
         </td>
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
         <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">${item.price.toFixed(2)} €</td>
@@ -128,8 +137,8 @@ async function sendOrderConfirmationEmail(
               <div style="background-color: #f9f6f1; padding: 20px; border-left: 3px solid #C9A962;">
                 <h3 style="margin: 0 0 10px; font-size: 14px; text-transform: uppercase; color: #666; letter-spacing: 0.1em;">Adresse de livraison</h3>
                 <p style="margin: 0; color: #19110B; line-height: 1.6;">
-                  ${shippingData.name}<br>
-                  ${shippingData.address}
+                  ${escapeHtml(shippingData.name)}<br>
+                  ${escapeHtml(shippingData.address)}
                 </p>
               </div>
             </td>
@@ -203,21 +212,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  // Traiter l'événement
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
 
     try {
+      // IDEMPOTENCE: vérifier si cette session a déjà été traitée
+      const { data: existingOrder } = await supabaseAdmin
+        .from('orders')
+        .select('id')
+        .eq('stripe_session_id', session.id)
+        .maybeSingle()
+
+      if (existingOrder) {
+        console.log('Webhook déjà traité pour session:', session.id)
+        return NextResponse.json({ received: true })
+      }
+
       // Récupérer les métadonnées (format du checkout sécurisé)
       const metadata = session.metadata || {}
       const shippingData = metadata.shipping ? JSON.parse(metadata.shipping) : null
       // Format items: {id, s (size), q (quantity), p (price)}
       const rawItems = metadata.items ? JSON.parse(metadata.items) : []
-      const userId = metadata.userId || null
       const shippingMethodId = metadata.shippingMethodId || null
       const shippingMethodTitle = metadata.shippingMethodTitle || 'Livraison'
       const promoCode = metadata.promoCodeCode || null
       const promoDiscount = metadata.promoCodeDiscount ? parseFloat(metadata.promoCodeDiscount) : null
+
+      // SÉCURITÉ: résoudre le userId depuis l'email du paiement (jamais faire confiance au client)
+      let resolvedUserId: string | null = null
+      if (session.customer_email) {
+        const { data: profile } = await supabaseAdmin
+          .from('profiles')
+          .select('id')
+          .eq('email', session.customer_email)
+          .maybeSingle()
+        if (profile) resolvedUserId = profile.id
+      }
 
       // Récupérer les infos produits depuis la BDD pour avoir les noms et images
       const productIds = rawItems.map((item: { id: string }) => item.id)
@@ -232,14 +262,13 @@ export async function POST(request: NextRequest) {
       const subtotal = rawItems.reduce((sum: number, item: { p: number; q: number }) =>
         sum + item.p * item.q, 0
       )
-      // Frais de livraison déjà calculés et stockés en metadata côté checkout
       const shippingCost = metadata.shippingCost ? parseFloat(metadata.shippingCost) : 0
 
       // Créer la commande dans Supabase
       const { data: order, error: orderError } = await supabaseAdmin
         .from('orders')
         .insert({
-          user_id: userId || null,
+          user_id: resolvedUserId,
           status: 'confirmed',
           subtotal: subtotal,
           shipping: shippingCost,
@@ -282,7 +311,6 @@ export async function POST(request: NextRequest) {
             quantity: item.q,
             price: item.p * item.q,
           }
-          // Préparer les données pour l'email
           orderItemsForEmail.push({
             product_name: orderItem.product_name,
             size: orderItem.size,
@@ -299,18 +327,34 @@ export async function POST(request: NextRequest) {
         if (itemsError) {
           console.error('Error creating order items:', itemsError)
         }
+
+        // Déduire le stock pour chaque article commandé
+        for (const item of rawItems as Array<{ id: string; q: number }>) {
+          const { data: prod } = await supabaseAdmin
+            .from('products')
+            .select('stock')
+            .eq('id', item.id)
+            .maybeSingle()
+
+          if (prod && prod.stock !== null) {
+            await supabaseAdmin
+              .from('products')
+              .update({ stock: Math.max(0, prod.stock - item.q) })
+              .eq('id', item.id)
+          }
+        }
       }
 
       console.log('Order created successfully:', order?.order_number)
 
-      // Créditer les points de fidélité (1 point par euro dépensé)
-      if (order && userId) {
+      // Créditer les points de fidélité (1 point par euro dépensé — userId vérifié côté serveur)
+      if (order && resolvedUserId) {
         const pointsToCredit = Math.floor(subtotal)
         if (pointsToCredit > 0) {
           await supabaseAdmin
             .from('loyalty_points')
             .insert({
-              user_id: userId,
+              user_id: resolvedUserId,
               points: pointsToCredit,
               reason: `Commande #${order.order_number}`,
               order_id: order.id,
@@ -324,9 +368,7 @@ export async function POST(request: NextRequest) {
       // Envoyer l'email de confirmation au client + notification à l'admin
       if (order && session.customer_email) {
         const total = session.amount_total ? session.amount_total / 100 : subtotal + shippingCost
-        const customerName = shippingData
-          ? `${shippingData.firstName || ''} ${shippingData.lastName || ''}`.trim()
-          : session.customer_email
+        const customerName = shippingData?.name || session.customer_email
 
         await Promise.all([
           sendOrderConfirmationEmail(
@@ -341,7 +383,7 @@ export async function POST(request: NextRequest) {
           ),
           sendAdminOrderNotification({
             orderNumber: order.order_number,
-            customerName: customerName || session.customer_email,
+            customerName,
             customerEmail: session.customer_email,
             total,
             itemCount: orderItemsForEmail.length,
@@ -352,6 +394,47 @@ export async function POST(request: NextRequest) {
       console.error('Error processing webhook:', error)
       return NextResponse.json({ error: 'Error processing order' }, { status: 500 })
     }
+  }
+
+  if (event.type === 'charge.refunded') {
+    const charge = event.data.object as Stripe.Charge
+    try {
+      const paymentIntentId = typeof charge.payment_intent === 'string'
+        ? charge.payment_intent
+        : charge.payment_intent?.id
+
+      if (paymentIntentId) {
+        await supabaseAdmin
+          .from('orders')
+          .update({ status: 'refunded', payment_status: 'refunded' })
+          .eq('stripe_payment_intent', paymentIntentId)
+      }
+    } catch (error) {
+      console.error('Error processing refund webhook:', error)
+    }
+  }
+
+  if (event.type === 'charge.dispute.created') {
+    const dispute = event.data.object as Stripe.Dispute
+    try {
+      const paymentIntentId = typeof dispute.payment_intent === 'string'
+        ? dispute.payment_intent
+        : dispute.payment_intent?.id
+
+      if (paymentIntentId) {
+        await supabaseAdmin
+          .from('orders')
+          .update({ payment_status: 'disputed' })
+          .eq('stripe_payment_intent', paymentIntentId)
+      }
+    } catch (error) {
+      console.error('Error processing dispute webhook:', error)
+    }
+  }
+
+  if (event.type === 'payment_intent.payment_failed') {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent
+    console.error('Payment failed for intent:', paymentIntent.id, paymentIntent.last_payment_error?.message)
   }
 
   return NextResponse.json({ received: true })

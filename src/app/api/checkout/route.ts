@@ -157,15 +157,15 @@ async function verifyPromoCode(
   }
 }
 
-// SÉCURITÉ: Vérifier les prix des produits côté serveur
+// SÉCURITÉ: Vérifier les prix et le stock des produits côté serveur
 async function verifyProductPrices(
   items: z.infer<typeof cartItemSchema>[]
-): Promise<{ valid: boolean; verifiedItems: Array<{ id: string; size: string; quantity: number; serverPrice: number }> }> {
+): Promise<{ valid: boolean; error?: string; verifiedItems: Array<{ id: string; size: string; quantity: number; serverPrice: number }> }> {
   const productIds = items.map(item => item.product.id)
 
   const { data: products, error } = await supabase
     .from('products')
-    .select('id, price, price_by_size')
+    .select('id, price, price_by_size, stock, name')
     .in('id', productIds)
 
   if (error || !products) {
@@ -179,6 +179,16 @@ async function verifyProductPrices(
     const serverProduct = productMap.get(item.product.id)
     if (!serverProduct) {
       return { valid: false, verifiedItems: [] }
+    }
+
+    // Vérification du stock
+    if (serverProduct.stock !== null && serverProduct.stock !== undefined) {
+      if (serverProduct.stock === 0) {
+        return { valid: false, error: `"${serverProduct.name}" est en rupture de stock`, verifiedItems: [] }
+      }
+      if (serverProduct.stock < item.quantity) {
+        return { valid: false, error: `Stock insuffisant pour "${serverProduct.name}" (${serverProduct.stock} disponible${serverProduct.stock > 1 ? 's' : ''})`, verifiedItems: [] }
+      }
     }
 
     // Obtenir le prix serveur pour cette taille
@@ -235,11 +245,11 @@ export async function POST(request: NextRequest) {
 
     const { items, shippingAddress, shippingMethodId, userId, promoCode } = parseResult.data
 
-    // SÉCURITÉ: Vérifier les prix des produits côté serveur
-    const { valid, verifiedItems } = await verifyProductPrices(items)
+    // SÉCURITÉ: Vérifier les prix et le stock des produits côté serveur
+    const { valid, error: stockError, verifiedItems } = await verifyProductPrices(items)
     if (!valid) {
       return NextResponse.json(
-        { error: 'Un ou plusieurs produits sont invalides' },
+        { error: stockError || 'Un ou plusieurs produits sont invalides' },
         { status: 400 }
       )
     }
@@ -314,16 +324,20 @@ export async function POST(request: NextRequest) {
     let stripeCouponId: string | undefined
     if (verifiedPromoCode && verifiedPromoCode.calculatedDiscount > 0) {
       try {
-        const coupon = await stripe.coupons.create({
-          amount_off: formatAmountForStripe(verifiedPromoCode.calculatedDiscount),
-          currency: 'eur',
-          duration: 'once',
-          name: `Code promo: ${verifiedPromoCode.code}`,
-          max_redemptions: 1,
-        })
+        // Clé d'idempotence basée sur le code promo + montant exact → réutilise le même coupon Stripe
+        const discountCents = formatAmountForStripe(verifiedPromoCode.calculatedDiscount)
+        const idempotencyKey = `coupon-${verifiedPromoCode.id}-${discountCents}`
+        const coupon = await stripe.coupons.create(
+          {
+            amount_off: discountCents,
+            currency: 'eur',
+            duration: 'once',
+            name: `Code promo: ${verifiedPromoCode.code}`,
+          },
+          { idempotencyKey }
+        )
         stripeCouponId = coupon.id
       } catch (couponError) {
-        // Log sans exposer de détails sensibles
         console.error('Erreur création coupon Stripe')
       }
     }
@@ -331,7 +345,7 @@ export async function POST(request: NextRequest) {
     // Créer la session Stripe Checkout
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sessionConfig: any = {
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -388,11 +402,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
   } catch (error: unknown) {
-    // SÉCURITÉ: Ne pas exposer les détails d'erreur en production
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
     console.error('Checkout error:', errorMessage)
 
-    // Vérifier si Stripe est configuré
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
         { error: 'Service de paiement temporairement indisponible' },

@@ -1,5 +1,14 @@
 import { Resend } from 'resend'
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 const getResend = () => {
   if (!process.env.RESEND_API_KEY) return null
   return new Resend(process.env.RESEND_API_KEY)
@@ -75,10 +84,10 @@ export async function sendShippingEmail({
   const trackingBlock = trackingNumber ? `
     <div style="background-color: #f9f6f1; padding: 20px; border-left: 3px solid #C9A962; margin: 20px 0;">
       <h3 style="margin: 0 0 12px; font-size: 13px; text-transform: uppercase; color: #666; letter-spacing: 0.1em;">Informations de suivi</h3>
-      ${carrier ? `<p style="margin: 0 0 6px; color: #19110B;"><strong>Transporteur :</strong> ${carrier}</p>` : ''}
-      <p style="margin: 0; color: #19110B;"><strong>Numéro de suivi :</strong> ${trackingNumber}</p>
+      ${carrier ? `<p style="margin: 0 0 6px; color: #19110B;"><strong>Transporteur :</strong> ${escapeHtml(carrier)}</p>` : ''}
+      <p style="margin: 0; color: #19110B;"><strong>Numéro de suivi :</strong> ${escapeHtml(trackingNumber)}</p>
       ${trackingUrl ? `
-      <a href="${trackingUrl}" style="display: inline-block; margin-top: 14px; padding: 10px 20px; background-color: #C9A962; color: #19110B; text-decoration: none; font-size: 13px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">
+      <a href="${escapeHtml(trackingUrl)}" style="display: inline-block; margin-top: 14px; padding: 10px 20px; background-color: #C9A962; color: #19110B; text-decoration: none; font-size: 13px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">
         Suivre mon colis
       </a>` : ''}
     </div>` : ''
@@ -99,7 +108,7 @@ export async function sendShippingEmail({
     </tr>
     <tr>
       <td style="padding: 0 40px 30px;">
-        <p style="color: #444; font-size: 15px; line-height: 1.7;">Bonjour ${customerName},</p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7;">Bonjour ${escapeHtml(customerName)},</p>
         <p style="color: #444; font-size: 15px; line-height: 1.7;">
           Bonne nouvelle ! Votre commande a été expédiée et est en chemin vers vous.
         </p>
