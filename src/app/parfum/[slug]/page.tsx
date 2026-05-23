@@ -11,7 +11,7 @@ const supabase = createClient(
 )
 
 // Régénération des metadata toutes les heures
-export const revalidate = 3600
+export const revalidate = 60
 
 interface PageProps {
   params: Promise<{ slug: string }>

@@ -10,7 +10,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: 'Tous nos parfums - Décants 2ml, 5ml, 10ml',
