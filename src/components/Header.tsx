@@ -501,7 +501,7 @@ export function Header() {
                       TikTok
                     </a>
                     <a
-                      href="https://snapchat.com/t/Ye5KOxwv"
+                      href="https://snapchat.com/t/RIDz6Z16"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"

@@ -164,7 +164,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://snapchat.com/t/Ye5KOxwv"
+                  href="https://snapchat.com/t/RIDz6Z16"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 text-sm text-white/60 hover:text-primary transition-colors"
@@ -246,7 +246,7 @@ export function Footer() {
                 </svg>
               </a>
               <a
-                href="https://snapchat.com/t/Ye5KOxwv"
+                href="https://snapchat.com/t/RIDz6Z16"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/60 hover:text-primary transition-colors"
