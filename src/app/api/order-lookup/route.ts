@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     const { data: order, error } = await supabase
       .from('orders')
-      .select('id, order_number, status, subtotal, shipping, total, tracking_number, created_at, shipping_address, shipping_method')
+      .select('id, order_number, status, subtotal, shipping, total, tracking_number, tracking_url, carrier, created_at, shipping_address, shipping_method')
       .eq('order_number', orderNumber)
       .single()
 
@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
         shipping: order.shipping,
         total: order.total,
         tracking_number: order.tracking_number,
+        tracking_url: order.tracking_url,
+        carrier: order.carrier,
         created_at: order.created_at,
         shipping_address: {
           firstName: (order.shipping_address as Record<string, string>)?.firstName,

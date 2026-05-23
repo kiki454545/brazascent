@@ -27,6 +27,8 @@ interface Order {
   total: number
   payment_status: string
   tracking_number: string | null
+  tracking_url: string | null
+  carrier: string | null
   created_at: string
   items?: OrderItem[]
 }
@@ -64,7 +66,7 @@ export default function CommandesPage() {
     try {
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
-        .select('*')
+        .select('id, order_number, status, subtotal, shipping, total, payment_status, tracking_number, tracking_url, carrier, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -231,18 +233,20 @@ export default function CommandesPage() {
                           {order.tracking_number && (
                             <div className="mt-4 pt-4 border-t flex items-center justify-between gap-4 flex-wrap">
                               <div>
-                                <p className="text-sm text-muted-foreground">Numéro de suivi</p>
+                                <p className="text-sm text-muted-foreground">Numéro de suivi{order.carrier ? ` · ${order.carrier}` : ''}</p>
                                 <p className="font-mono font-medium">{order.tracking_number}</p>
                               </div>
-                              <a
-                                href={`https://www.laposte.fr/outils/suivre-vos-envois?code=${order.tracking_number}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs tracking-[0.1em] uppercase hover:bg-primary/90 transition-colors"
-                              >
-                                <Truck className="w-3.5 h-3.5" />
-                                Suivre la livraison
-                              </a>
+                              {order.tracking_url && (
+                                <a
+                                  href={order.tracking_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs tracking-[0.1em] uppercase hover:bg-primary/90 transition-colors"
+                                >
+                                  <Truck className="w-3.5 h-3.5" />
+                                  Suivre la livraison
+                                </a>
+                              )}
                             </div>
                           )}
                         </div>
