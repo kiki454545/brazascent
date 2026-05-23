@@ -252,8 +252,8 @@ export default function CheckoutPage() {
       return {
         firstName: profile?.first_name || shippingAddress.firstName,
         lastName: profile?.last_name || shippingAddress.lastName,
-        email: profile?.email || shippingAddress.email,
-        phone: shippingAddress.phone, // Toujours utiliser le téléphone du formulaire
+        email: user?.email || profile?.email || shippingAddress.email,
+        phone: shippingAddress.phone,
         street: selectedAddress.street,
         city: selectedAddress.city,
         postalCode: selectedAddress.postal_code,
@@ -263,14 +263,21 @@ export default function CheckoutPage() {
 
     return {
       ...shippingAddress,
-      email: user ? (profile?.email || shippingAddress.email) : shippingAddress.email,
+      email: user ? (user.email || profile?.email || shippingAddress.email) : shippingAddress.email,
     }
   }
 
   const handleInformationSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Vérifier que le téléphone est renseigné
+    if (user && user.email) {
+      const usedEmail = (profile?.email || shippingAddress.email).toLowerCase().trim()
+      if (usedEmail !== user.email.toLowerCase().trim()) {
+        setError("L'adresse email doit correspondre à celle de votre compte")
+        return
+      }
+    }
+
     if (!shippingAddress.phone.trim()) {
       setError('Le numéro de téléphone est requis pour la livraison')
       return
@@ -533,7 +540,7 @@ export default function CheckoutPage() {
                         </label>
                         <input
                           type="email"
-                          value={user ? (profile?.email || shippingAddress.email) : shippingAddress.email}
+                          value={user ? (user.email || '') : shippingAddress.email}
                           onChange={(e) => {
                             if (!user) setShippingAddress({ ...shippingAddress, email: e.target.value })
                           }}
