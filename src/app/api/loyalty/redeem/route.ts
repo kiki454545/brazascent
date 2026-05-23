@@ -6,7 +6,7 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const POINTS_PER_EURO = 100  // 100 pts = 10€
+const POINTS_PER_EURO = 100  // 100 pts = 5€
 const MIN_POINTS = 100
 
 async function getUserId(request: NextRequest): Promise<string | null> {
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // Points utilisables (multiple de 100)
     const pointsToRedeem = Math.floor(balance / POINTS_PER_EURO) * POINTS_PER_EURO
-    const discountEuros = pointsToRedeem / POINTS_PER_EURO * 10
+    const discountEuros = pointsToRedeem / POINTS_PER_EURO * 5
 
     // Générer un code unique
     const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase()

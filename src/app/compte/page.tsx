@@ -301,7 +301,7 @@ export default function ComptePage() {
                     </div>
                     <div className="flex-1 text-sm text-muted-foreground leading-relaxed">
                       <p>Vous gagnez <strong className="text-foreground">1 point par euro</strong> dépensé.</p>
-                      <p className="mt-1"><strong className="text-foreground">100 points</strong> = code promo <strong className="text-foreground">10€</strong> de réduction.</p>
+                      <p className="mt-1"><strong className="text-foreground">100 points</strong> = code promo <strong className="text-foreground">5€</strong> de réduction.</p>
                     </div>
                   </div>
 
@@ -316,7 +316,7 @@ export default function ComptePage() {
                         {redeemLoading ? (
                           <><Loader2 className="w-4 h-4 animate-spin" /> Génération en cours…</>
                         ) : (
-                          <><Gift className="w-4 h-4" /> Échanger {Math.floor(loyaltyPoints / 100) * 100} pts contre {Math.floor(loyaltyPoints / 100) * 10}€</>
+                          <><Gift className="w-4 h-4" /> Échanger {Math.floor(loyaltyPoints / 100) * 100} pts contre {Math.floor(loyaltyPoints / 100) * 5}€</>
                         )}
                       </button>
                       {redeemError && <p className="text-xs text-red-500 mt-2">{redeemError}</p>}
