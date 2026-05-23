@@ -51,11 +51,13 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     siteName: "Braza Scent",
     url: "https://brazascent.com",
+    images: [{ url: "https://brazascent.com/images/hero-bg.jpg", width: 1200, height: 630, alt: "Braza Scent — Décants de parfum" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Braza Scent | Boutique d'Échantillons de Parfum & Décants",
     description: "Décants et échantillons de parfum en 2ml, 5ml, 10ml. Testez les plus grandes maisons sans vous ruiner.",
+    images: ["https://brazascent.com/images/hero-bg.jpg"],
   },
   robots: {
     index: true,

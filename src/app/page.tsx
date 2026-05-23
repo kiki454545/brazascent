@@ -1,6 +1,30 @@
+import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import HomeClient from './HomeClient'
 import { Product } from '@/types'
+
+const SITE_URL = 'https://brazascent.com'
+
+export const metadata: Metadata = {
+  title: "Braza Scent | Boutique d'Échantillons de Parfum & Décants",
+  description: "Découvrez et testez les plus grands parfums en décants 2ml, 5ml et 10ml. Dior, Chanel, MFK, Creed, Maison Margiela… Livraison rapide en France.",
+  alternates: { canonical: SITE_URL },
+  openGraph: {
+    title: "Braza Scent | Boutique d'Échantillons de Parfum & Décants",
+    description: "Découvrez et testez les plus grands parfums en décants 2ml, 5ml et 10ml. Livraison rapide en France.",
+    url: SITE_URL,
+    type: 'website',
+    locale: 'fr_FR',
+    siteName: 'Braza Scent',
+    images: [{ url: `${SITE_URL}/images/hero-bg.jpg`, width: 1200, height: 630, alt: 'Braza Scent — Décants de parfum' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Braza Scent | Boutique d'Échantillons de Parfum & Décants",
+    description: "Testez les plus grands parfums en décants 2ml, 5ml, 10ml. Livraison rapide en France.",
+    images: [`${SITE_URL}/images/hero-bg.jpg`],
+  },
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

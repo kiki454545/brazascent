@@ -20,7 +20,7 @@ export async function requireAdmin() {
   if (!user) return null
 
   const { data: profile } = await supabase
-    .from('profiles')
+    .from('user_profiles')
     .select('is_admin')
     .eq('id', user.id)
     .maybeSingle()

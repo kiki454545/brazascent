@@ -13,6 +13,8 @@ export default function robots(): MetadataRoute.Robots {
           '/checkout/',
           '/panier',
           '/favoris',
+          '/reset-password',
+          '/mot-de-passe-oublie',
         ],
       },
     ],
