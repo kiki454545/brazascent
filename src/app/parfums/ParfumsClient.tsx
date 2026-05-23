@@ -62,28 +62,47 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
   // Infinite scroll sentinel
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  // Plage de prix dynamique
-  const allPrices = products.map(p => {
+  // Plage de prix dynamique — couvre TOUTES les contenances de tous les produits
+  const allPrices = products.flatMap(p => {
     if (p.priceBySize) {
-      const vals = Object.values(p.priceBySize).filter(v => v > 0)
-      if (vals.length > 0) return Math.min(...vals)
+      const vals = Object.values(p.priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
+      if (vals.length > 0) return vals
     }
-    return p.price
+    return p.price > 0 ? [p.price] : []
   })
   const globalMin = Math.floor(Math.min(...allPrices, 0))
   const globalMax = Math.ceil(Math.max(...allPrices, 200))
   const [priceRange, setPriceRange] = useState<[number, number]>([globalMin, globalMax])
 
+  const isRangeFiltered = priceRange[0] > globalMin || priceRange[1] < globalMax
+
+  // Retourne le prix à afficher : priorité au format sélectionné, sinon le prix dans la plage, sinon le min
   const getProductDisplayPrice = (product: Product) => {
     if (selectedFormat !== 'all' && product.priceBySize) {
       const key = Object.keys(product.priceBySize).find(k => k.toLowerCase() === selectedFormat.toLowerCase())
       if (key && product.priceBySize[key] > 0) return product.priceBySize[key]
     }
     if (product.priceBySize) {
-      const vals = Object.values(product.priceBySize).filter(v => v > 0)
-      if (vals.length > 0) return Math.min(...vals)
+      const entries = Object.entries(product.priceBySize).filter(([, v]) => typeof v === 'number' && v > 0) as [string, number][]
+      if (entries.length > 0) {
+        if (isRangeFiltered) {
+          const inRange = entries.filter(([, v]) => v >= priceRange[0] && v <= priceRange[1])
+          if (inRange.length > 0) return Math.min(...inRange.map(([, v]) => v))
+        }
+        return Math.min(...entries.map(([, v]) => v))
+      }
     }
     return product.price
+  }
+
+  // Retourne la taille à pré-sélectionner sur la carte selon les filtres actifs
+  const getPreferredSize = (product: Product): string | undefined => {
+    if (selectedFormat !== 'all') return selectedFormat
+    if (isRangeFiltered && product.priceBySize) {
+      const entries = Object.entries(product.priceBySize).filter(([, v]) => typeof v === 'number' && v > 0 && (v as number) >= priceRange[0] && (v as number) <= priceRange[1]) as [string, number][]
+      if (entries.length > 0) return entries.reduce((a, b) => a[1] < b[1] ? a : b)[0]
+    }
+    return undefined
   }
 
   const filteredProducts = products
@@ -91,8 +110,12 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
     .filter(p => selectedBrand === 'all' || p.brand === selectedBrand)
     .filter(p => selectedFormat === 'all' || p.size?.some(s => s.toLowerCase() === selectedFormat.toLowerCase()))
     .filter(p => {
-      const price = getProductDisplayPrice(p)
-      return price >= priceRange[0] && price <= priceRange[1]
+      // Le produit passe si AU MOINS UNE de ses contenances est dans la plage de prix
+      if (p.priceBySize) {
+        const vals = Object.values(p.priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
+        if (vals.length > 0) return vals.some(v => v >= priceRange[0] && v <= priceRange[1])
+      }
+      return p.price >= priceRange[0] && p.price <= priceRange[1]
     })
     .filter(p => {
       if (!searchQuery.trim()) return true
@@ -485,7 +508,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
                     {visibleProducts.map((product, index) => (
-                      <ProductCard key={product.id} product={product} index={index} preferredSize={selectedFormat !== 'all' ? selectedFormat : undefined} />
+                      <ProductCard key={product.id} product={product} index={index} preferredSize={getPreferredSize(product)} />
                     ))}
                   </div>
 
