@@ -180,7 +180,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               {/* Add to cart button */}
               <button
                 onClick={handleAddToCart}
-                className="btn-luxury w-full min-h-[44px] py-2 bg-foreground text-background text-xs tracking-[0.15em] uppercase flex items-center justify-center gap-2 hover:bg-primary transition-colors"
+                className="btn-luxury w-full min-h-[44px] py-2 bg-foreground text-background text-xs tracking-[0.15em] uppercase flex items-center justify-center gap-2 hover:bg-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-gold-light transition-colors"
               >
                 <ShoppingBag className="w-4 h-4" />
                 Ajouter au panier

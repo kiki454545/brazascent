@@ -217,7 +217,7 @@ export default function PacksPage() {
 
                   <button
                     onClick={() => handleAddToCart(pack)}
-                    className="w-full mt-4 py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
+                    className="w-full mt-4 py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-gold-light transition-colors"
                   >
                     Ajouter au panier
                   </button>

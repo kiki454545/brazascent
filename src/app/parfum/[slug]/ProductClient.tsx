@@ -561,7 +561,7 @@ export default function ProductPage() {
               ) : (
                 <button
                   onClick={handleAddToCart}
-                  className="btn-luxury flex-1 border border-primary bg-primary px-6 py-5 text-sm font-medium uppercase tracking-[0.18em] text-white shadow-[0_18px_40px_rgba(201,169,98,0.28)] transition-all hover:bg-foreground hover:shadow-[0_22px_48px_rgba(0,0,0,0.18)]"
+                  className="btn-luxury flex-1 border border-primary bg-primary px-6 py-5 text-sm font-medium uppercase tracking-[0.18em] text-white shadow-[0_18px_40px_rgba(201,169,98,0.28)] transition-all hover:bg-foreground hover:shadow-[0_22px_48px_rgba(0,0,0,0.18)] dark:hover:bg-gold-light dark:hover:border-gold-light dark:hover:text-primary-foreground"
                 >
                   Ajouter au panier
                 </button>
@@ -694,7 +694,7 @@ export default function ProductPage() {
           ) : (
             <button
               onClick={handleAddToCart}
-              className="w-full border border-primary bg-primary py-4 text-sm font-medium uppercase tracking-[0.18em] text-white shadow-[0_14px_34px_rgba(201,169,98,0.26)] transition-colors hover:bg-foreground"
+              className="w-full border border-primary bg-primary py-4 text-sm font-medium uppercase tracking-[0.18em] text-white shadow-[0_14px_34px_rgba(201,169,98,0.26)] transition-colors hover:bg-foreground dark:hover:bg-gold-light dark:hover:border-gold-light dark:hover:text-primary-foreground"
             >
               Ajouter au panier
             </button>

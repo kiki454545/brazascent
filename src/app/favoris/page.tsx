@@ -201,7 +201,7 @@ export default function FavorisPage() {
                   {/* Add to cart button */}
                   <button
                     onClick={() => handleAddToCart(product)}
-                    className="absolute bottom-4 left-4 right-4 py-3 bg-white text-sm tracking-[0.1em] uppercase opacity-0 group-hover:opacity-100 transition-opacity hover:bg-foreground hover:text-background"
+                    className="absolute bottom-4 left-4 right-4 py-3 bg-white text-sm tracking-[0.1em] uppercase opacity-0 group-hover:opacity-100 transition-opacity hover:bg-foreground hover:text-background dark:bg-primary dark:text-primary-foreground dark:hover:bg-gold-light"
                   >
                     <span className="flex items-center justify-center gap-2">
                       <ShoppingBag className="w-4 h-4" />

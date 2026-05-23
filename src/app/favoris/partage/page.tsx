@@ -124,7 +124,7 @@ export default function WishlistSharePage() {
                 {product.inStock && (
                   <button
                     onClick={() => { addItem(product, product.size[0]); openCart() }}
-                    className="absolute bottom-3 left-3 right-3 py-2.5 bg-white text-xs tracking-[0.1em] uppercase opacity-0 group-hover:opacity-100 transition-opacity hover:bg-foreground hover:text-background"
+                    className="absolute bottom-3 left-3 right-3 py-2.5 bg-white text-xs tracking-[0.1em] uppercase opacity-0 group-hover:opacity-100 transition-opacity hover:bg-foreground hover:text-background dark:bg-primary dark:text-primary-foreground dark:hover:bg-gold-light"
                   >
                     Ajouter au panier
                   </button>
