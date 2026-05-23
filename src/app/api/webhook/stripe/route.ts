@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
       let resolvedUserId: string | null = null
       if (session.customer_email) {
         const { data: profile } = await supabaseAdmin
-          .from('profiles')
+          .from('user_profiles')
           .select('id')
           .eq('email', session.customer_email)
           .maybeSingle()
