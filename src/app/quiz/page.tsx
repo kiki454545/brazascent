@@ -85,9 +85,9 @@ function scoreProduct(product: any, answers: Answers): number {
     ...(product.notes_top || []),
     ...(product.notes_heart || []),
     ...(product.notes_base || []),
-    ...(product.main_accords || []),
-    ...(product.accords?.map((a: any) => a.name || a) || []),
-  ].map((n: string) => n.toLowerCase())
+    ...(product.main_accords?.map((a: any) => typeof a === 'string' ? a : (a.name || '')) || []),
+    ...(product.accords?.map((a: any) => typeof a === 'string' ? a : (a.name || a.nom || '')) || []),
+  ].filter(Boolean).map((n: string) => n.toLowerCase())
 
   // Famille principale de l'étape "famille"
   const primaryFamily = answers.famille
@@ -154,19 +154,36 @@ export default function QuizPage() {
     } else {
       // Dernière réponse — calculer les résultats
       setLoading(true)
-      const { data } = await supabase
-        .from('products')
-        .select('id, name, slug, images, price, price_by_size, category, brand, notes_top, notes_heart, notes_base, main_accords, accords, is_bestseller, is_new, stock, is_active')
-        .eq('is_active', true)
-        .gt('stock', 0)
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, name, slug, images, price, price_by_size, category, brand, notes_top, notes_heart, notes_base, main_accords, accords, is_bestseller, is_new, stock, is_active')
+          .eq('is_active', true)
 
-      if (data) {
-        const scored: ScoredProduct[] = data.map(p => ({ product: p, score: scoreProduct(p, newAnswers) }))
-        scored.sort((a, b) => b.score - a.score)
-        setResults(scored.slice(0, 6).map(s => s.product))
+        if (error) console.error('Quiz query error:', error)
+
+        const products = data || []
+
+        if (products.length > 0) {
+          const scored: ScoredProduct[] = products.map(p => ({ product: p, score: scoreProduct(p, newAnswers) }))
+          scored.sort((a, b) => b.score - a.score)
+          setResults(scored.slice(0, 6).map(s => s.product))
+        } else {
+          // Fallback : bestsellers
+          const { data: fallback } = await supabase
+            .from('products')
+            .select('id, name, slug, images, price, price_by_size, category, brand, notes_top, notes_heart, notes_base, main_accords, accords, is_bestseller, is_new, stock, is_active')
+            .eq('is_active', true)
+            .eq('is_bestseller', true)
+            .limit(6)
+          setResults(fallback || [])
+        }
+      } catch (err) {
+        console.error('Quiz error:', err)
+      } finally {
+        setLoading(false)
+        setDone(true)
       }
-      setLoading(false)
-      setDone(true)
     }
   }
 
