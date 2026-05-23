@@ -90,6 +90,7 @@ const navigation = [
   { name: 'Marques', href: '/marques' },
   { name: 'Packs', href: '/packs' },
   { name: 'Promos 🔥', href: '/promos' },
+  { name: 'Blog', href: '/blog' },
 ]
 
 export function Header() {

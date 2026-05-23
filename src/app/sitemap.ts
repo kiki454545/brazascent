@@ -99,8 +99,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly',
       priority: 0.3,
     },
-  
-]
+    {
+      url: `${SITE_URL}/a-propos`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${SITE_URL}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/quiz`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+  ]
 
   // 2. Produits dynamiques (depuis Supabase)
   let productPages: MetadataRoute.Sitemap = []
@@ -161,5 +178,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Erreur récupération packs pour sitemap:', error)
   }
 
-  return [...staticPages, ...productPages, ...brandPages, ...packPages]
+  // 5. Articles de blog
+  let blogPages: MetadataRoute.Sitemap = []
+  try {
+    const { data: posts } = await supabase
+      .from('blog_posts')
+      .select('slug, updated_at')
+      .eq('is_published', true)
+
+    if (posts) {
+      blogPages = posts.map((post) => ({
+        url: `${SITE_URL}/blog/${post.slug}`,
+        lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }))
+    }
+  } catch (error) {
+    console.error('Erreur récupération blog pour sitemap:', error)
+  }
+
+  return [...staticPages, ...productPages, ...brandPages, ...packPages, ...blogPages]
 }

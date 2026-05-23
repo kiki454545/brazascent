@@ -21,7 +21,8 @@ import {
   ShoppingBag,
   Truck,
   Flower2,
-  Star
+  Star,
+  BookOpen
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -39,6 +40,7 @@ const adminNav = [
   { name: 'Livraisons', href: '/admin/livraisons', icon: Truck },
   { name: 'Codes Promo', href: '/admin/promo', icon: Tag },
   { name: 'Avis clients', href: '/admin/avis', icon: Star },
+  { name: 'Blog', href: '/admin/blog', icon: BookOpen },
   { name: 'Tickets', href: '/admin/tickets', icon: MessageSquare },
   { name: 'Newsletter', href: '/admin/newsletter', icon: Mail },
   { name: 'Utilisateurs', href: '/admin/utilisateurs', icon: Users },

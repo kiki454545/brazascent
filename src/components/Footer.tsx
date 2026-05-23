@@ -11,6 +11,9 @@ const footerLinks = {
     { name: 'Parfums', href: '/parfums' },
     { name: 'Marques', href: '/marques' },
     { name: 'Packs', href: '/packs' },
+    { name: 'Quiz olfactif', href: '/quiz' },
+    { name: 'Blog', href: '/blog' },
+    { name: 'À propos', href: '/a-propos' },
   ],
   services: [
     { name: 'Mon Compte', href: '/compte' },
