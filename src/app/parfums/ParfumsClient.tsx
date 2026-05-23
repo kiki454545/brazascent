@@ -8,7 +8,6 @@ import { m } from 'framer-motion'
 import { X, Search, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import dynamic from 'next/dynamic'
-const Benefits = dynamic(() => import('@/components/Benefits').then(m => m.Benefits), { ssr: false })
 import { Product } from '@/types'
 
 interface Brand {
@@ -399,7 +398,6 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
         </div>
       </section>
 
-      <Benefits />
     </div>
   )
 }
