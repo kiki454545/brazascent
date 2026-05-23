@@ -36,7 +36,7 @@ const sortOptions = [
 ]
 
 const ITEMS_PER_PAGE = 20
-const formats = ['2ml', '5ml', '10ml']
+const formats = ['2ml', '5ml', '10ml', '30ml']
 
 export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsClientProps) {
   const searchParams = useSearchParams()
