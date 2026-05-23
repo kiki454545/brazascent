@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { m, AnimatePresence } from 'framer-motion'
 import { ArrowRight, ArrowLeft, RotateCcw, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import posthog from 'posthog-js'
 
 // Mots-clés par famille olfactive (recherchés dans notes et accords)
 const FAMILY_KEYWORDS: Record<string, string[]> = {
@@ -164,10 +165,12 @@ export default function QuizPage() {
 
         const products = data || []
 
+        let finalResults: any[] = []
         if (products.length > 0) {
           const scored: ScoredProduct[] = products.map(p => ({ product: p, score: scoreProduct(p, newAnswers) }))
           scored.sort((a, b) => b.score - a.score)
-          setResults(scored.slice(0, 6).map(s => s.product))
+          finalResults = scored.slice(0, 6).map(s => s.product)
+          setResults(finalResults)
         } else {
           // Fallback : bestsellers
           const { data: fallback } = await supabase
@@ -176,8 +179,18 @@ export default function QuizPage() {
             .eq('is_active', true)
             .eq('is_bestseller', true)
             .limit(6)
-          setResults(fallback || [])
+          finalResults = fallback || []
+          setResults(finalResults)
         }
+        posthog.capture('quiz_completed', {
+          occasion: newAnswers.occasion,
+          famille: newAnswers.famille,
+          intensite: newAnswers.intensite,
+          saison: newAnswers.saison,
+          result_count: finalResults.length,
+          top_result_id: finalResults[0]?.id ?? null,
+          top_result_name: finalResults[0]?.name ?? null,
+        })
       } catch (err) {
         console.error('Quiz error:', err)
       } finally {
@@ -249,7 +262,7 @@ export default function QuizPage() {
                           />
                         )}
                         {i === 0 && (
-                          <div className="absolute top-3 left-3 px-2 py-1 bg-primary text-white text-[10px] tracking-wider uppercase">
+                          <div className="absolute top-3 left-3 px-2 py-1 bg-primary text-primary-foreground text-[10px] tracking-wider uppercase">
                             Meilleur match
                           </div>
                         )}

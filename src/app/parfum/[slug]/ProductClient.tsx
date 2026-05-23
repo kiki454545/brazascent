@@ -17,7 +17,9 @@ import { StockAlertForm } from '@/components/StockAlertForm'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { useSettingsStore } from '@/store/settings'
+import { useRecentlyViewedStore } from '@/store/recentlyViewed'
 import { ProductCard } from '@/components/ProductCard'
+import { RecentlyViewed } from '@/components/RecentlyViewed'
 
 interface SupabaseProductRow {
   id: string
@@ -68,6 +70,7 @@ export default function ProductPage() {
   const { addItem, openCart } = useCartStore()
   const { toggleItem, isInWishlist } = useWishlistStore()
   const { settings } = useSettingsStore()
+  const { add: addRecentlyViewed } = useRecentlyViewedStore()
 
   useEffect(() => {
     let isMounted = true
@@ -149,6 +152,17 @@ export default function ProductPage() {
         setProduct(mappedProduct)
         setStockBySize(data.stock_by_size || {})
         setUnlimitedStock(data.unlimited_stock ?? false)
+
+        // Enregistrer dans les produits récemment vus
+        const prices = Object.values(parsedPriceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
+        addRecentlyViewed({
+          id: data.id,
+          slug: data.slug,
+          name: data.name,
+          brand: data.brand || '',
+          price: prices.length > 0 ? Math.min(...prices) : data.price,
+          image: data.images?.[0] || '',
+        })
 
         // Fetch review stats for header display
         supabase
@@ -351,6 +365,21 @@ export default function ProductPage() {
   })
   const selectedSprays = sprayEstimates[selectedSize.toLowerCase()]
 
+  // Upsell : suggère la taille supérieure si le client a choisi la moins chère
+  const upsellSuggestion = (() => {
+    if (!selectedSize || !priceBySize || isGloballyOutOfStock) return null
+    const currentIdx = orderedSizes.indexOf(selectedSize)
+    if (currentIdx < 0 || currentIdx === orderedSizes.length - 1) return null
+    const nextSize = orderedSizes[currentIdx + 1]
+    const nextStock = stockBySize[nextSize] ?? 0
+    if (!unlimitedStock && nextStock === 0) return null
+    const currentP = getSizePrice(selectedSize)
+    const nextP = getSizePrice(nextSize)
+    if (nextP <= currentP) return null
+    const diff = (nextP - currentP).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return { size: nextSize, diff }
+  })()
+
   return (
     <div className="min-h-screen pt-28 pb-28 lg:pb-0">
       {/* Breadcrumb */}
@@ -423,7 +452,7 @@ export default function ProductPage() {
                     onClick={() => setSelectedImage(index)}
                     className={`relative w-20 h-20 bg-cream overflow-hidden transition-all ${
                       selectedImage === index
-                        ? 'ring-2 ring-[#C9A962]'
+                        ? 'ring-2 ring-primary'
                         : 'opacity-70 hover:opacity-100'
                     }`}
                   >
@@ -538,6 +567,17 @@ export default function ProductPage() {
                 <p className="text-xs text-muted-foreground mt-3">
                   Estimation basée sur une vaporisation standard : {selectedSize} {selectedSprays}.
                 </p>
+              )}
+              {upsellSuggestion && (
+                <button
+                  onClick={() => setSelectedSize(upsellSuggestion.size)}
+                  className="mt-3 w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-primary/8 border border-primary/25 text-sm hover:bg-primary/14 transition-colors text-left"
+                >
+                  <span className="text-foreground">
+                    Passez au <strong>{upsellSuggestion.size}</strong> pour seulement <strong>+{upsellSuggestion.diff} €</strong> de plus
+                  </span>
+                  <span className="text-xs text-primary whitespace-nowrap flex-shrink-0">Choisir →</span>
+                </button>
               )}
             </div>
 
@@ -736,6 +776,9 @@ export default function ProductPage() {
           </div>
         </section>
       )}
+
+      {/* Récemment vus */}
+      <RecentlyViewed excludeId={product?.id} />
 
       {/* Lightbox */}
       <AnimatePresence>

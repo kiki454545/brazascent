@@ -38,12 +38,12 @@ interface OrderResult {
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  confirmed: { label: 'Confirmée', color: 'text-blue-600', bg: 'bg-blue-50', icon: Clock },
-  pending:   { label: 'En attente', color: 'text-yellow-600', bg: 'bg-yellow-50', icon: Clock },
-  processing:{ label: 'En préparation', color: 'text-blue-600', bg: 'bg-blue-50', icon: Package },
-  shipped:   { label: 'Expédiée', color: 'text-purple-600', bg: 'bg-purple-50', icon: Truck },
-  delivered: { label: 'Livrée', color: 'text-green-600', bg: 'bg-green-50', icon: CheckCircle },
-  cancelled: { label: 'Annulée', color: 'text-red-600', bg: 'bg-red-50', icon: XCircle },
+  confirmed: { label: 'Confirmée', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/30', icon: Clock },
+  pending:   { label: 'En attente', color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-50 dark:bg-yellow-950/30', icon: Clock },
+  processing:{ label: 'En préparation', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/30', icon: Package },
+  shipped:   { label: 'Expédiée', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/30', icon: Truck },
+  delivered: { label: 'Livrée', color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-950/30', icon: CheckCircle },
+  cancelled: { label: 'Annulée', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/30', icon: XCircle },
 }
 
 const statusSteps = ['confirmed', 'processing', 'shipped', 'delivered']
@@ -146,7 +146,7 @@ export default function SuiviPage() {
             </div>
 
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 text-red-600 text-sm">
+              <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 text-sm">
                 {error}
               </div>
             )}

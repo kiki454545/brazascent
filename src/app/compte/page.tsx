@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Gift, Copy, Check, Loader2 } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Gift, Copy, Check, Loader2, Share2, Users } from 'lucide-react'
 import { AccountSidebar } from '@/components/AccountSidebar'
 import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
@@ -34,6 +34,8 @@ export default function ComptePage() {
   const [redeemedCode, setRedeemedCode] = useState<{ code: string; discountEuros: number; newBalance: number } | null>(null)
   const [redeemError, setRedeemError] = useState<string | null>(null)
   const [codeCopied, setCodeCopied] = useState(false)
+  const [referralCode, setReferralCode] = useState<string | null>(null)
+  const [referralCopied, setReferralCopied] = useState(false)
 
   useEffect(() => {
     if (!isInitialized) {
@@ -61,8 +63,22 @@ export default function ComptePage() {
     if (historyData) setLoyaltyHistory(historyData)
   }
 
+  const fetchReferralCode = async () => {
+    if (!user) return
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    const res = await fetch('/api/referral/code', {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+    if (res.ok) {
+      const json = await res.json()
+      setReferralCode(json.code)
+    }
+  }
+
   useEffect(() => {
     fetchLoyalty()
+    fetchReferralCode()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
@@ -167,12 +183,12 @@ export default function ComptePage() {
 
             {/* Messages */}
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 text-sm">
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 text-sm">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-600 text-sm">
+              <div className="mb-6 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 text-green-600 dark:text-green-400 text-sm">
                 {success}
               </div>
             )}
@@ -325,16 +341,16 @@ export default function ComptePage() {
 
                   {/* Code généré */}
                   {redeemedCode && (
-                    <div className="mb-5 p-4 bg-green-50 border border-green-200">
-                      <p className="text-sm text-green-700 font-medium mb-2">Votre code promo de {redeemedCode.discountEuros}€ :</p>
+                    <div className="mb-5 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50">
+                      <p className="text-sm text-green-700 dark:text-green-400 font-medium mb-2">Votre code promo de {redeemedCode.discountEuros}€ :</p>
                       <div className="flex items-center gap-2">
-                        <span className="flex-1 font-mono text-lg font-bold text-green-800 tracking-wider">{redeemedCode.code}</span>
+                        <span className="flex-1 font-mono text-lg font-bold text-green-800 dark:text-green-300 tracking-wider">{redeemedCode.code}</span>
                         <button
                           onClick={() => handleCopyCode(redeemedCode.code)}
-                          className="p-2 hover:bg-green-100 rounded transition-colors"
+                          className="p-2 hover:bg-green-100 dark:hover:bg-green-900/30 rounded transition-colors"
                           title="Copier"
                         >
-                          {codeCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-green-600" />}
+                          {codeCopied ? <Check className="w-4 h-4 text-green-600 dark:text-green-400" /> : <Copy className="w-4 h-4 text-green-600 dark:text-green-400" />}
                         </button>
                       </div>
                       <p className="text-xs text-green-600 mt-1">Valable 90 jours — utilisable lors de votre prochain achat. Nouveau solde : {redeemedCode.newBalance} pts.</p>
@@ -364,6 +380,56 @@ export default function ComptePage() {
                     </p>
                   )}
                 </div>
+
+                {/* Parrainage */}
+                {referralCode && (
+                  <div className="bg-cream p-8 shadow-sm mt-6">
+                    <div className="flex items-center gap-3 mb-5">
+                      <Users className="w-5 h-5 text-primary" />
+                      <h2 className="text-xl tracking-[0.1em] uppercase">Parrainez un ami</h2>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                      Partagez votre code unique avec un ami. Il bénéficiera de <strong className="text-foreground">10% de réduction</strong> sur sa première commande, et vous recevrez <strong className="text-foreground">50 points</strong> de fidélité dès qu&apos;il aura validé sa commande.
+                    </p>
+
+                    {/* Code */}
+                    <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 mb-4">
+                      <span className="flex-1 font-mono text-xl font-bold tracking-[0.2em] text-primary">
+                        {referralCode}
+                      </span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(referralCode)
+                          setReferralCopied(true)
+                          setTimeout(() => setReferralCopied(false), 2000)
+                        }}
+                        className="p-2 hover:bg-primary/10 rounded transition-colors"
+                        title="Copier le code"
+                      >
+                        {referralCopied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 text-primary" />}
+                      </button>
+                    </div>
+
+                    {/* Partager le lien */}
+                    <button
+                      onClick={() => {
+                        const url = `https://brazascent.com/parfums?ref=${referralCode}`
+                        if (navigator.share) {
+                          navigator.share({ title: 'Braza Scent — 10% de réduction', text: `Utilise mon code ${referralCode} pour avoir 10% sur ta première commande !`, url })
+                        } else {
+                          navigator.clipboard.writeText(url)
+                          setReferralCopied(true)
+                          setTimeout(() => setReferralCopied(false), 2000)
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-3 border border-border hover:border-primary text-sm tracking-[0.1em] uppercase transition-colors"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      Partager mon lien de parrainage
+                    </button>
+                  </div>
+                )}
+
               </div>
             </div>
           </div>

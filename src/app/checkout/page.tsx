@@ -464,7 +464,7 @@ export default function CheckoutPage() {
 
             {/* Error */}
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 text-sm">
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 text-sm">
                 {error}
               </div>
             )}
@@ -954,10 +954,10 @@ export default function CheckoutPage() {
                   Code promo
                 </p>
                 {appliedPromoCode ? (
-                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 rounded-lg">
                     <div>
-                      <p className="font-mono font-semibold text-green-700">{appliedPromoCode.code}</p>
-                      <p className="text-xs text-green-600">
+                      <p className="font-mono font-semibold text-green-700 dark:text-green-400">{appliedPromoCode.code}</p>
+                      <p className="text-xs text-green-600 dark:text-green-500">
                         {appliedPromoCode.discount_type === 'percentage'
                           ? `-${appliedPromoCode.discount_value}%`
                           : `-${appliedPromoCode.discount_value} €`}
@@ -965,9 +965,9 @@ export default function CheckoutPage() {
                     </div>
                     <button
                       onClick={handleRemovePromoCode}
-                      className="p-1 hover:bg-green-100 rounded-full transition-colors"
+                      className="p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full transition-colors"
                     >
-                      <X className="w-4 h-4 text-green-600" />
+                      <X className="w-4 h-4 text-green-600 dark:text-green-400" />
                     </button>
                   </div>
                 ) : (
@@ -1000,14 +1000,14 @@ export default function CheckoutPage() {
                       <p className="text-xs text-red-500">{promoError}</p>
                     )}
                     {promoRequiresLogin && (
-                      <div className="p-3 bg-amber-50 border border-amber-200 text-sm space-y-1">
-                        <p className="text-amber-800 font-medium">Ce code est réservé aux comptes connectés.</p>
-                        <div className="flex items-center gap-3 text-amber-700">
-                          <Link href="/compte?redirect=/checkout" className="underline hover:text-amber-900">
+                      <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-sm space-y-1">
+                        <p className="text-amber-800 dark:text-amber-300 font-medium">Ce code est réservé aux comptes connectés.</p>
+                        <div className="flex items-center gap-3 text-amber-700 dark:text-amber-400">
+                          <Link href="/compte?redirect=/checkout" className="underline hover:text-amber-900 dark:hover:text-amber-200">
                             Se connecter
                           </Link>
                           <span>·</span>
-                          <Link href="/compte?tab=register&redirect=/checkout" className="underline hover:text-amber-900">
+                          <Link href="/compte?tab=register&redirect=/checkout" className="underline hover:text-amber-900 dark:hover:text-amber-200">
                             Créer un compte
                           </Link>
                         </div>

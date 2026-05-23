@@ -34,11 +34,11 @@ interface Order {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  pending: { label: 'En attente', color: 'text-yellow-600 bg-yellow-50', icon: Clock },
-  processing: { label: 'En préparation', color: 'text-blue-600 bg-blue-50', icon: Package },
-  shipped: { label: 'Expédiée', color: 'text-purple-600 bg-purple-50', icon: Truck },
-  delivered: { label: 'Livrée', color: 'text-green-600 bg-green-50', icon: CheckCircle },
-  cancelled: { label: 'Annulée', color: 'text-red-600 bg-red-50', icon: XCircle },
+  pending: { label: 'En attente', color: 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/30', icon: Clock },
+  processing: { label: 'En préparation', color: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30', icon: Package },
+  shipped: { label: 'Expédiée', color: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30', icon: Truck },
+  delivered: { label: 'Livrée', color: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30', icon: CheckCircle },
+  cancelled: { label: 'Annulée', color: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30', icon: XCircle },
 }
 
 export default function CommandesPage() {

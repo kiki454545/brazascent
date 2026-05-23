@@ -106,13 +106,13 @@ export default function ResetPasswordPage() {
           </p>
 
           {success ? (
-            <div className="p-4 bg-green-50 border border-green-200 text-green-700 text-sm text-center">
+            <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-400 text-sm text-center">
               Mot de passe mis à jour ! Redirection en cours...
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 text-red-600 text-sm">
+                <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 text-sm">
                   {error}
                 </div>
               )}

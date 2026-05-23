@@ -190,14 +190,14 @@ export default function ContactPage() {
           {/* Contact Form */}
           <div className="lg:col-span-2 animate-fade-in-right">
             {success ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-8 text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-8 h-8 text-green-600" />
+              <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 rounded-lg p-8 text-center">
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
                 </div>
-                <h3 className="text-xl font-medium text-green-800 mb-2">
+                <h3 className="text-xl font-medium text-green-800 dark:text-green-300 mb-2">
                   Message envoyé !
                 </h3>
-                <p className="text-green-600 mb-6">
+                <p className="text-green-600 dark:text-green-400 mb-6">
                   Nous avons bien reçu votre demande et vous répondrons dans les plus brefs délais.
                 </p>
                 {user ? (
@@ -220,15 +220,15 @@ export default function ContactPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-red-700">{error}</p>
+                  <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-lg flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-red-700 dark:text-red-400">{error}</p>
                   </div>
                 )}
 
                 {!user && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-blue-700 text-sm">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50 rounded-lg">
+                    <p className="text-blue-700 dark:text-blue-400 text-sm">
                       <Link href="/connexion" className="font-medium underline">Connectez-vous</Link> pour suivre vos demandes et accéder à l'historique de vos tickets.
                     </p>
                   </div>

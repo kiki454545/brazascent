@@ -78,6 +78,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active')
+  const [exportDropdown, setExportDropdown] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
@@ -306,36 +307,82 @@ export default function AdminOrdersPage() {
     return statusOptions.find(s => s.value === status)?.step || 0
   }
 
-  // Export CSV des commandes filtrées
-  const handleExportCSV = () => {
-    const rows = filteredOrders.length > 0 ? filteredOrders : orders
-    const headers = ['Numéro', 'Date', 'Client', 'Email', 'Ville', 'CP', 'Statut', 'Livraison', 'Sous-total', 'Frais livraison', 'Remise', 'Total', 'Transporteur', 'Numéro de suivi']
-    const csvRows = [
-      headers.join(';'),
-      ...rows.map(o => [
-        o.order_number,
-        new Date(o.created_at).toLocaleDateString('fr-FR'),
-        `${o.shipping_address?.firstName || ''} ${o.shipping_address?.lastName || ''}`.trim(),
-        o.shipping_address?.email || '',
-        o.shipping_address?.city || '',
-        o.shipping_address?.postalCode || '',
-        o.status,
-        o.shipping_method || '',
-        (o.subtotal || 0).toFixed(2),
-        (o.shipping || 0).toFixed(2),
-        (o.discount || 0).toFixed(2),
-        (o.total || 0).toFixed(2),
-        o.carrier || '',
-        o.tracking_number || '',
-      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
-    ]
-    const blob = new Blob(['﻿' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' })
+  const downloadCSV = (rows: string[][], filename: string) => {
+    const csv = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `commandes-${new Date().toISOString().slice(0, 10)}.csv`
+    a.download = filename
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  // Export CSV synthèse (une ligne par commande)
+  const handleExportCSV = () => {
+    const rows = filteredOrders.length > 0 ? filteredOrders : orders
+    downloadCSV(
+      [
+        ['Numéro', 'Date', 'Client', 'Email', 'Adresse', 'Ville', 'CP', 'Statut', 'Livraison', 'Sous-total', 'Frais livraison', 'Code promo', 'Remise', 'Total', 'Transporteur', 'Numéro de suivi'],
+        ...rows.map(o => [
+          o.order_number,
+          new Date(o.created_at).toLocaleDateString('fr-FR'),
+          `${o.shipping_address?.firstName || ''} ${o.shipping_address?.lastName || ''}`.trim(),
+          o.shipping_address?.email || '',
+          o.shipping_address?.address || '',
+          o.shipping_address?.city || '',
+          o.shipping_address?.postalCode || '',
+          o.status,
+          o.shipping_method || '',
+          (o.subtotal || 0).toFixed(2),
+          (o.shipping || 0).toFixed(2),
+          o.promo_code || '',
+          (o.discount || 0).toFixed(2),
+          (o.total || 0).toFixed(2),
+          o.carrier || '',
+          o.tracking_number || '',
+        ]),
+      ],
+      `commandes-${new Date().toISOString().slice(0, 10)}.csv`
+    )
+  }
+
+  // Export CSV détaillé (une ligne par article)
+  const handleExportCSVItems = () => {
+    const rows = filteredOrders.length > 0 ? filteredOrders : orders
+    const itemRows: string[][] = [
+      ['Numéro commande', 'Date', 'Client', 'Email', 'Statut', 'Produit', 'Taille', 'Qté', 'Prix unitaire', 'Total commande'],
+    ]
+    for (const o of rows) {
+      const items: any[] = Array.isArray(o.items) ? o.items : []
+      if (items.length === 0) {
+        itemRows.push([
+          o.order_number,
+          new Date(o.created_at).toLocaleDateString('fr-FR'),
+          `${o.shipping_address?.firstName || ''} ${o.shipping_address?.lastName || ''}`.trim(),
+          o.shipping_address?.email || '',
+          o.status,
+          '', '', '', '',
+          (o.total || 0).toFixed(2),
+        ])
+      } else {
+        for (const item of items) {
+          itemRows.push([
+            o.order_number,
+            new Date(o.created_at).toLocaleDateString('fr-FR'),
+            `${o.shipping_address?.firstName || ''} ${o.shipping_address?.lastName || ''}`.trim(),
+            o.shipping_address?.email || '',
+            o.status,
+            item.product_name || item.name || '',
+            item.size || item.selectedSize || '',
+            String(item.quantity || 1),
+            (item.price || 0).toFixed(2),
+            (o.total || 0).toFixed(2),
+          ])
+        }
+      }
+    }
+    downloadCSV(itemRows, `commandes-articles-${new Date().toISOString().slice(0, 10)}.csv`)
   }
 
   // Filtrer selon l'onglet actif
@@ -374,13 +421,34 @@ export default function AdminOrdersPage() {
             {activeOrders.length} à traiter · {completedOrders.length} terminées
           </p>
         </div>
-        <button
-          onClick={handleExportCSV}
-          className="flex items-center gap-2 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors"
-        >
-          <Download className="w-5 h-5" />
-          Exporter CSV
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setExportDropdown(v => !v)}
+            className="flex items-center gap-2 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Exporter
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+          {exportDropdown && (
+            <div className="absolute right-0 top-full mt-1 w-52 bg-admin-surface border border-admin-border rounded-lg shadow-lg z-20 overflow-hidden">
+              <button
+                onClick={() => { handleExportCSV(); setExportDropdown(false) }}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-admin-surface-alt transition-colors"
+              >
+                <p className="font-medium">Synthèse commandes</p>
+                <p className="text-xs text-admin-muted mt-0.5">1 ligne par commande</p>
+              </button>
+              <button
+                onClick={() => { handleExportCSVItems(); setExportDropdown(false) }}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-admin-surface-alt transition-colors border-t border-admin-border"
+              >
+                <p className="font-medium">Détail articles</p>
+                <p className="text-xs text-admin-muted mt-0.5">1 ligne par article commandé</p>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}

@@ -2,6 +2,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import posthog from 'posthog-js'
 
 interface WishlistStore {
   items: string[]
@@ -22,6 +23,7 @@ export const useWishlistStore = create<WishlistStore>()(
           if (state.items.includes(productId)) return state
           return { items: [...state.items, productId] }
         })
+        posthog.capture('wishlist_item_added', { product_id: productId })
       },
 
       removeItem: (productId) => {

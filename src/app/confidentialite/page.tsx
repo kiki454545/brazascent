@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Politique de Confidentialité | Braza Scent',
+  description: 'Politique de confidentialité et gestion des données personnelles de Braza Scent.',
+  robots: { index: false },
+}
+
 export default function ConfidentialitePage() {
   return (
     <main className="min-h-screen bg-background">

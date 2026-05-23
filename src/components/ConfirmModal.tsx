@@ -28,16 +28,16 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   const variantStyles = {
     danger: {
-      icon: 'bg-red-100 text-red-600',
-      button: 'bg-red-600 hover:bg-red-700'
+      icon: 'bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400',
+      button: 'bg-red-600 hover:bg-red-700 text-white'
     },
     warning: {
-      icon: 'bg-amber-100 text-amber-600',
-      button: 'bg-amber-600 hover:bg-amber-700'
+      icon: 'bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400',
+      button: 'bg-amber-600 hover:bg-amber-700 text-white'
     },
     default: {
-      icon: 'bg-[#C9A962]/20 text-[#C9A962]',
-      button: 'bg-[#C9A962] hover:bg-[#B8994D]'
+      icon: 'bg-primary/20 text-primary',
+      button: 'bg-primary hover:bg-gold-dark text-primary-foreground'
     }
   }
 
@@ -57,7 +57,7 @@ export function ConfirmModal({
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden"
+            className="bg-background rounded-xl shadow-xl max-w-md w-full overflow-hidden border border-border"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -70,7 +70,7 @@ export function ConfirmModal({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
                 disabled={loading}
               >
                 <X className="w-5 h-5" />
@@ -79,15 +79,15 @@ export function ConfirmModal({
 
             {/* Content */}
             <div className="p-6">
-              <p className="text-gray-600">{message}</p>
+              <p className="text-muted-foreground">{message}</p>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 p-4 bg-gray-50 border-t">
+            <div className="flex gap-3 p-4 bg-muted/50 border-t border-border">
               <button
                 onClick={onClose}
                 disabled={loading}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 border border-border rounded-lg text-foreground hover:bg-muted transition-colors disabled:opacity-50"
               >
                 {cancelText}
               </button>

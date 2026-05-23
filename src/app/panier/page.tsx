@@ -155,13 +155,13 @@ export default function PanierPage() {
 
             {/* Alerte produits en rupture */}
             {hasOutOfStockItems && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-lg flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-red-800">
+                  <p className="font-medium text-red-800 dark:text-red-300">
                     {outOfStockItems.length === 1 ? 'Un produit est' : `${outOfStockItems.length} produits sont`} en rupture de stock
                   </p>
-                  <p className="text-sm text-red-600 mt-1">
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">
                     Veuillez retirer les produits indisponibles pour continuer votre commande.
                   </p>
                 </div>
@@ -309,17 +309,17 @@ export default function PanierPage() {
                   Code promo
                 </p>
                 {pendingPromoCode ? (
-                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200">
+                  <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50">
                     <div>
-                      <p className="font-mono font-semibold text-green-700 text-sm">{pendingPromoCode.code}</p>
-                      <p className="text-xs text-green-600">
+                      <p className="font-mono font-semibold text-green-700 dark:text-green-400 text-sm">{pendingPromoCode.code}</p>
+                      <p className="text-xs text-green-600 dark:text-green-500">
                         {pendingPromoCode.discount_type === 'percentage'
                           ? `−${pendingPromoCode.discount_value}%`
                           : `−${pendingPromoCode.discount_value} €`}
                       </p>
                     </div>
-                    <button onClick={handleRemovePromo} className="p-1 hover:bg-green-100 rounded-full transition-colors">
-                      <X className="w-4 h-4 text-green-600" />
+                    <button onClick={handleRemovePromo} className="p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full transition-colors">
+                      <X className="w-4 h-4 text-green-600 dark:text-green-400" />
                     </button>
                   </div>
                 ) : (
@@ -343,12 +343,12 @@ export default function PanierPage() {
                     </div>
                     {promoError && <p className="text-xs text-red-500">{promoError}</p>}
                     {promoRequiresLogin && (
-                      <div className="p-3 bg-amber-50 border border-amber-200 text-sm space-y-1">
-                        <p className="text-amber-800 font-medium">Ce code est réservé aux comptes connectés.</p>
-                        <div className="flex items-center gap-3 text-amber-700">
-                          <Link href="/compte?redirect=/panier" className="underline hover:text-amber-900">Se connecter</Link>
+                      <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 text-sm space-y-1">
+                        <p className="text-amber-800 dark:text-amber-300 font-medium">Ce code est réservé aux comptes connectés.</p>
+                        <div className="flex items-center gap-3 text-amber-700 dark:text-amber-400">
+                          <Link href="/compte?redirect=/panier" className="underline hover:text-amber-900 dark:hover:text-amber-200">Se connecter</Link>
                           <span>·</span>
-                          <Link href="/compte?tab=register&redirect=/panier" className="underline hover:text-amber-900">Créer un compte</Link>
+                          <Link href="/compte?tab=register&redirect=/panier" className="underline hover:text-amber-900 dark:hover:text-amber-200">Créer un compte</Link>
                         </div>
                       </div>
                     )}

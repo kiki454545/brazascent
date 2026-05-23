@@ -122,18 +122,18 @@ export function ImageUpload({ value, onChange, bucket, className = '' }: ImageUp
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="w-full aspect-video bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#C9A962] hover:bg-gray-100 transition-colors flex flex-col items-center justify-center gap-2"
+          className="w-full aspect-video bg-admin-surface-alt border-2 border-dashed border-admin-border rounded-lg hover:border-primary hover:bg-muted transition-colors flex flex-col items-center justify-center gap-2"
         >
           {uploading ? (
             <>
-              <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-              <span className="text-sm text-gray-500">Upload en cours...</span>
+              <Loader2 className="w-8 h-8 text-muted-foreground/60 animate-spin" />
+              <span className="text-sm text-muted-foreground">Upload en cours...</span>
             </>
           ) : (
             <>
-              <ImageIcon className="w-8 h-8 text-gray-400" />
-              <span className="text-sm text-gray-500">Cliquez pour ajouter une image</span>
-              <span className="text-xs text-gray-400">PNG, JPG jusqu'à 5MB</span>
+              <ImageIcon className="w-8 h-8 text-muted-foreground/60" />
+              <span className="text-sm text-muted-foreground">Cliquez pour ajouter une image</span>
+              <span className="text-xs text-muted-foreground/60">PNG, JPG jusqu'à 5MB</span>
             </>
           )}
         </button>
@@ -266,7 +266,7 @@ export function MultiImageUpload({
                 className="object-cover"
               />
               {index === 0 && (
-                <span className="absolute top-2 left-2 px-2 py-1 bg-[#C9A962] text-white text-xs rounded">
+                <span className="absolute top-2 left-2 px-2 py-1 bg-primary text-primary-foreground text-xs rounded">
                   Principal
                 </span>
               )}
@@ -299,14 +299,14 @@ export function MultiImageUpload({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="aspect-square bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg hover:border-[#C9A962] hover:bg-gray-100 transition-colors flex flex-col items-center justify-center gap-1"
+            className="aspect-square bg-admin-surface-alt border-2 border-dashed border-admin-border rounded-lg hover:border-primary hover:bg-muted transition-colors flex flex-col items-center justify-center gap-1"
           >
             {uploading ? (
-              <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+              <Loader2 className="w-6 h-6 text-muted-foreground/60 animate-spin" />
             ) : (
               <>
-                <Upload className="w-6 h-6 text-gray-400" />
-                <span className="text-xs text-gray-500">Ajouter</span>
+                <Upload className="w-6 h-6 text-muted-foreground/60" />
+                <span className="text-xs text-muted-foreground">Ajouter</span>
               </>
             )}
           </button>
@@ -317,7 +317,7 @@ export function MultiImageUpload({
         <p className="mt-2 text-sm text-red-500">{error}</p>
       )}
 
-      <p className="mt-2 text-xs text-gray-500">
+      <p className="mt-2 text-xs text-muted-foreground">
         {values.length}/{maxImages} images. La première image sera l'image principale.
       </p>
     </div>

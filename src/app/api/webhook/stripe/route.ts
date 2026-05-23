@@ -3,6 +3,7 @@ import { stripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
 import { sendAdminOrderNotification } from '@/lib/email'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 function escapeHtml(str: string): string {
   return str
@@ -347,6 +348,29 @@ export async function POST(request: NextRequest) {
 
       console.log('Order created successfully:', order?.order_number)
 
+      // PostHog: server-side order_created event
+      if (order) {
+        const posthog = getPostHogClient()
+        const distinctId = resolvedUserId ?? (session.customer_email ?? session.id)
+        posthog.capture({
+          distinctId,
+          event: 'order_created',
+          properties: {
+            order_number: order.order_number,
+            order_id: order.id,
+            subtotal,
+            shipping_cost: shippingCost,
+            total: session.amount_total ? session.amount_total / 100 : subtotal + shippingCost,
+            item_count: rawItems.length,
+            shipping_method: shippingMethodTitle,
+            promo_code: promoCode ?? null,
+            promo_discount: promoDiscount ?? null,
+            payment_method: 'stripe',
+          },
+        })
+        await posthog.shutdown()
+      }
+
       // Créditer les points de fidélité (1 point par euro dépensé — userId vérifié côté serveur)
       if (order && resolvedUserId) {
         const pointsToCredit = Math.floor(subtotal)
@@ -435,6 +459,18 @@ export async function POST(request: NextRequest) {
   if (event.type === 'payment_intent.payment_failed') {
     const paymentIntent = event.data.object as Stripe.PaymentIntent
     console.error('Payment failed for intent:', paymentIntent.id, paymentIntent.last_payment_error?.message)
+    const posthog = getPostHogClient()
+    posthog.capture({
+      distinctId: paymentIntent.id,
+      event: 'payment_failed',
+      properties: {
+        payment_intent_id: paymentIntent.id,
+        failure_message: paymentIntent.last_payment_error?.message ?? null,
+        failure_code: paymentIntent.last_payment_error?.code ?? null,
+        amount: paymentIntent.amount ? paymentIntent.amount / 100 : null,
+      },
+    })
+    await posthog.shutdown()
   }
 
   return NextResponse.json({ received: true })

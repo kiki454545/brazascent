@@ -4,6 +4,27 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   // Désactiver le trailing slash pour éviter les redirections 307 sur les webhooks
   trailingSlash: false,
+  skipTrailingSlashRedirect: true,
+  compress: true,
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion', 'recharts'],
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/ingest/static/:path*',
+        destination: 'https://eu-assets.i.posthog.com/static/:path*',
+      },
+      {
+        source: '/ingest/array/:path*',
+        destination: 'https://eu-assets.i.posthog.com/array/:path*',
+      },
+      {
+        source: '/ingest/:path*',
+        destination: 'https://eu.i.posthog.com/:path*',
+      },
+    ]
+  },
   images: {
     // Loader personnalisé : Supabase → render API, Unsplash → CDN natif, local → brut
     // Aucun quota Vercel consommé (pas de passage par /_next/image)

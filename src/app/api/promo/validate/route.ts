@@ -83,6 +83,47 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (fetchError || !promoCode) {
+      // Vérifier si c'est un code de parrainage
+      const { data: referrerProfile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('id, first_name, last_name')
+        .eq('referral_code', code.toUpperCase().trim())
+        .maybeSingle()
+
+      if (referrerProfile) {
+        // Empêcher l'auto-parrainage
+        if (userId && userId === referrerProfile.id) {
+          return NextResponse.json({ error: 'Vous ne pouvez pas utiliser votre propre code de parrainage.' }, { status: 400 })
+        }
+        // Vérifier que le filleul n'a pas déjà utilisé un code de parrainage
+        if (userId) {
+          const { data: existingReferral } = await supabaseAdmin
+            .from('referrals')
+            .select('id')
+            .eq('referred_user_id', userId)
+            .eq('status', 'converted')
+            .maybeSingle()
+          if (existingReferral) {
+            return NextResponse.json({ error: 'Vous avez déjà bénéficié d\'un code de parrainage.' }, { status: 400 })
+          }
+        }
+        const discount = orderTotal ? Math.round(orderTotal * 0.1 * 100) / 100 : 0
+        return NextResponse.json({
+          valid: true,
+          isReferral: true,
+          referrerId: referrerProfile.id,
+          promoCode: {
+            id: `referral-${referrerProfile.id}`,
+            code: code.toUpperCase().trim(),
+            description: `Code de parrainage — 10% de réduction sur votre première commande`,
+            discount_type: 'percentage',
+            discount_value: 10,
+            min_order_amount: 0,
+          },
+          discountAmount: discount,
+        })
+      }
+
       return NextResponse.json(
         { error: 'Code promo invalide' },
         { status: 400 }

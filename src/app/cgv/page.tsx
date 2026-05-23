@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Conditions Générales de Vente | Braza Scent',
+  description: 'Consultez les conditions générales de vente de Braza Scent, maison de parfumerie d\'exception.',
+  robots: { index: false },
+}
+
 export default function CGVPage() {
   return (
     <main className="min-h-screen bg-background">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Bell, Check, Loader2 } from 'lucide-react'
+import posthog from 'posthog-js'
 
 export function StockAlertForm({ productId }: { productId: string }) {
   const [email, setEmail] = useState('')
@@ -21,6 +22,7 @@ export function StockAlertForm({ productId }: { productId: string }) {
       })
 
       if (res.ok) {
+        posthog.capture('stock_alert_subscribed', { product_id: productId })
         setStatus('success')
         setMessage('Vous serez alerté dès le retour en stock !')
         setEmail('')
@@ -35,7 +37,7 @@ export function StockAlertForm({ productId }: { productId: string }) {
 
   if (status === 'success') {
     return (
-      <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 text-green-700 text-sm">
+      <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-400 text-sm">
         <Check className="w-4 h-4 flex-shrink-0" />
         <span>{message}</span>
       </div>

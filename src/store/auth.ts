@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase, isAbortError } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
+import posthog from 'posthog-js'
 
 interface UserProfile {
   id: string
@@ -112,6 +113,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
         set({ user: data.user })
         await get().fetchProfile()
+
+        posthog.identify(data.user.id, {
+          email,
+          first_name: firstName ?? null,
+          last_name: lastName ?? null,
+        })
+        posthog.capture('user_signed_up', { email })
       }
 
       set({ isLoading: false })
@@ -164,6 +172,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         // Passer le token directement pour éviter un nouvel appel à getSession
         const accessToken = data.session?.access_token
         await get().fetchProfile(accessToken)
+
+        posthog.identify(data.user.id, { email: data.user.email })
+        posthog.capture('user_signed_in', { email: data.user.email })
       }
 
       set({ isLoading: false })
@@ -185,6 +196,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch (error) {
       console.error('Sign out error:', error)
     }
+    posthog.reset()
     set({ user: null, profile: null, isLoading: false })
   },
 

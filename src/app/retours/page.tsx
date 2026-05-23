@@ -1,4 +1,11 @@
+import type { Metadata } from 'next'
 import { Package, Mail, AlertCircle, ShieldCheck, Droplets } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Retours & Échanges | Braza Scent',
+  description: 'Politique de retours et échanges Braza Scent. Retournez votre commande sous 30 jours. Procédure simple et rapide.',
+  robots: { index: false },
+}
 
 export default function RetoursPage() {
   return (

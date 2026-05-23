@@ -19,6 +19,8 @@ interface Brand {
 interface ParfumsClientProps {
   initialProducts: Product[]
   initialBrands: Brand[]
+  familleFilter?: string
+  familleLabel?: string
 }
 
 const categories = [
@@ -27,6 +29,38 @@ const categories = [
   { id: 'Eau de Toilette', name: 'Eau de Toilette' },
   { id: 'Extrait de Parfum', name: 'Extrait de Parfum' },
 ]
+
+const genders = [
+  { id: 'Homme', label: 'Homme', emoji: '♂' },
+  { id: 'Femme', label: 'Femme', emoji: '♀' },
+  { id: 'Unisexe', label: 'Unisexe', emoji: '◇' },
+]
+
+const familles = [
+  { id: 'florale', label: 'Florale', emoji: '🌸' },
+  { id: 'boisee', label: 'Boisée', emoji: '🌲' },
+  { id: 'orientale', label: 'Orientale', emoji: '🪔' },
+  { id: 'fraiche', label: 'Fraîche', emoji: '🍃' },
+]
+
+const FAMILY_KEYWORDS: Record<string, string[]> = {
+  florale: ['rose', 'jasmin', 'iris', 'pivoine', 'fleur', 'ylang', 'violet', 'magnolia', 'muguet', 'lilas', 'freesia', 'orchidée', 'géranium'],
+  boisee: ['cèdre', 'santal', 'vétiver', 'bois', 'oud', 'patchouli', 'gaiac', 'chêne', 'mousse', 'cyprès', 'bambou'],
+  orientale: ['ambre', 'musc', 'vanille', 'benjoin', 'résine', 'cannelle', 'cardamome', 'encens', 'fève', 'tonka', 'labdanum', 'myrrhe'],
+  fraiche: ['bergamote', 'citron', 'mandarine', 'agrumes', 'menthe', 'aquatique', 'marine', 'gingembre', 'thé', 'herbe', 'fougère', 'lavande'],
+}
+
+function matchesFamille(product: Product, famille: string): boolean {
+  const keywords = FAMILY_KEYWORDS[famille]
+  if (!keywords) return true
+  const allNotes = [
+    ...(product.notes?.top || []),
+    ...(product.notes?.heart || []),
+    ...(product.notes?.base || []),
+    ...((product.mainAccords || []).map((a: any) => typeof a === 'string' ? a : (a.name || ''))),
+  ].filter(Boolean).map((n: string) => n.toLowerCase())
+  return allNotes.some(note => keywords.some(kw => note.includes(kw)))
+}
 
 const sortOptions = [
   { id: 'newest', name: 'Nouveautés' },
@@ -38,7 +72,7 @@ const sortOptions = [
 const ITEMS_PER_PAGE = 20
 const formats = ['2ml', '5ml', '10ml', '30ml']
 
-export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsClientProps) {
+export default function ParfumsPage({ initialProducts, initialBrands, familleFilter, familleLabel }: ParfumsClientProps) {
   const searchParams = useSearchParams()
   const initialSearch = searchParams.get('search') || ''
 
@@ -47,6 +81,9 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [selectedFormat, setSelectedFormat] = useState('all')
+  const [selectedGender, setSelectedGender] = useState('all')
+  // Si on vient d'une page famille, le filtre est verrouillé
+  const [selectedFamille, setSelectedFamille] = useState(familleFilter || 'all')
   const [sortBy, setSortBy] = useState('newest')
   const [searchQuery, setSearchQuery] = useState(initialSearch)
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
@@ -55,7 +92,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
   // Sidebar sections open/close (desktop)
-  const [openSections, setOpenSections] = useState({ category: true, brand: true, format: true, price: true })
+  const [openSections, setOpenSections] = useState({ gender: true, famille: true, category: true, brand: true, format: true, price: true })
   const toggleSection = (key: keyof typeof openSections) =>
     setOpenSections(s => ({ ...s, [key]: !s[key] }))
 
@@ -106,6 +143,8 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
   }
 
   const filteredProducts = products
+    .filter(p => selectedGender === 'all' || (p.gender || 'Unisexe') === selectedGender)
+    .filter(p => selectedFamille === 'all' || matchesFamille(p, selectedFamille))
     .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
     .filter(p => selectedBrand === 'all' || p.brand === selectedBrand)
     .filter(p => selectedFormat === 'all' || p.size?.some(s => s.toLowerCase() === selectedFormat.toLowerCase()))
@@ -137,7 +176,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
   // Réinitialiser la pagination à chaque changement de filtre
   useEffect(() => {
     setVisibleCount(ITEMS_PER_PAGE)
-  }, [selectedCategory, selectedBrand, selectedFormat, sortBy, searchQuery, priceRange])
+  }, [selectedCategory, selectedBrand, selectedFormat, selectedGender, selectedFamille, sortBy, searchQuery, priceRange])
 
   // Intersection Observer pour l'infinite scroll
   const loadMore = useCallback(() => {
@@ -155,6 +194,8 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
   }, [hasMore, loadMore])
 
   const activeFilterCount = [
+    selectedGender !== 'all',
+    selectedFamille !== 'all',
     selectedCategory !== 'all',
     selectedBrand !== 'all',
     selectedFormat !== 'all',
@@ -162,6 +203,8 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
   ].filter(Boolean).length
 
   const resetFilters = () => {
+    setSelectedGender('all')
+    setSelectedFamille('all')
     setSelectedCategory('all')
     setSelectedBrand('all')
     setSelectedFormat('all')
@@ -186,12 +229,16 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 flex items-center justify-center text-center text-white px-6 pt-24 sm:pt-0">
           <m.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="max-w-3xl">
-            <span className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary mb-4 block">Collection</span>
+            <span className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
+              {familleLabel ? `Famille olfactive` : 'Collection'}
+            </span>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-light tracking-[0.15em] sm:tracking-[0.2em] uppercase mb-4">
-              Nos Parfums
+              {familleLabel ? `Parfums ${familleLabel}` : 'Nos Parfums'}
             </h1>
             <p className="text-sm sm:text-lg font-light max-w-xl mx-auto mb-6">
-              Découvrez notre sélection de fragrances d&apos;exception
+              {familleLabel
+                ? `${initialProducts.length} fragrance${initialProducts.length !== 1 ? 's' : ''} dans cette famille olfactive`
+                : `Découvrez notre sélection de fragrances d'exception`}
             </p>
             <Link
               href="/quiz"
@@ -270,6 +317,32 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                         <button key={o.id} onClick={() => setSortBy(o.id)}
                           className={`w-full text-left text-sm py-2 px-2 transition-colors ${sortBy === o.id ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                           {o.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Genre */}
+                  <div>
+                    <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Genre</p>
+                    <div className="flex flex-wrap gap-2">
+                      {genders.map(g => (
+                        <button key={g.id} onClick={() => setSelectedGender(g.id === selectedGender ? 'all' : g.id)}
+                          className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedGender === g.id ? 'bg-foreground text-background border-foreground' : 'border-border'}`}>
+                          {g.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Famille olfactive */}
+                  <div>
+                    <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Famille olfactive</p>
+                    <div className="space-y-1">
+                      {familles.map(f => (
+                        <button key={f.id} onClick={() => setSelectedFamille(f.id === selectedFamille ? 'all' : f.id)}
+                          className={`w-full text-left text-sm py-2 px-2 flex items-center gap-2 transition-colors ${selectedFamille === f.id ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                          <span>{f.emoji}</span>{f.label}
                         </button>
                       ))}
                     </div>
@@ -394,6 +467,42 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Genre */}
+                <div className="mb-5">
+                  <SectionHeader label="Genre" sectionKey="gender" />
+                  {openSections.gender && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {genders.map(g => (
+                        <button
+                          key={g.id}
+                          onClick={() => setSelectedGender(g.id === selectedGender ? 'all' : g.id)}
+                          className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedGender === g.id ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'}`}
+                        >
+                          {g.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Famille olfactive */}
+                <div className="mb-5">
+                  <SectionHeader label="Famille olfactive" sectionKey="famille" />
+                  {openSections.famille && (
+                    <div className="mt-2 space-y-1">
+                      {familles.map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => setSelectedFamille(f.id === selectedFamille ? 'all' : f.id)}
+                          className={`w-full text-left text-sm py-1.5 px-2 transition-colors flex items-center gap-2 ${selectedFamille === f.id ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          <span>{f.emoji}</span>{f.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Catégorie */}

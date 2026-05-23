@@ -39,6 +39,9 @@ export interface Product {
   new?: boolean
   bestseller?: boolean
   promo?: boolean
+  gender?: string
+  avgRating?: number
+  reviewCount?: number
 }
 
 export interface CartItem {

@@ -82,8 +82,9 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
   return (
     <m.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ duration: 0.5, delay: Math.min(index, 3) * 0.08 }}
     >
       <Link
         href={`/parfum/${product.slug}`}
@@ -98,18 +99,20 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
             src={product.images[0]}
             alt={product.name}
             fill
+            priority={index < 4}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`object-cover transition-all duration-700 ${
               isHovered && product.images[1] ? 'opacity-0' : 'opacity-100'
             }`}
           />
 
-          {/* Hover image */}
+          {/* Hover image — chargé en lazy car pas visible par défaut */}
           {product.images[1] && (
             <Image
               src={product.images[1]}
               alt={product.name}
               fill
+              loading="lazy"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className={`object-cover transition-all duration-700 absolute inset-0 ${
                 isHovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
@@ -213,6 +216,18 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
           <h3 className="text-lg font-light tracking-wide mb-1 group-hover:text-primary transition-colors truncate">
             {product.name}
           </h3>
+          {product.avgRating !== undefined && product.reviewCount !== undefined && product.reviewCount > 0 && (
+            <div className="flex items-center justify-center gap-1.5 mb-1.5">
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <svg key={star} className={`w-3 h-3 ${star <= Math.round(product.avgRating!) ? 'text-primary fill-primary' : 'text-muted-foreground/30 fill-muted-foreground/30'}`} viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground">{product.avgRating!.toFixed(1)} ({product.reviewCount})</span>
+            </div>
+          )}
           <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">
             {product.shortDescription}
           </p>

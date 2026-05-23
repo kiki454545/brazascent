@@ -556,3 +556,86 @@ export async function sendNewsletterWelcomeEmail(email: string) {
     console.error('Erreur envoi email bienvenue newsletter:', error)
   }
 }
+
+export async function sendReviewRequestEmail({
+  customerEmail,
+  customerName,
+  orderNumber,
+  products,
+}: {
+  customerEmail: string
+  customerName: string
+  orderNumber: string
+  products: Array<{ name: string; slug: string; image?: string }>
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const productsHtml = products.map(p => `
+    <tr>
+      <td style="padding: 12px 0; border-bottom: 1px solid #f0ece6;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="width: 60px; vertical-align: middle; padding-right: 16px;">
+              ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" style="width: 56px; height: 56px; object-fit: cover; border-radius: 4px;">` : ''}
+            </td>
+            <td style="vertical-align: middle;">
+              <p style="margin: 0 0 8px; color: #19110B; font-size: 14px; font-weight: 500;">${escapeHtml(p.name)}</p>
+              <a href="https://brazascent.com/parfum/${escapeHtml(p.slug)}#avis" style="display: inline-block; padding: 6px 16px; background-color: #C9A962; color: #19110B; text-decoration: none; font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">
+                Laisser un avis
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `).join('')
+
+  const html = wrapEmail(`
+    <tr>
+      <td style="padding: 40px; text-align: center;">
+        <div style="width: 60px; height: 60px; background-color: #C9A962; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+          <span style="color: white; font-size: 26px; line-height: 1;">⭐</span>
+        </div>
+        <h2 style="margin: 0 0 10px; color: #19110B; font-size: 24px; font-weight: 400;">
+          Votre avis compte !
+        </h2>
+        <p style="margin: 0; color: #666; font-size: 16px;">
+          Commande n° <strong style="color: #19110B;">${escapeHtml(orderNumber)}</strong>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 20px;">
+        <p style="color: #444; font-size: 15px; line-height: 1.7;">Bonjour ${escapeHtml(customerName)},</p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7;">
+          Nous espérons que vous appréciez votre nouvelle fragrance. Votre expérience compte beaucoup pour nous et pour les autres passionnés de parfums.
+        </p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7;">
+          Prenez un moment pour partager votre ressenti — cela aide notre communauté à trouver les parfums qui leur correspondent.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 40px;">
+        <h3 style="margin: 0 0 16px; color: #19110B; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 2px solid #C9A962; padding-bottom: 10px;">
+          Vos achats
+        </h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          ${productsHtml}
+        </table>
+      </td>
+    </tr>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: 'Braza Scent <commandes@brazascent.com>',
+      to: customerEmail,
+      subject: 'Votre avis sur votre commande Braza Scent',
+      html,
+    })
+  } catch (error) {
+    console.error('Erreur envoi email demande avis:', error)
+  }
+}

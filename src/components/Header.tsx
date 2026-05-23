@@ -90,6 +90,7 @@ const navigation = [
   { name: 'Marques', href: '/marques' },
   { name: 'Packs', href: '/packs' },
   { name: 'Promos 🔥', href: '/promos' },
+  { name: 'Quiz', href: '/quiz' },
   { name: 'Blog', href: '/blog' },
 ]
 

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { m } from 'framer-motion'
 import { CheckCircle, Package, Mail, ArrowRight } from 'lucide-react'
+import posthog from 'posthog-js'
 
 function ConfirmationContent() {
   const searchParams = useSearchParams()
@@ -13,7 +14,12 @@ function ConfirmationContent() {
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    if (orderNumber) {
+      posthog.capture('order_completed', { order_number: orderNumber })
+    } else {
+      posthog.capture('order_completed')
+    }
+  }, [orderNumber])
 
   if (!mounted) {
     return null

@@ -45,12 +45,12 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="text-center p-8">
-            <h2 className="text-xl mb-4">Une erreur est survenue</h2>
+            <h2 className="text-xl mb-4 text-foreground">Une erreur est survenue</h2>
             <button
               onClick={() => this.setState({ hasError: false })}
-              className="px-6 py-2 bg-[#C9A962] text-white rounded hover:bg-[#19110B] transition-colors"
+              className="px-6 py-2 bg-primary text-primary-foreground rounded hover:bg-gold-dark transition-colors"
             >
               Réessayer
             </button>

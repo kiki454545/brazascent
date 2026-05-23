@@ -117,6 +117,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.7,
     },
+    // Pages familles olfactives
+    ...(['florale', 'boisee', 'orientale', 'fraiche'] as const).map((famille) => ({
+      url: `${SITE_URL}/parfums/${famille}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.85,
+    })),
   ]
 
   // 2. Produits dynamiques (depuis Supabase)

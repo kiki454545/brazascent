@@ -1,3 +1,11 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Mentions Légales | Braza Scent',
+  description: 'Mentions légales de Braza Scent, maison de parfumerie d\'exception.',
+  robots: { index: false },
+}
+
 export default function MentionsLegalesPage() {
   return (
     <main className="min-h-screen bg-background">

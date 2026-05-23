@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { m, AnimatePresence } from 'framer-motion'
 import { X, Mail, Check, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import posthog from 'posthog-js'
 
 const STORAGE_KEY = 'brazascent-newsletter-popup'
 const DELAY_MS = 20000 // 20 secondes
@@ -47,6 +48,7 @@ export function NewsletterPopup() {
         body: JSON.stringify({ email }),
       }).catch(console.error)
 
+      posthog.capture('newsletter_subscribed', { source: 'popup' })
       setStatus('success')
       setMessage('Merci ! Retrouvez votre code BIENVENUE10 dans votre email.')
       localStorage.setItem(STORAGE_KEY, 'subscribed')
@@ -103,7 +105,7 @@ export function NewsletterPopup() {
                 </div>
 
                 {status === 'success' ? (
-                  <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 text-green-700 text-sm">
+                  <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-400 text-sm">
                     <Check className="w-4 h-4 flex-shrink-0" />
                     <span>{message}</span>
                   </div>

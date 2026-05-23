@@ -13,7 +13,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   AlertTriangle,
-  ExternalLink
+  ExternalLink,
+  ShoppingBag,
+  Crown,
 } from 'lucide-react'
 import { supabaseFetch } from '@/lib/supabase'
 
@@ -39,6 +41,13 @@ interface TopProduct {
   qty: number
 }
 
+interface TopClient {
+  name: string
+  email: string
+  orders: number
+  total: number
+}
+
 interface LowStockProduct {
   id: string
   name: string
@@ -50,22 +59,25 @@ interface DashboardData {
   totalRevenue: number
   totalUsers: number
   totalProducts: number
+  avgOrderValue: number
   recentOrders: any[]
   revenueByDay: RevenueDay[]
   topProducts: TopProduct[]
+  topClients: TopClient[]
   lowStockProducts: LowStockProduct[]
   ordersChange: number
   revenueChange: number
+  avgOrderChange: number
 }
 
-function buildRevenueByDay(orders: any[]): RevenueDay[] {
-  const days: Record<string, RevenueDay> = {}
+function buildRevenueByDay(orders: any[], days: number): RevenueDay[] {
+  const result: Record<string, RevenueDay> = {}
   const now = new Date()
-  for (let i = 29; i >= 0; i--) {
+  for (let i = days - 1; i >= 0; i--) {
     const d = new Date(now)
     d.setDate(d.getDate() - i)
     const key = d.toISOString().slice(0, 10)
-    days[key] = {
+    result[key] = {
       date: d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
       revenue: 0,
       orders: 0,
@@ -74,12 +86,12 @@ function buildRevenueByDay(orders: any[]): RevenueDay[] {
   for (const order of orders) {
     if (order.status === 'cancelled') continue
     const key = order.created_at?.slice(0, 10)
-    if (key && days[key]) {
-      days[key].revenue += order.total || 0
-      days[key].orders += 1
+    if (key && result[key]) {
+      result[key].revenue += order.total || 0
+      result[key].orders += 1
     }
   }
-  return Object.values(days)
+  return Object.values(result)
 }
 
 function buildTopProducts(items: any[]): TopProduct[] {
@@ -96,10 +108,25 @@ function buildTopProducts(items: any[]): TopProduct[] {
     .map(p => ({ ...p, name: p.name.length > 20 ? p.name.slice(0, 18) + '…' : p.name }))
 }
 
+function buildTopClients(orders: any[]): TopClient[] {
+  const map: Record<string, TopClient> = {}
+  for (const order of orders) {
+    if (order.status === 'cancelled') continue
+    const email = order.shipping_address?.email || order.user_id || 'unknown'
+    const name = `${order.shipping_address?.firstName || ''} ${order.shipping_address?.lastName || ''}`.trim() || email
+    if (!map[email]) map[email] = { name, email, orders: 0, total: 0 }
+    map[email].orders += 1
+    map[email].total += order.total || 0
+  }
+  return Object.values(map)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 5)
+}
+
 export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [period, setPeriod] = useState<7 | 30>(30)
+  const [period, setPeriod] = useState<7 | 30 | 90>(30)
 
   useEffect(() => {
     let isMounted = true
@@ -120,8 +147,8 @@ export default function AdminDashboard() {
 
         const validOrders = orders.filter((o: any) => o.status !== 'cancelled')
         const totalRevenue = validOrders.reduce((s: number, o: any) => s + (o.total || 0), 0)
+        const avgOrderValue = validOrders.length > 0 ? totalRevenue / validOrders.length : 0
 
-        // Calcul variation sur 30j vs 30j précédents
         const now = Date.now()
         const ms30 = 30 * 86400000
         const last30 = validOrders.filter((o: any) => new Date(o.created_at).getTime() > now - ms30)
@@ -134,6 +161,10 @@ export default function AdminDashboard() {
         const revenueChange = prev30Rev > 0 ? Math.round(((last30Rev - prev30Rev) / prev30Rev) * 100 * 10) / 10 : 0
         const ordersChange = prev30.length > 0 ? Math.round(((last30.length - prev30.length) / prev30.length) * 100 * 10) / 10 : 0
 
+        const last30Avg = last30.length > 0 ? last30Rev / last30.length : 0
+        const prev30Avg = prev30.length > 0 ? prev30Rev / prev30.length : 0
+        const avgOrderChange = prev30Avg > 0 ? Math.round(((last30Avg - prev30Avg) / prev30Avg) * 100 * 10) / 10 : 0
+
         const lowStockProducts: LowStockProduct[] = products
           .filter((p: any) => p.stock !== null && p.stock <= 5)
           .sort((a: any, b: any) => a.stock - b.stock)
@@ -145,12 +176,15 @@ export default function AdminDashboard() {
           totalRevenue,
           totalUsers: usersRes.data?.length || 0,
           totalProducts: products.length,
+          avgOrderValue,
           recentOrders: orders.slice(0, 5),
-          revenueByDay: buildRevenueByDay(orders),
+          revenueByDay: buildRevenueByDay(orders, 90),
           topProducts: buildTopProducts(items),
+          topClients: buildTopClients(orders),
           lowStockProducts,
           ordersChange,
           revenueChange,
+          avgOrderChange,
         })
       } catch (error) {
         if (isMounted) console.error('Error fetching stats:', error)
@@ -164,18 +198,18 @@ export default function AdminDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800'
-      case 'processing': return 'bg-blue-100 text-blue-800'
-      case 'confirmed': return 'bg-blue-100 text-blue-800'
-      case 'shipped': return 'bg-purple-100 text-purple-800'
-      case 'cancelled': return 'bg-red-100 text-red-800'
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+      case 'processing': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+      case 'confirmed': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+      case 'shipped': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
+      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
       default: return 'bg-admin-surface-alt text-admin-text'
     }
   }
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'completed': return 'Terminée'
+      case 'completed': return 'Livrée'
       case 'processing': return 'En cours'
       case 'confirmed': return 'Confirmée'
       case 'shipped': return 'Expédiée'
@@ -188,18 +222,23 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-2 border-[#C9A962] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (!data) return null
 
-  const chartData = period === 7 ? data.revenueByDay.slice(-7) : data.revenueByDay
+  const chartData = period === 7
+    ? data.revenueByDay.slice(-7)
+    : period === 30
+      ? data.revenueByDay.slice(-30)
+      : data.revenueByDay
 
   const statCards = [
-    { title: 'Chiffre d\'affaires', value: `${data.totalRevenue.toLocaleString('fr-FR')} €`, change: data.revenueChange, icon: DollarSign, color: 'bg-green-500' },
+    { title: 'Chiffre d\'affaires', value: `${data.totalRevenue.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`, change: data.revenueChange, icon: DollarSign, color: 'bg-green-500' },
     { title: 'Commandes', value: data.totalOrders, change: data.ordersChange, icon: ShoppingCart, color: 'bg-blue-500' },
+    { title: 'Panier moyen', value: `${data.avgOrderValue.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`, change: data.avgOrderChange, icon: ShoppingBag, color: 'bg-amber-500' },
     { title: 'Utilisateurs', value: data.totalUsers, change: 0, icon: Users, color: 'bg-purple-500' },
     { title: 'Produits actifs', value: data.totalProducts, change: 0, icon: Package, color: 'bg-orange-500' },
   ]
@@ -208,13 +247,13 @@ export default function AdminDashboard() {
     <div className="space-y-6 p-6">
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {statCards.map((stat, index) => (
           <m.div
             key={stat.title}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.08 }}
+            transition={{ delay: index * 0.07 }}
             className="bg-admin-surface rounded-xl p-5 shadow-sm"
           >
             <div className="flex items-center justify-between mb-3">
@@ -222,13 +261,13 @@ export default function AdminDashboard() {
                 <stat.icon className="w-5 h-5 text-white" />
               </div>
               {stat.change !== 0 && (
-                <div className={`flex items-center gap-1 text-xs font-medium ${stat.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`flex items-center gap-1 text-xs font-medium ${stat.change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                   {stat.change > 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                   {Math.abs(stat.change)}%
                 </div>
               )}
             </div>
-            <p className="text-2xl font-semibold mb-0.5">{stat.value}</p>
+            <p className="text-xl font-semibold mb-0.5 truncate">{stat.value}</p>
             <p className="text-xs text-admin-muted">{stat.title}</p>
           </m.div>
         ))}
@@ -271,9 +310,9 @@ export default function AdminDashboard() {
             <p className="text-xs text-admin-muted mt-0.5">Revenus journaliers (commandes validées)</p>
           </div>
           <div className="flex gap-1">
-            {([7, 30] as const).map((p) => (
+            {([7, 30, 90] as const).map((p) => (
               <button key={p} onClick={() => setPeriod(p)}
-                className={`px-3 py-1 text-xs rounded-lg transition-colors ${period === p ? 'bg-[#C9A962] text-white' : 'bg-admin-surface-alt text-admin-muted hover:text-admin-text'}`}
+                className={`px-3 py-1 text-xs rounded-lg transition-colors ${period === p ? 'bg-primary text-primary-foreground' : 'bg-admin-surface-alt text-admin-muted hover:text-admin-text'}`}
               >
                 {p}j
               </button>
@@ -290,7 +329,7 @@ export default function AdminDashboard() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.1)" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval={period === 30 ? 4 : 0} />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} interval={period === 90 ? 8 : period === 30 ? 4 : 0} />
               <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}€`} />
               <Tooltip
                 formatter={(v: any) => [`${Number(v).toFixed(2)} €`, 'Revenus']}
@@ -332,7 +371,7 @@ export default function AdminDashboard() {
         >
           <div className="flex items-center justify-between p-5 border-b border-admin-border">
             <h2 className="text-base font-medium">Commandes récentes</h2>
-            <Link href="/admin/commandes" className="text-xs text-[#C9A962] hover:underline">Voir tout</Link>
+            <Link href="/admin/commandes" className="text-xs text-primary hover:underline">Voir tout</Link>
           </div>
           {data.recentOrders.length > 0 ? (
             <div className="divide-y divide-admin-border">
@@ -345,7 +384,7 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium">{order.total?.toLocaleString('fr-FR')} €</p>
+                    <p className="text-sm font-medium">{order.total?.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</p>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(order.status)}`}>
                       {getStatusLabel(order.status)}
                     </span>
@@ -362,15 +401,49 @@ export default function AdminDashboard() {
         </m.div>
       </div>
 
+      {/* Top clients */}
+      {data.topClients.length > 0 && (
+        <m.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+          className="bg-admin-surface rounded-xl shadow-sm"
+        >
+          <div className="flex items-center gap-2 p-5 border-b border-admin-border">
+            <Crown className="w-4 h-4 text-primary" />
+            <h2 className="text-base font-medium">Meilleurs clients</h2>
+          </div>
+          <div className="divide-y divide-admin-border">
+            {data.topClients.map((client, index) => (
+              <div key={client.email} className="flex items-center justify-between px-5 py-3 hover:bg-admin-surface-alt transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                    index === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                    index === 1 ? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' :
+                    index === 2 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
+                    'bg-admin-surface-alt text-admin-muted'
+                  }`}>{index + 1}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{client.name}</p>
+                    <p className="text-xs text-admin-muted truncate">{client.email}</p>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0 ml-4">
+                  <p className="text-sm font-medium">{client.total.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</p>
+                  <p className="text-xs text-admin-muted">{client.orders} commande{client.orders > 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </m.div>
+      )}
+
       {/* Actions rapides */}
-      <m.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+      <m.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
         className="grid grid-cols-1 sm:grid-cols-3 gap-4"
       >
         <Link href="/admin/produits/nouveau"
           className="bg-admin-surface rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
         >
-          <div className="p-2.5 bg-[#C9A962]/10 rounded-lg">
-            <Package className="w-5 h-5 text-[#C9A962]" />
+          <div className="p-2.5 bg-primary/10 rounded-lg">
+            <Package className="w-5 h-5 text-primary" />
           </div>
           <div>
             <p className="font-medium text-sm">Ajouter un produit</p>
@@ -380,7 +453,7 @@ export default function AdminDashboard() {
         <Link href="/admin/commandes"
           className="bg-admin-surface rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
         >
-          <div className="p-2.5 bg-blue-50 rounded-lg">
+          <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <ShoppingCart className="w-5 h-5 text-blue-500" />
           </div>
           <div>
@@ -391,7 +464,7 @@ export default function AdminDashboard() {
         <Link href="/admin/blog"
           className="bg-admin-surface rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
         >
-          <div className="p-2.5 bg-purple-50 rounded-lg">
+          <div className="p-2.5 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
             <TrendingUp className="w-5 h-5 text-purple-500" />
           </div>
           <div>
