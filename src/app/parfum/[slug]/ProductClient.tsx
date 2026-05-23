@@ -459,10 +459,7 @@ export default function ProductPage() {
 
             {/* Price */}
             <div className="flex items-center gap-4 mb-8">
-              <div className="flex flex-col">
-                <span className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-0.5">À partir de</span>
-                <span className="text-3xl font-light">{currentPrice.toLocaleString('fr-FR')} €</span>
-              </div>
+              <span className="text-3xl font-light">{currentPrice.toLocaleString('fr-FR')} €</span>
               {product.originalPrice && (
                 <span className="text-lg text-muted-foreground/60 line-through">
                   {getSizePrice(selectedSize) * (product.originalPrice / product.price)} €
