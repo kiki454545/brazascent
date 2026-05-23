@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { m } from 'framer-motion'
-import { X, Search, ChevronDown, ChevronUp, Sparkles } from 'lucide-react'
+import { X, Search, ChevronDown, ChevronUp, Sparkles, SlidersHorizontal } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import dynamic from 'next/dynamic'
 import { Product } from '@/types'
@@ -50,6 +50,9 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
   const [sortBy, setSortBy] = useState('newest')
   const [searchQuery, setSearchQuery] = useState(initialSearch)
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
+
+  // Tiroir filtres mobile
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
   // Sidebar sections open/close (desktop)
   const [openSections, setOpenSections] = useState({ category: true, brand: true, format: true, price: true })
@@ -179,7 +182,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
         <div className="px-6 sm:px-10 lg:px-20">
 
           {/* Mobile top bar */}
-          <div className="flex items-center gap-4 mb-6 lg:hidden">
+          <div className="flex items-center gap-2 mb-6 lg:hidden">
             <div className="relative flex-1">
               <input
                 type="text"
@@ -202,7 +205,131 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
             >
               {sortOptions.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
             </select>
+            <button
+              onClick={() => setMobileFiltersOpen(true)}
+              className="relative flex items-center gap-1.5 px-3 py-2 border border-border text-sm hover:border-primary transition-colors shrink-0"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filtres
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-medium">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
+
+          {/* Tiroir filtres mobile */}
+          {mobileFiltersOpen && (
+            <div className="fixed inset-0 z-50 lg:hidden">
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-black/50" onClick={() => setMobileFiltersOpen(false)} />
+              {/* Panneau */}
+              <div className="absolute right-0 top-0 h-full w-80 max-w-[90vw] bg-background overflow-y-auto shadow-xl">
+                {/* En-tête */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-border sticky top-0 bg-background z-10">
+                  <span className="text-sm tracking-[0.15em] uppercase font-medium">Filtres</span>
+                  <button onClick={() => setMobileFiltersOpen(false)}>
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="px-5 py-4 space-y-6">
+                  {/* Tri */}
+                  <div>
+                    <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Trier par</p>
+                    <div className="space-y-1">
+                      {sortOptions.map(o => (
+                        <button key={o.id} onClick={() => setSortBy(o.id)}
+                          className={`w-full text-left text-sm py-2 px-2 transition-colors ${sortBy === o.id ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                          {o.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Catégorie */}
+                  <div>
+                    <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Catégorie</p>
+                    <div className="space-y-1">
+                      {categories.map(c => (
+                        <button key={c.id} onClick={() => setSelectedCategory(c.id)}
+                          className={`w-full text-left text-sm py-2 px-2 transition-colors ${selectedCategory === c.id ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                          {c.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Marque */}
+                  {brands.length > 0 && (
+                    <div>
+                      <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Marque</p>
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
+                        <button onClick={() => setSelectedBrand('all')}
+                          className={`w-full text-left text-sm py-2 px-2 transition-colors ${selectedBrand === 'all' ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                          Toutes
+                        </button>
+                        {brands.map(b => (
+                          <button key={b.id} onClick={() => setSelectedBrand(b.name)}
+                            className={`w-full text-left text-sm py-2 px-2 transition-colors ${selectedBrand === b.name ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                            {b.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Format */}
+                  <div>
+                    <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Format</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={() => setSelectedFormat('all')}
+                        className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedFormat === 'all' ? 'bg-foreground text-background border-foreground' : 'border-border'}`}>
+                        Tous
+                      </button>
+                      {formats.map(f => (
+                        <button key={f} onClick={() => setSelectedFormat(f)}
+                          className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedFormat === f ? 'bg-foreground text-background border-foreground' : 'border-border'}`}>
+                          {f}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Prix */}
+                  <div>
+                    <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Prix</p>
+                    <p className="text-xs text-muted-foreground mb-3">{priceRange[0]} € — {priceRange[1]} €</p>
+                    <div className="space-y-2">
+                      <input type="range" min={globalMin} max={globalMax} value={priceRange[0]}
+                        onChange={e => setPriceRange([Math.min(Number(e.target.value), priceRange[1] - 1), priceRange[1]])}
+                        className="w-full accent-primary" />
+                      <input type="range" min={globalMin} max={globalMax} value={priceRange[1]}
+                        onChange={e => setPriceRange([priceRange[0], Math.max(Number(e.target.value), priceRange[0] + 1)])}
+                        className="w-full accent-primary" />
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>{globalMin} €</span><span>{globalMax} €</span>
+                    </div>
+                  </div>
+
+                  {/* Reset + Appliquer */}
+                  <div className="flex gap-3 pt-2">
+                    {activeFilterCount > 0 && (
+                      <button onClick={() => { resetFilters(); }} className="flex-1 py-2.5 border border-border text-sm tracking-[0.1em] uppercase hover:border-foreground transition-colors">
+                        Réinitialiser
+                      </button>
+                    )}
+                    <button onClick={() => setMobileFiltersOpen(false)}
+                      className="flex-1 py-2.5 bg-foreground text-background text-sm tracking-[0.1em] uppercase dark:bg-primary dark:text-primary-foreground hover:bg-primary transition-colors">
+                      Voir {filteredProducts.length} résultat{filteredProducts.length > 1 ? 's' : ''}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-8 lg:gap-12">
             {/* ── Sidebar desktop ── */}
