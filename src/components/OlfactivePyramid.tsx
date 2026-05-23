@@ -8,27 +8,9 @@ interface Props {
 }
 
 const TIERS = [
-  {
-    key: 'top' as const,
-    label: 'Tête',
-    sub: '15–30 min',
-    desc: 'Première impression',
-    barWidth: 'w-1',
-  },
-  {
-    key: 'heart' as const,
-    label: 'Cœur',
-    sub: '2–4 heures',
-    desc: 'Caractère du parfum',
-    barWidth: 'w-1.5',
-  },
-  {
-    key: 'base' as const,
-    label: 'Fond',
-    sub: '6 heures+',
-    desc: 'Signature durable',
-    barWidth: 'w-2',
-  },
+  { key: 'top' as const, label: 'Tête', sub: '15–30 min', desc: 'Première impression', barWidth: 'w-1' },
+  { key: 'heart' as const, label: 'Cœur', sub: '2–4 heures', desc: 'Caractère du parfum', barWidth: 'w-1.5' },
+  { key: 'base' as const, label: 'Fond', sub: '6 heures+', desc: 'Signature durable', barWidth: 'w-2' },
 ]
 
 function getImage(note: string, noteImages?: Record<string, string>) {
@@ -40,10 +22,57 @@ function getImage(note: string, noteImages?: Record<string, string>) {
   )
 }
 
-export default function OlfactivePyramid({ notes, noteImages }: Props) {
-  const hasAny = notes.top.length > 0 || notes.heart.length > 0 || notes.base.length > 0
-  if (!hasAny) return null
+function NoteCircle({ note, noteImages }: { note: string; noteImages?: Record<string, string> }) {
+  const img = getImage(note, noteImages)
+  return (
+    <div className="flex flex-col items-center gap-1.5 w-14">
+      <div className="w-12 h-12 rounded-full overflow-hidden border border-border bg-cream shrink-0">
+        {img ? (
+          <Image src={img} alt={note} width={48} height={48} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted/30">
+            <span className="text-[8px] text-muted-foreground text-center leading-tight px-0.5">
+              {note.split(' ')[0]}
+            </span>
+          </div>
+        )}
+      </div>
+      <span className="text-[10px] text-muted-foreground text-center leading-tight">{note}</span>
+    </div>
+  )
+}
 
+export default function OlfactivePyramid({ notes, noteImages }: Props) {
+  const tiersWithNotes = TIERS.filter(t => notes[t.key].length > 0)
+
+  if (tiersWithNotes.length === 0) return null
+
+  // Un seul palier renseigné → affichage "Notes principales" à plat
+  if (tiersWithNotes.length === 1) {
+    const allNotes = notes[tiersWithNotes[0].key]
+    return (
+      <div>
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-lg tracking-[0.15em] uppercase">Notes principales</h2>
+          <span className="text-[10px] text-muted-foreground border border-border px-2 py-0.5 tracking-wide">
+            Pyramide non communiquée par la marque
+          </span>
+        </div>
+        <div className="border border-border p-5">
+          <div className="flex flex-wrap gap-4">
+            {allNotes.map(note => (
+              <NoteCircle key={note} note={note} noteImages={noteImages} />
+            ))}
+          </div>
+        </div>
+        <p className="mt-3 text-[10px] text-muted-foreground/50 tracking-[0.1em]">
+          La marque n&apos;a pas communiqué la répartition tête / cœur / fond pour ce parfum.
+        </p>
+      </div>
+    )
+  }
+
+  // Pyramide complète (≥ 2 paliers renseignés)
   return (
     <div>
       <div className="flex items-start gap-6">
@@ -64,13 +93,9 @@ export default function OlfactivePyramid({ notes, noteImages }: Props) {
             const tierNotes = notes[tier.key]
             return (
               <div key={tier.key} className="flex gap-4 p-4">
-
-                {/* Barre latérale progressive */}
                 <div className="flex flex-col items-center shrink-0">
                   <div className={`${tier.barWidth} bg-primary/70 self-stretch rounded-full`} />
                 </div>
-
-                {/* Contenu */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2 mb-3">
                     <span className="text-xs font-semibold tracking-[0.15em] uppercase text-foreground">
@@ -80,41 +105,14 @@ export default function OlfactivePyramid({ notes, noteImages }: Props) {
                       {tier.sub} · {tier.desc}
                     </span>
                   </div>
-
                   {tierNotes.length > 0 ? (
                     <div className="flex flex-wrap gap-3">
-                      {tierNotes.map((note) => {
-                        const img = getImage(note, noteImages)
-                        return (
-                          <div key={note} className="flex flex-col items-center gap-1.5 w-14">
-                            {/* Image ou placeholder */}
-                            <div className="w-12 h-12 rounded-full overflow-hidden border border-border bg-cream shrink-0">
-                              {img ? (
-                                <Image
-                                  src={img}
-                                  alt={note}
-                                  width={48}
-                                  height={48}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-muted/30">
-                                  <span className="text-[8px] text-muted-foreground text-center leading-tight px-0.5">
-                                    {note.split(' ')[0]}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            {/* Nom de la note */}
-                            <span className="text-[10px] text-muted-foreground text-center leading-tight">
-                              {note}
-                            </span>
-                          </div>
-                        )
-                      })}
+                      {tierNotes.map(note => (
+                        <NoteCircle key={note} note={note} noteImages={noteImages} />
+                      ))}
                     </div>
                   ) : (
-                    <span className="text-xs text-muted-foreground/40 italic">Non renseigné</span>
+                    <span className="text-xs text-muted-foreground/40 italic">Non communiqué</span>
                   )}
                 </div>
               </div>
@@ -122,8 +120,6 @@ export default function OlfactivePyramid({ notes, noteImages }: Props) {
           })}
         </div>
       </div>
-
-      {/* Légende */}
       <p className="mt-3 text-[10px] text-muted-foreground/50 tracking-[0.1em] text-right">
         TÊTE → CŒUR → FOND · du plus volatile au plus persistant
       </p>
