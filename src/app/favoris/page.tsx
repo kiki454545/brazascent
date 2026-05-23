@@ -31,20 +31,26 @@ export default function FavorisPage() {
       try {
         const { data, error } = await supabase
           .from('products')
-          .select('*')
+          .select('id, name, slug, description, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, notes_top, notes_heart, notes_base, stock, is_new, is_bestseller')
           .in('id', wishlistIds)
 
         if (error) {
           console.error('Error fetching wishlist products:', error)
           setWishlistProducts([])
         } else if (data) {
-          const mappedProducts: Product[] = data.map((p: any) => ({
+          const mappedProducts: Product[] = data.map((p: any) => {
+            const priceBySize = typeof p.price_by_size === 'string'
+              ? JSON.parse(p.price_by_size)
+              : (p.price_by_size || {})
+            const prices = Object.values(priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
+            const displayPrice = prices.length > 0 ? Math.min(...prices) : (p.price || 0)
+            return {
             id: p.id,
             name: p.name,
             slug: p.slug,
             description: p.description || '',
             shortDescription: p.short_description || '',
-            price: p.price,
+            price: displayPrice,
             originalPrice: p.original_price,
             images: p.images || [],
             size: p.sizes || [],
@@ -60,7 +66,7 @@ export default function FavorisPage() {
             new: p.is_new,
             bestseller: p.is_bestseller,
             featured: p.is_bestseller
-          }))
+          }})
           setWishlistProducts(mappedProducts)
         }
       } catch (err) {
@@ -212,7 +218,9 @@ export default function FavorisPage() {
                   <h3 className="text-lg font-light tracking-[0.1em] uppercase mb-2 group-hover:text-primary transition-colors">
                     {product.name}
                   </h3>
-                  <p className="text-lg">{product.price} €</p>
+                  <p className="text-lg">
+                    {product.price > 0 ? `À partir de ${product.price} €` : '—'}
+                  </p>
                 </Link>
               </div>
             ))}
