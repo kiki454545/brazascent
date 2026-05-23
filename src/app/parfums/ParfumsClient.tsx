@@ -74,7 +74,11 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
   const globalMax = Math.ceil(Math.max(...allPrices, 200))
   const [priceRange, setPriceRange] = useState<[number, number]>([globalMin, globalMax])
 
-  const getProductMinPrice = (product: Product) => {
+  const getProductDisplayPrice = (product: Product) => {
+    if (selectedFormat !== 'all' && product.priceBySize) {
+      const key = Object.keys(product.priceBySize).find(k => k.toLowerCase() === selectedFormat.toLowerCase())
+      if (key && product.priceBySize[key] > 0) return product.priceBySize[key]
+    }
     if (product.priceBySize) {
       const vals = Object.values(product.priceBySize).filter(v => v > 0)
       if (vals.length > 0) return Math.min(...vals)
@@ -87,7 +91,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
     .filter(p => selectedBrand === 'all' || p.brand === selectedBrand)
     .filter(p => selectedFormat === 'all' || p.size?.some(s => s.toLowerCase() === selectedFormat.toLowerCase()))
     .filter(p => {
-      const price = getProductMinPrice(p)
+      const price = getProductDisplayPrice(p)
       return price >= priceRange[0] && price <= priceRange[1]
     })
     .filter(p => {
@@ -97,8 +101,8 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case 'price-asc': return getProductMinPrice(a) - getProductMinPrice(b)
-        case 'price-desc': return getProductMinPrice(b) - getProductMinPrice(a)
+        case 'price-asc': return getProductDisplayPrice(a) - getProductDisplayPrice(b)
+        case 'price-desc': return getProductDisplayPrice(b) - getProductDisplayPrice(a)
         case 'name': return a.name.localeCompare(b.name)
         default: return b.new ? 1 : -1
       }
@@ -252,8 +256,8 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                   <div>
                     <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Catégorie</p>
                     <div className="space-y-1">
-                      {categories.map(c => (
-                        <button key={c.id} onClick={() => setSelectedCategory(c.id === selectedCategory && c.id !== 'all' ? 'all' : c.id)}
+                      {categories.filter(c => c.id !== 'all').map(c => (
+                        <button key={c.id} onClick={() => setSelectedCategory(c.id === selectedCategory ? 'all' : c.id)}
                           className={`w-full text-left text-sm py-2 px-2 transition-colors ${selectedCategory === c.id ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                           {c.name}
                         </button>
@@ -266,10 +270,6 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                     <div>
                       <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Marque</p>
                       <div className="space-y-1 max-h-48 overflow-y-auto">
-                        <button onClick={() => setSelectedBrand('all')}
-                          className={`w-full text-left text-sm py-2 px-2 transition-colors ${selectedBrand === 'all' ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-                          Toutes
-                        </button>
                         {brands.map(b => (
                           <button key={b.id} onClick={() => setSelectedBrand(b.name === selectedBrand ? 'all' : b.name)}
                             className={`w-full text-left text-sm py-2 px-2 transition-colors ${selectedBrand === b.name ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
@@ -284,10 +284,6 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                   <div>
                     <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Format</p>
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={() => setSelectedFormat('all')}
-                        className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedFormat === 'all' ? 'bg-foreground text-background border-foreground' : 'border-border'}`}>
-                        Tous
-                      </button>
                       {formats.map(f => (
                         <button key={f} onClick={() => setSelectedFormat(f === selectedFormat ? 'all' : f)}
                           className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedFormat === f ? 'bg-foreground text-background border-foreground' : 'border-border'}`}>
@@ -382,10 +378,10 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                   <SectionHeader label="Catégorie" sectionKey="category" />
                   {openSections.category && (
                     <div className="mt-2 space-y-1">
-                      {categories.map(c => (
+                      {categories.filter(c => c.id !== 'all').map(c => (
                         <button
                           key={c.id}
-                          onClick={() => setSelectedCategory(c.id === selectedCategory && c.id !== 'all' ? 'all' : c.id)}
+                          onClick={() => setSelectedCategory(c.id === selectedCategory ? 'all' : c.id)}
                           className={`w-full text-left text-sm py-1.5 px-2 transition-colors ${selectedCategory === c.id ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                           {c.name}
@@ -401,12 +397,6 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                     <SectionHeader label="Marque" sectionKey="brand" />
                     {openSections.brand && (
                       <div className="mt-2 max-h-48 overflow-y-auto space-y-1 pr-1">
-                        <button
-                          onClick={() => setSelectedBrand('all')}
-                          className={`w-full text-left text-sm py-1.5 px-2 transition-colors ${selectedBrand === 'all' ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
-                        >
-                          Toutes
-                        </button>
                         {brands.map(b => (
                           <button
                             key={b.id}
@@ -426,12 +416,6 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                   <SectionHeader label="Format" sectionKey="format" />
                   {openSections.format && (
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => setSelectedFormat('all')}
-                        className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedFormat === 'all' ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'}`}
-                      >
-                        Tous
-                      </button>
                       {formats.map(f => (
                         <button
                           key={f}
@@ -501,7 +485,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
                     {visibleProducts.map((product, index) => (
-                      <ProductCard key={product.id} product={product} index={index} />
+                      <ProductCard key={product.id} product={product} index={index} preferredSize={selectedFormat !== 'all' ? selectedFormat : undefined} />
                     ))}
                   </div>
 

@@ -12,11 +12,17 @@ import { useWishlistStore } from '@/store/wishlist'
 interface ProductCardProps {
   product: Product
   index?: number
+  preferredSize?: string
 }
 
-export function ProductCard({ product, index = 0 }: ProductCardProps) {
+export function ProductCard({ product, index = 0, preferredSize }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [selectedSize, setSelectedSize] = useState(product.size?.[0] || '')
+  const [selectedSize, setSelectedSize] = useState(() => {
+    if (preferredSize && product.size?.some(s => s.toLowerCase() === preferredSize.toLowerCase())) {
+      return product.size.find(s => s.toLowerCase() === preferredSize.toLowerCase()) || product.size?.[0] || ''
+    }
+    return product.size?.[0] || ''
+  })
   const [mounted, setMounted] = useState(false)
   const { addItem, openCart } = useCartStore()
   const { toggleItem, isInWishlist } = useWishlistStore()
@@ -47,6 +53,14 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Sync taille préférée quand le filtre format change
+  useEffect(() => {
+    if (preferredSize) {
+      const match = product.size?.find(s => s.toLowerCase() === preferredSize.toLowerCase())
+      if (match) setSelectedSize(match)
+    }
+  }, [preferredSize, product.size])
 
   // Ne vérifier la wishlist qu'après le montage côté client
   const inWishlist = mounted ? isInWishlist(product.id) : false
