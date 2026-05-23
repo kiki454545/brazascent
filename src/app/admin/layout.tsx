@@ -23,7 +23,8 @@ import {
   Flower2,
   Star,
   BookOpen,
-  Video
+  Video,
+  Percent
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -39,6 +40,7 @@ const adminNav = [
   { name: 'Marques', href: '/admin/marques', icon: Building2 },
   { name: 'Commandes', href: '/admin/commandes', icon: ShoppingCart },
   { name: 'Livraisons', href: '/admin/livraisons', icon: Truck },
+  { name: 'Produits Promo', href: '/admin/promos', icon: Percent },
   { name: 'Codes Promo', href: '/admin/promo', icon: Tag },
   { name: 'Avis clients', href: '/admin/avis', icon: Star },
   { name: 'Blog', href: '/admin/blog', icon: BookOpen },

@@ -16,6 +16,7 @@ import {
   ExternalLink,
   ShoppingBag,
   Crown,
+  Percent,
 } from 'lucide-react'
 import { supabaseFetch } from '@/lib/supabase'
 
@@ -437,7 +438,7 @@ export default function AdminDashboard() {
 
       {/* Actions rapides */}
       <m.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
-        className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
       >
         <Link href="/admin/produits/nouveau"
           className="bg-admin-surface rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
@@ -470,6 +471,17 @@ export default function AdminDashboard() {
           <div>
             <p className="font-medium text-sm">Gérer le blog</p>
             <p className="text-xs text-admin-muted">Articles et contenu</p>
+          </div>
+        </Link>
+        <Link href="/admin/promos"
+          className="bg-admin-surface rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4"
+        >
+          <div className="p-2.5 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <Percent className="w-5 h-5 text-red-500" />
+          </div>
+          <div>
+            <p className="font-medium text-sm">Produits Promo</p>
+            <p className="text-xs text-admin-muted">Gérer les promotions</p>
           </div>
         </Link>
       </m.div>

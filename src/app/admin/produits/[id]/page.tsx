@@ -1178,6 +1178,43 @@ const saveAccords = async () => {
                   />
                 </label>
 
+                {form.is_promo && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg space-y-3">
+                    <p className="text-sm font-medium text-red-700">Prix de la promotion</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-red-600 mb-1">Prix barré (avant promo)</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={form.original_price ?? ''}
+                            onChange={(e) => setForm({ ...form, original_price: e.target.value ? parseFloat(e.target.value) : null })}
+                            placeholder="Ex: 12.90"
+                            className="w-full px-3 py-2 pr-8 bg-white border border-red-300 text-admin-text rounded-lg focus:outline-none focus:border-red-500"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 text-sm">€</span>
+                        </div>
+                        <p className="text-xs text-red-400 mt-1">Affiché barré à côté du prix promo</p>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        {form.original_price && (() => {
+                          const prices = Object.values(form.price_by_size ?? {}).filter((v): v is number => typeof v === 'number' && v > 0)
+                          const minPrice = prices.length > 0 ? Math.min(...prices) : 0
+                          const pct = minPrice > 0 ? Math.round((1 - minPrice / form.original_price) * 100) : 0
+                          return pct > 0 ? (
+                            <div className="text-center">
+                              <span className="text-2xl font-bold text-red-600">-{pct}%</span>
+                              <p className="text-xs text-red-400 mt-1">de réduction</p>
+                            </div>
+                          ) : null
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <label className="flex items-center justify-between p-4 bg-orange-50 rounded-lg cursor-pointer">
                   <div>
                     <p className="font-medium text-orange-700">Masquer le produit</p>

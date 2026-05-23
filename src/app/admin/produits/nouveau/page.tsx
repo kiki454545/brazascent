@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { m } from 'framer-motion'
 import {
@@ -68,6 +68,7 @@ interface ProductForm {
 
 export default function NewProductPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -100,6 +101,13 @@ export default function NewProductPage() {
     is_promo: false,
     unlimited_stock: false
   })
+
+  // Pré-remplir is_promo si on vient de la page Produits Promo
+  useEffect(() => {
+    if (searchParams.get('promo') === 'true') {
+      setForm(f => ({ ...f, is_promo: true }))
+    }
+  }, [searchParams])
 
   const [newNote, setNewNote] = useState({ top: '', heart: '', base: '' })
   const [newSize, setNewSize] = useState('')
@@ -905,6 +913,56 @@ const addSize = () => {
                     className="w-5 h-5 rounded border-admin-border accent-[#C9A962]"
                   />
                 </label>
+
+                <label className="flex items-center justify-between p-4 bg-red-50 rounded-lg cursor-pointer">
+                  <div>
+                    <p className="font-medium text-red-700">Promo</p>
+                    <p className="text-sm text-red-400">Badge rouge &quot;Promo&quot; + visible dans l&apos;onglet Promos</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={form.is_promo}
+                    onChange={(e) => setForm({ ...form, is_promo: e.target.checked })}
+                    className="w-5 h-5 rounded border-red-300 accent-red-500"
+                  />
+                </label>
+
+                {form.is_promo && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg space-y-3">
+                    <p className="text-sm font-medium text-red-700">Prix de la promotion</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-red-600 mb-1">Prix barré (avant promo)</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={form.original_price ?? ''}
+                            onChange={(e) => setForm({ ...form, original_price: e.target.value ? parseFloat(e.target.value) : null })}
+                            placeholder="Ex: 12.90"
+                            className="w-full px-3 py-2 pr-8 bg-white border border-red-300 text-admin-text rounded-lg focus:outline-none focus:border-red-500"
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-400 text-sm">€</span>
+                        </div>
+                        <p className="text-xs text-red-400 mt-1">Affiché barré à côté du prix promo</p>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        {form.original_price && (() => {
+                          const prices = Object.values(form.price_by_size ?? {}).filter((v): v is number => typeof v === 'number' && v > 0)
+                          const minPrice = prices.length > 0 ? Math.min(...prices) : 0
+                          const pct = minPrice > 0 ? Math.round((1 - minPrice / form.original_price) * 100) : 0
+                          return pct > 0 ? (
+                            <div className="text-center">
+                              <span className="text-2xl font-bold text-red-600">-{pct}%</span>
+                              <p className="text-xs text-red-400 mt-1">de réduction</p>
+                            </div>
+                          ) : null
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </m.div>
@@ -912,7 +970,7 @@ const addSize = () => {
 
         <div className="flex items-center justify-end gap-4 mt-6 pt-6 border-t border-admin-border">
           <Link
-            href="/admin/produits"
+            href={searchParams.get('promo') === 'true' ? '/admin/promos' : '/admin/produits'}
             className="px-6 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors"
           >
             Annuler
