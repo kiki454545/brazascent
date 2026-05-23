@@ -261,7 +261,10 @@ export default function CheckoutPage() {
       }
     }
 
-    return shippingAddress
+    return {
+      ...shippingAddress,
+      email: user ? (profile?.email || shippingAddress.email) : shippingAddress.email,
+    }
   }
 
   const handleInformationSubmit = (e: React.FormEvent) => {
@@ -524,15 +527,19 @@ export default function CheckoutPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm text-muted-foreground mb-2">Email *</label>
+                        <label className="block text-sm text-muted-foreground mb-2">
+                          Email *
+                          {user && <span className="ml-2 text-xs text-primary">(lié à votre compte)</span>}
+                        </label>
                         <input
                           type="email"
-                          value={shippingAddress.email}
-                          onChange={(e) =>
-                            setShippingAddress({ ...shippingAddress, email: e.target.value })
-                          }
+                          value={user ? (profile?.email || shippingAddress.email) : shippingAddress.email}
+                          onChange={(e) => {
+                            if (!user) setShippingAddress({ ...shippingAddress, email: e.target.value })
+                          }}
+                          readOnly={!!user}
                           required
-                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
+                          className={`w-full px-4 py-3 border border-border focus:outline-none text-base ${user ? 'bg-muted text-muted-foreground cursor-default focus:border-border' : 'focus:border-primary'}`}
                         />
                       </div>
 
