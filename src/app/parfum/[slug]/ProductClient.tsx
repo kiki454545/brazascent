@@ -641,29 +641,33 @@ export default function ProductPage() {
               <p className="text-muted-foreground leading-relaxed">{product.description}</p>
             </div>
 
-            {/* Accords olfactifs (IA) */}
-            {product.accords && product.accords.length > 0 && (
-              <div className="mt-8">
-                <ScentAccords accords={product.accords} />
-              </div>
-            )}
+            {/* Accords + Pyramide côte à côte */}
+            {((product.accords?.length ?? 0) > 0 || product.notes.top.length > 0 || product.notes.heart.length > 0 || product.notes.base.length > 0 || product.pyramidImage) && (
+              <div className="mt-10 grid grid-cols-1 gap-10 xl:grid-cols-2">
 
-            {/* Pyramide olfactive */}
-            {(product.pyramidImage || product.notes.top.length > 0 || product.notes.heart.length > 0 || product.notes.base.length > 0) && (
-              <div className="mt-8">
-                <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Pyramide olfactive</h2>
-                {product.pyramidImage ? (
-                  <div className="rounded-2xl overflow-hidden" style={{ background: '#0c0906' }}>
-                    <Image
-                      src={product.pyramidImage}
-                      alt={`Pyramide olfactive — ${product.name}`}
-                      width={800}
-                      height={600}
-                      className="w-full h-auto object-contain"
-                    />
+                {/* Accords olfactifs */}
+                {product.accords && product.accords.length > 0 && (
+                  <ScentAccords accords={product.accords} />
+                )}
+
+                {/* Pyramide olfactive */}
+                {(product.pyramidImage || product.notes.top.length > 0 || product.notes.heart.length > 0 || product.notes.base.length > 0) && (
+                  <div>
+                    <h2 className="text-lg tracking-[0.15em] uppercase mb-5">Pyramide olfactive</h2>
+                    {product.pyramidImage ? (
+                      <div className="rounded-2xl overflow-hidden" style={{ background: '#0c0906' }}>
+                        <Image
+                          src={product.pyramidImage}
+                          alt={`Pyramide olfactive — ${product.name}`}
+                          width={800}
+                          height={600}
+                          className="w-full h-auto object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <OlfactivePyramid notes={product.notes} noteImages={product.noteImages} />
+                    )}
                   </div>
-                ) : (
-                  <OlfactivePyramid notes={product.notes} noteImages={product.noteImages} />
                 )}
               </div>
             )}
