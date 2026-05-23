@@ -202,13 +202,16 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           <p className="text-sm text-muted-foreground mb-2 line-clamp-2 break-words">
             {product.shortDescription}
           </p>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <span className="text-sm font-medium"><span className="text-xs text-muted-foreground font-normal">À partir de </span>{currentPrice.toLocaleString('fr-FR')} €</span>
-            {product.originalPrice && currentPrice < product.originalPrice && (
-              <span className="text-sm text-muted-foreground/60 line-through">
-                {product.originalPrice.toLocaleString('fr-FR')} €
-              </span>
-            )}
+          <div className="flex flex-col items-center gap-0.5">
+            <span className="text-[10px] font-serif italic text-foreground/60 tracking-wide">À partir de</span>
+            <div className="flex items-center gap-3 flex-wrap justify-center">
+              <span className="text-sm font-medium">{currentPrice.toLocaleString('fr-FR')} €</span>
+              {product.originalPrice && currentPrice < product.originalPrice && (
+                <span className="text-sm text-muted-foreground/60 line-through">
+                  {product.originalPrice.toLocaleString('fr-FR')} €
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </Link>
