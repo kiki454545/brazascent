@@ -5,7 +5,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { m } from 'framer-motion'
 import { Gift, Loader2 } from 'lucide-react'
-import { Benefits } from '@/components/Benefits'
 import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cart'
 
@@ -228,8 +227,6 @@ export default function PacksPage() {
           )}
         </div>
       </section>
-
-      <Benefits />
 
     </div>
   )
