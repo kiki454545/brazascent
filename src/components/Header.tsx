@@ -327,7 +327,7 @@ export function Header() {
               </Link>
 
               <Link
-                href="/compte/commandes"
+                href="/suivi"
                 className={`hidden sm:block p-2 transition-colors duration-300 ${
                   isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
                 }`}
@@ -435,7 +435,7 @@ export function Header() {
                           Mes favoris
                         </Link>
                         <Link
-                          href="/compte/commandes"
+                          href="/suivi"
                           onClick={() => setIsMenuOpen(false)}
                           className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                         >
@@ -480,7 +480,7 @@ export function Header() {
                           Mes favoris
                         </Link>
                         <Link
-                          href="/compte/commandes"
+                          href="/suivi"
                           onClick={() => setIsMenuOpen(false)}
                           className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
                         >
