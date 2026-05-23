@@ -155,36 +155,38 @@ export default function AdminLayout({
           <p className="text-sm text-gray-400 mt-1">Braza Scent</p>
         </div>
 
-        <nav className="p-4 space-y-1">
-          {adminNav.map((item) => {
-            const isActive = pathname === item.href ||
-              (item.href !== '/admin' && pathname.startsWith(item.href))
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-[#C9A962] text-white'
-                    : 'text-gray-300 hover:bg-white/10'
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                <span>{item.name}</span>
-              </Link>
-            )
-          })}
-        </nav>
+        <div className="flex flex-col h-[calc(100%-73px)]">
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+            {adminNav.map((item) => {
+              const isActive = pathname === item.href ||
+                (item.href !== '/admin' && pathname.startsWith(item.href))
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    isActive
+                      ? 'bg-[#C9A962] text-white'
+                      : 'text-gray-300 hover:bg-white/10'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  <span>{item.name}</span>
+                </Link>
+              )
+            })}
+          </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
-          <Link
-            href="/compte"
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Retour au compte
-          </Link>
+          <div className="shrink-0 p-4 border-t border-white/10">
+            <Link
+              href="/compte"
+              className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Retour au compte
+            </Link>
+          </div>
         </div>
       </aside>
 
