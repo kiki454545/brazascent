@@ -10,6 +10,7 @@ import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
 import { CartItem } from '@/types'
+import posthog from 'posthog-js'
 
 // Obtenir le prix d'un article selon sa taille
 const getItemPrice = (item: CartItem) => {
@@ -100,6 +101,7 @@ export default function CheckoutPage() {
   const [appliedPromoCode, setAppliedPromoCode] = useState<AppliedPromoCode | null>(null)
   const [promoDiscount, setPromoDiscount] = useState(0)
   const [promoError, setPromoError] = useState<string | null>(null)
+  const [promoRequiresLogin, setPromoRequiresLogin] = useState(false)
   const [validatingPromo, setValidatingPromo] = useState(false)
 
   // Charger les méthodes de livraison depuis la BDD
@@ -187,11 +189,20 @@ export default function CheckoutPage() {
 
     setValidatingPromo(true)
     setPromoError(null)
+    setPromoRequiresLogin(false)
 
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (user) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`
+        }
+      }
+
       const response = await fetch('/api/promo/validate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           code: promoCode.trim(),
           orderTotal: subtotal,
@@ -202,13 +213,24 @@ export default function CheckoutPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setPromoError(data.error || 'Code promo invalide')
+        if (data.requiresLogin) {
+          setPromoRequiresLogin(true)
+        } else {
+          setPromoError(data.error || 'Code promo invalide')
+        }
         return
       }
 
       setAppliedPromoCode(data.promoCode)
       setPromoDiscount(data.discountAmount)
       setPromoCode('')
+      posthog.capture('promo_code_applied', {
+        code: data.promoCode.code,
+        discount_type: data.promoCode.discount_type,
+        discount_value: data.promoCode.discount_value,
+        discount_amount: data.discountAmount,
+        order_subtotal: subtotal,
+      })
     } catch (err) {
       setPromoError('Erreur lors de la validation du code promo')
     } finally {
@@ -218,6 +240,7 @@ export default function CheckoutPage() {
 
   // Retirer le code promo
   const handleRemovePromoCode = () => {
+    setPromoRequiresLogin(false)
     setAppliedPromoCode(null)
     setPromoDiscount(0)
     setPromoError(null)
@@ -338,10 +361,27 @@ export default function CheckoutPage() {
 
       // Rediriger vers Stripe Checkout
       if (data.url) {
+        posthog.capture('checkout_started', {
+          item_count: items.length,
+          subtotal,
+          shipping_cost: shippingCost,
+          total,
+          shipping_method: selectedMethod?.title,
+          promo_code: appliedPromoCode?.code ?? null,
+          promo_discount: promoDiscount > 0 ? promoDiscount : null,
+          items: items.map(item => ({
+            product_id: item.product.id,
+            product_name: item.product.name,
+            size: item.selectedSize,
+            quantity: item.quantity,
+            price: getItemPrice(item),
+          })),
+        })
         window.location.href = data.url
       }
     } catch (err) {
       console.error('Payment error:', err)
+      posthog.captureException(err)
       setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du paiement')
     } finally {
       setIsLoading(false)
@@ -925,6 +965,7 @@ export default function CheckoutPage() {
                         onChange={(e) => {
                           setPromoCode(e.target.value.toUpperCase())
                           setPromoError(null)
+                          setPromoRequiresLogin(false)
                         }}
                         placeholder="Entrer le code"
                         className="flex-1 px-3 py-2 border border-border text-base focus:border-primary focus:outline-none uppercase"
@@ -943,6 +984,20 @@ export default function CheckoutPage() {
                     </div>
                     {promoError && (
                       <p className="text-xs text-red-500">{promoError}</p>
+                    )}
+                    {promoRequiresLogin && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 text-sm space-y-1">
+                        <p className="text-amber-800 font-medium">Ce code est réservé aux comptes connectés.</p>
+                        <div className="flex items-center gap-3 text-amber-700">
+                          <Link href="/compte?redirect=/checkout" className="underline hover:text-amber-900">
+                            Se connecter
+                          </Link>
+                          <span>·</span>
+                          <Link href="/compte?tab=register&redirect=/checkout" className="underline hover:text-amber-900">
+                            Créer un compte
+                          </Link>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}

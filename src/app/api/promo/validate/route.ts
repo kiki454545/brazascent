@@ -13,8 +13,16 @@ const supabaseAdmin = createClient(
 const validatePromoSchema = z.object({
   code: z.string().min(1, 'Code promo requis').max(50),
   orderTotal: z.number().min(0).optional(),
-  productIds: z.array(z.string()).optional(), // IDs des produits pour vérifier les packs sans promo
+  productIds: z.array(z.string()).optional(),
 })
+
+async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
+  const authHeader = request.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) return null
+  const token = authHeader.slice(7)
+  const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+  return user?.id ?? null
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,6 +42,8 @@ export async function POST(request: NextRequest) {
         }
       )
     }
+
+    const userId = await getUserIdFromRequest(request)
 
     // SÉCURITÉ: Validation des entrées avec Zod
     const rawBody = await request.json()
@@ -114,6 +124,27 @@ export async function POST(request: NextRequest) {
         { error: 'Ce code promo a atteint sa limite d\'utilisation' },
         { status: 400 }
       )
+    }
+
+    // Vérifier la limite par compte
+    if (promoCode.max_uses_per_user !== null) {
+      if (!userId) {
+        return NextResponse.json(
+          { error: 'Ce code promo est réservé aux comptes connectés.', requiresLogin: true },
+          { status: 401 }
+        )
+      }
+      const { count } = await supabaseAdmin
+        .from('promo_code_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('promo_code_id', promoCode.id)
+        .eq('user_id', userId)
+      if ((count ?? 0) >= promoCode.max_uses_per_user) {
+        return NextResponse.json(
+          { error: 'Vous avez déjà utilisé ce code promo.' },
+          { status: 400 }
+        )
+      }
     }
 
     // Vérifier le montant minimum de commande

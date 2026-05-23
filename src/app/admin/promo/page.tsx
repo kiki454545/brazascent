@@ -28,6 +28,7 @@ interface PromoCode {
   discount_value: number
   min_order_amount: number
   max_uses: number | null
+  max_uses_per_user: number | null
   current_uses: number
   starts_at: string
   expires_at: string | null
@@ -66,6 +67,7 @@ export default function PromoCodesPage() {
     discount_value: '',
     min_order_amount: '',
     max_uses: '',
+    max_uses_per_user: '',
     starts_at: '',
     expires_at: '',
     is_active: true,
@@ -120,6 +122,7 @@ export default function PromoCodesPage() {
         discount_value: code.discount_value.toString(),
         min_order_amount: code.min_order_amount?.toString() || '',
         max_uses: code.max_uses?.toString() || '',
+        max_uses_per_user: code.max_uses_per_user?.toString() || '',
         starts_at: code.starts_at ? new Date(code.starts_at).toISOString().slice(0, 16) : '',
         expires_at: code.expires_at ? new Date(code.expires_at).toISOString().slice(0, 16) : '',
         is_active: code.is_active,
@@ -133,6 +136,7 @@ export default function PromoCodesPage() {
         discount_value: '',
         min_order_amount: '',
         max_uses: '',
+        max_uses_per_user: '',
         starts_at: new Date().toISOString().slice(0, 16),
         expires_at: '',
         is_active: true,
@@ -161,6 +165,7 @@ export default function PromoCodesPage() {
         discount_value: parseFloat(formData.discount_value),
         min_order_amount: formData.min_order_amount ? parseFloat(formData.min_order_amount) : 0,
         max_uses: formData.max_uses ? parseInt(formData.max_uses) : null,
+        max_uses_per_user: formData.max_uses_per_user ? parseInt(formData.max_uses_per_user) : null,
         starts_at: formData.starts_at || new Date().toISOString(),
         expires_at: formData.expires_at || null,
         is_active: formData.is_active,
@@ -353,6 +358,11 @@ export default function PromoCodesPage() {
                             {code.max_uses && ` / ${code.max_uses}`}
                           </span>
                         </div>
+                        {code.max_uses_per_user && (
+                          <p className="text-xs text-admin-muted mt-0.5">
+                            {code.max_uses_per_user}× / compte
+                          </p>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm">
@@ -525,19 +535,35 @@ export default function PromoCodesPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-admin-text mb-1">
-                  Nombre maximum d'utilisations
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.max_uses}
-                  onChange={(e) => setFormData({ ...formData, max_uses: e.target.value })}
-                  placeholder="Illimité"
-                  className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
-                />
-                <p className="text-xs text-admin-muted mt-1">Laisser vide pour illimité</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-admin-text mb-1">
+                    Utilisations max (total)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.max_uses}
+                    onChange={(e) => setFormData({ ...formData, max_uses: e.target.value })}
+                    placeholder="Illimité"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
+                  />
+                  <p className="text-xs text-admin-muted mt-1">Laisser vide pour illimité</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-admin-text mb-1">
+                    Utilisations max par compte
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.max_uses_per_user}
+                    onChange={(e) => setFormData({ ...formData, max_uses_per_user: e.target.value })}
+                    placeholder="Illimité"
+                    className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
+                  />
+                  <p className="text-xs text-admin-muted mt-1">Connexion requise si défini</p>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

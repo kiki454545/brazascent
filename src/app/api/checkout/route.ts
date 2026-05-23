@@ -93,7 +93,8 @@ async function getShippingMethod(id: string): Promise<ShippingMethod | null> {
 // SÉCURITÉ: Vérifier et recalculer le code promo côté serveur
 async function verifyPromoCode(
   promoCodeId: string,
-  orderTotal: number
+  orderTotal: number,
+  userId?: string
 ): Promise<VerifiedPromoCode | null> {
   try {
     const { data: promoCode, error } = await supabase
@@ -129,6 +130,17 @@ async function verifyPromoCode(
     // Vérifier le nombre d'utilisations
     if (promoCode.max_uses !== null && promoCode.current_uses >= promoCode.max_uses) {
       return null
+    }
+
+    // Vérifier la limite par compte
+    if (promoCode.max_uses_per_user !== null) {
+      if (!userId) return null
+      const { count } = await supabase
+        .from('promo_code_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('promo_code_id', promoCode.id)
+        .eq('user_id', userId)
+      if ((count ?? 0) >= promoCode.max_uses_per_user) return null
     }
 
     // Vérifier le montant minimum de commande
@@ -285,7 +297,7 @@ export async function POST(request: NextRequest) {
         // Ignorer le code promo si des packs n'autorisent pas les promos
         verifiedPromoCode = null
       } else {
-        verifiedPromoCode = await verifyPromoCode(promoCode.id, subtotal)
+        verifiedPromoCode = await verifyPromoCode(promoCode.id, subtotal, userId)
       }
       // Si le code promo fourni est invalide, on continue sans réduction (pas d'erreur)
     }
