@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Package, Heart, MapPin, MessageSquare, LogOut, Shield, User } from 'lucide-react'
+import { Package, Heart, MapPin, MessageSquare, LogOut, Shield, User, Truck } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 
 interface NavItem {
@@ -24,6 +24,12 @@ const items: NavItem[] = [
     href: '/compte/commandes',
     icon: Package,
     isActive: (p) => p.startsWith('/compte/commandes'),
+  },
+  {
+    label: 'Suivi de commande',
+    href: '/suivi',
+    icon: Truck,
+    isActive: (p) => p.startsWith('/suivi'),
   },
   {
     label: 'Mes favoris',

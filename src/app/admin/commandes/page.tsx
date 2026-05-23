@@ -186,6 +186,14 @@ export default function AdminOrdersPage() {
         setOrders(orders.map(order =>
           order.id === orderId ? { ...order, ...updateData } : order
         ))
+
+        if (newStatus === 'processing' || newStatus === 'completed') {
+          fetch('/api/email/order-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, status: newStatus }),
+          }).catch(console.error)
+        }
       } else {
         console.error('Error updating order:', error)
       }
@@ -210,11 +218,13 @@ export default function AdminOrdersPage() {
       }
 
       const isNewShipment = editForm.status === 'shipped' && !selectedOrder.shipped_at
+      const isNewProcessing = editForm.status === 'processing' && selectedOrder.status !== 'processing'
+      const isNewDelivered = editForm.status === 'completed' && !selectedOrder.delivered_at
 
       if (isNewShipment) {
         updateData.shipped_at = new Date().toISOString()
       }
-      if (editForm.status === 'completed' && !selectedOrder.delivered_at) {
+      if (isNewDelivered) {
         updateData.delivered_at = new Date().toISOString()
       }
 
@@ -230,12 +240,18 @@ export default function AdminOrdersPage() {
         ))
         setSelectedOrder(updatedOrder)
 
-        // Envoyer email d'expédition si nouvelle mise en expédition
         if (isNewShipment) {
           fetch('/api/email/shipping', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId: selectedOrder.id }),
+          }).catch(console.error)
+        }
+        if (isNewProcessing || isNewDelivered) {
+          fetch('/api/email/order-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: selectedOrder.id, status: editForm.status }),
           }).catch(console.error)
         }
       }

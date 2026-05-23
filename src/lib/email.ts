@@ -314,6 +314,120 @@ export async function sendStockAlertEmail({
   }
 }
 
+export async function sendProcessingEmail({
+  customerEmail,
+  customerName,
+  orderNumber,
+}: {
+  customerEmail: string
+  customerName: string
+  orderNumber: string
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const html = wrapEmail(`
+    <tr>
+      <td style="padding: 40px; text-align: center;">
+        <div style="width: 60px; height: 60px; background-color: #C9A962; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+          <span style="color: white; font-size: 26px; line-height: 1;">📦</span>
+        </div>
+        <h2 style="margin: 0 0 10px; color: #19110B; font-size: 24px; font-weight: 400;">
+          Votre commande est en préparation !
+        </h2>
+        <p style="margin: 0; color: #666; font-size: 16px;">
+          Commande n° <strong style="color: #19110B;">${orderNumber}</strong>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 30px;">
+        <p style="color: #444; font-size: 15px; line-height: 1.7;">Bonjour ${escapeHtml(customerName)},</p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7;">
+          Votre commande est actuellement en cours de préparation par notre équipe.
+          Vous recevrez un email dès qu'elle sera expédiée avec les informations de suivi.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 40px; text-align: center;">
+        <a href="https://brazascent.com/compte/commandes" style="display: inline-block; padding: 14px 32px; background-color: #C9A962; color: #19110B; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">
+          Voir ma commande
+        </a>
+      </td>
+    </tr>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: 'Braza Scent <commandes@brazascent.com>',
+      to: customerEmail,
+      subject: `Votre commande n° ${orderNumber} est en préparation`,
+      html,
+    })
+  } catch (error) {
+    console.error('Erreur envoi email préparation:', error)
+  }
+}
+
+export async function sendDeliveredEmail({
+  customerEmail,
+  customerName,
+  orderNumber,
+}: {
+  customerEmail: string
+  customerName: string
+  orderNumber: string
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const html = wrapEmail(`
+    <tr>
+      <td style="padding: 40px; text-align: center;">
+        <div style="width: 60px; height: 60px; background-color: #C9A962; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+          <span style="color: white; font-size: 26px; line-height: 1;">✓</span>
+        </div>
+        <h2 style="margin: 0 0 10px; color: #19110B; font-size: 24px; font-weight: 400;">
+          Votre commande a été livrée !
+        </h2>
+        <p style="margin: 0; color: #666; font-size: 16px;">
+          Commande n° <strong style="color: #19110B;">${orderNumber}</strong>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 30px;">
+        <p style="color: #444; font-size: 15px; line-height: 1.7;">Bonjour ${escapeHtml(customerName)},</p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7;">
+          Votre commande a bien été livrée. Nous espérons que vous apprécierez votre nouveau parfum.
+        </p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7;">
+          Votre satisfaction est notre priorité. N'hésitez pas à nous contacter si vous avez la moindre question.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 40px; text-align: center;">
+        <a href="https://brazascent.com/parfums" style="display: inline-block; padding: 14px 32px; background-color: #C9A962; color: #19110B; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">
+          Découvrir nos parfums
+        </a>
+      </td>
+    </tr>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: 'Braza Scent <commandes@brazascent.com>',
+      to: customerEmail,
+      subject: `Votre commande n° ${orderNumber} a été livrée`,
+      html,
+    })
+  } catch (error) {
+    console.error('Erreur envoi email livraison:', error)
+  }
+}
+
 export async function sendNewsletterWelcomeEmail(email: string) {
   const resend = getResend()
   if (!resend) return
@@ -330,11 +444,20 @@ export async function sendNewsletterWelcomeEmail(email: string) {
       </td>
     </tr>
     <tr>
+      <td style="padding: 0 40px 20px; text-align: center;">
+        <div style="background-color: #f9f6f1; border: 2px dashed #C9A962; padding: 24px; display: inline-block; width: 100%; box-sizing: border-box;">
+          <p style="margin: 0 0 8px; color: #666; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase;">Votre code de bienvenue</p>
+          <p style="margin: 0 0 8px; color: #19110B; font-size: 28px; font-weight: 700; letter-spacing: 0.2em; font-family: monospace;">BIENVENUE10</p>
+          <p style="margin: 0; color: #888; font-size: 12px;">-10% sur votre première commande</p>
+        </div>
+      </td>
+    </tr>
+    <tr>
       <td style="padding: 0 40px 30px;">
         <p style="color: #444; font-size: 15px; line-height: 1.7; text-align: center;">
-          En tant qu'abonné, vous serez le premier à découvrir :
+          En tant qu'abonné, vous serez également le premier à découvrir :
         </p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
           <tr>
             <td style="padding: 12px 16px; background-color: #f9f6f1; border-left: 3px solid #C9A962; color: #19110B; font-size: 14px;">
               ✨ <strong>Nos nouveautés</strong> en avant-première
@@ -358,7 +481,7 @@ export async function sendNewsletterWelcomeEmail(email: string) {
     <tr>
       <td style="padding: 0 40px 40px; text-align: center;">
         <a href="https://brazascent.com/parfums" style="display: inline-block; padding: 14px 32px; background-color: #C9A962; color: #19110B; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">
-          Découvrir nos parfums
+          Utiliser mon code
         </a>
       </td>
     </tr>

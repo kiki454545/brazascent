@@ -56,6 +56,7 @@ export default function ProductPage() {
   const [priceBySize, setPriceBySize] = useState<Record<string, number>>({})
   const [unlimitedStock, setUnlimitedStock] = useState(false)
   const [globalStock, setGlobalStock] = useState<number>(1)
+  const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
@@ -148,6 +149,19 @@ export default function ProductPage() {
         setProduct(mappedProduct)
         setStockBySize(data.stock_by_size || {})
         setUnlimitedStock(data.unlimited_stock ?? false)
+
+        // Fetch review stats for header display
+        supabase
+          .from('product_reviews')
+          .select('rating')
+          .eq('product_id', data.id)
+          .eq('is_approved', true)
+          .then(({ data: reviewsData }) => {
+            if (reviewsData && reviewsData.length > 0) {
+              const avg = reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length
+              setReviewStats({ avg, count: reviewsData.length })
+            }
+          })
         // Si stock est explicitement 0, c'est une rupture. Si null/undefined, utiliser 1 par défaut
         setGlobalStock(data.stock !== null && data.stock !== undefined ? data.stock : 1)
         setPriceBySize(parsedPriceBySize)
@@ -444,15 +458,17 @@ export default function ProductPage() {
             </h1>
 
             {/* Reviews */}
-            <div className="flex flex-wrap items-center gap-3 mb-5">
-              <div className="flex items-center gap-1 text-primary" aria-label="Note moyenne 4,8 sur 5">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className="w-4 h-4 fill-current" />
-                ))}
+            {reviewStats && reviewStats.count > 0 && (
+              <div className="flex flex-wrap items-center gap-3 mb-5">
+                <div className="flex items-center gap-1 text-primary" aria-label={`Note moyenne ${reviewStats.avg.toFixed(1)} sur 5`}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} className={`w-4 h-4 ${star <= Math.round(reviewStats.avg) ? 'fill-current' : ''}`} />
+                  ))}
+                </div>
+                <span className="text-sm font-medium">{reviewStats.avg.toFixed(1)}/5</span>
+                <span className="text-sm text-muted-foreground">{reviewStats.count} avis client{reviewStats.count > 1 ? 's' : ''}</span>
               </div>
-              <span className="text-sm font-medium">4,8/5</span>
-              <span className="text-sm text-muted-foreground">128 avis clients</span>
-            </div>
+            )}
 
             {/* Short description */}
             <p className="text-muted-foreground mb-6">{product.shortDescription}</p>
