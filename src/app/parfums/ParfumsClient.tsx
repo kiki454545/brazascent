@@ -353,7 +353,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
           <div className="flex gap-8 lg:gap-12">
             {/* ── Sidebar desktop ── */}
             <aside className="hidden lg:block w-56 flex-shrink-0">
-              <div className="sticky top-28">
+              <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
                 {/* Quiz CTA */}
                 <Link
                   href="/quiz"
