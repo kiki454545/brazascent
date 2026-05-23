@@ -211,9 +211,20 @@ export default function SuiviPage() {
 
             {/* Numéro de suivi */}
             {order.tracking_number && (
-              <div className="px-6 py-4 border-b bg-primary/5">
-                <p className="text-sm text-muted-foreground mb-1">Numéro de suivi transporteur</p>
-                <p className="font-mono font-medium text-primary">{order.tracking_number}</p>
+              <div className="px-6 py-4 border-b bg-primary/5 flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Numéro de suivi transporteur</p>
+                  <p className="font-mono font-medium text-primary">{order.tracking_number}</p>
+                </div>
+                <a
+                  href={`https://www.laposte.fr/outils/suivre-vos-envois?code=${order.tracking_number}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs tracking-[0.1em] uppercase hover:bg-primary/90 transition-colors"
+                >
+                  <Truck className="w-3.5 h-3.5" />
+                  Suivre la livraison
+                </a>
               </div>
             )}
 

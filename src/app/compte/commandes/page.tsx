@@ -229,9 +229,20 @@ export default function CommandesPage() {
 
                           {/* Tracking */}
                           {order.tracking_number && (
-                            <div className="mt-4 pt-4 border-t">
-                              <p className="text-sm text-muted-foreground">Numéro de suivi</p>
-                              <p className="font-medium">{order.tracking_number}</p>
+                            <div className="mt-4 pt-4 border-t flex items-center justify-between gap-4 flex-wrap">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Numéro de suivi</p>
+                                <p className="font-mono font-medium">{order.tracking_number}</p>
+                              </div>
+                              <a
+                                href={`https://www.laposte.fr/outils/suivre-vos-envois?code=${order.tracking_number}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs tracking-[0.1em] uppercase hover:bg-primary/90 transition-colors"
+                              >
+                                <Truck className="w-3.5 h-3.5" />
+                                Suivre la livraison
+                              </a>
                             </div>
                           )}
                         </div>
