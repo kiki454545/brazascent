@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { m, AnimatePresence } from 'framer-motion'
-import { Search, User, ShoppingBag, Heart, Menu, X, ChevronRight, LogOut, Loader2 } from 'lucide-react'
+import { Search, User, ShoppingBag, Heart, Package, Menu, X, ChevronRight, LogOut, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { useAuthStore } from '@/store/auth'
@@ -326,6 +326,16 @@ export function Header() {
                 )}
               </Link>
 
+              <Link
+                href="/compte/commandes"
+                className={`hidden sm:block p-2 transition-colors duration-300 ${
+                  isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
+                }`}
+                aria-label="Suivi de commande"
+              >
+                <Package className="w-5 h-5" />
+              </Link>
+
               <button
                 onClick={openCart}
                 className={`min-w-[44px] min-h-[44px] flex items-center justify-center py-2 pl-2 -mr-2 pr-2 transition-colors duration-300 relative ${
@@ -425,6 +435,14 @@ export function Header() {
                           Mes favoris
                         </Link>
                         <Link
+                          href="/compte/commandes"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
+                        >
+                          <Package className="w-4 h-4" />
+                          Suivi de commande
+                        </Link>
+                        <Link
                           href="/panier"
                           onClick={() => setIsMenuOpen(false)}
                           className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
@@ -460,6 +478,14 @@ export function Header() {
                         >
                           <Heart className="w-4 h-4" />
                           Mes favoris
+                        </Link>
+                        <Link
+                          href="/compte/commandes"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
+                        >
+                          <Package className="w-4 h-4" />
+                          Suivi de commande
                         </Link>
                         <Link
                           href="/panier"
