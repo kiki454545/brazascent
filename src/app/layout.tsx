@@ -27,11 +27,11 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: {
-    default: "Braza Scent | Boutique de Parfums de Luxe",
+    default: "Braza Scent | Boutique d'Échantillons de Parfum & Décants",
     template: "%s | Braza Scent",
   },
-  description: "Boutique en ligne de parfums haut de gamme. Découvrez notre sélection de fragrances de niche disponibles en formats 2ml, 5ml et 10ml. Testez les plus grandes maisons de parfumerie sans vous ruiner. Livraison rapide en France.",
-  keywords: "parfum, boutique parfum, décant parfum, échantillon parfum, parfum de niche, 2ml, 5ml, 10ml, parfum luxe, Braza Scent, brazascent, parfumerie",
+  description: "Boutique de décants et échantillons de parfum — 2ml, 5ml, 10ml. Testez les plus grandes maisons de parfumerie (Dior, Chanel, MFK, Creed…) sans vous ruiner. Livraison rapide en France.",
+  keywords: "décant parfum, échantillon parfum, decant parfum, boutique échantillon parfum, parfum 2ml, parfum 5ml, parfum 10ml, parfum de niche, Braza Scent, brazascent, testeur parfum",
   authors: [{ name: "Braza Scent" }],
   creator: "Braza Scent",
   publisher: "Braza Scent",
@@ -45,8 +45,8 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Braza Scent | Boutique de Parfums de Luxe",
-    description: "Boutique en ligne de parfums haut de gamme. Découvrez notre sélection de fragrances de niche disponibles en formats 2ml, 5ml et 10ml. Testez les plus grandes maisons sans vous ruiner.",
+    title: "Braza Scent | Boutique d'Échantillons de Parfum & Décants",
+    description: "Décants et échantillons de parfum en 2ml, 5ml, 10ml. Testez les plus grandes maisons sans vous ruiner. Livraison rapide en France.",
     type: "website",
     locale: "fr_FR",
     siteName: "Braza Scent",
@@ -54,8 +54,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Braza Scent | Boutique de Parfums de Luxe",
-    description: "Boutique en ligne de parfums haut de gamme. Fragrances de niche en formats 2ml, 5ml et 10ml.",
+    title: "Braza Scent | Boutique d'Échantillons de Parfum & Décants",
+    description: "Décants et échantillons de parfum en 2ml, 5ml, 10ml. Testez les plus grandes maisons sans vous ruiner.",
   },
   robots: {
     index: true,
@@ -103,6 +103,36 @@ export default function RootLayout({
   } catch (e) {}
 })();
             `.trim(),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              {
+                '@context': 'https://schema.org',
+                '@type': 'WebSite',
+                name: 'Braza Scent',
+                url: 'https://brazascent.com',
+                description: "Boutique de décants et échantillons de parfum — 2ml, 5ml, 10ml.",
+                potentialAction: {
+                  '@type': 'SearchAction',
+                  target: { '@type': 'EntryPoint', urlTemplate: 'https://brazascent.com/parfums?search={search_term_string}' },
+                  'query-input': 'required name=search_term_string',
+                },
+              },
+              {
+                '@context': 'https://schema.org',
+                '@type': 'ItemList',
+                name: 'Navigation principale',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Parfums', url: 'https://brazascent.com/parfums' },
+                  { '@type': 'ListItem', position: 2, name: 'Packs', url: 'https://brazascent.com/packs' },
+                  { '@type': 'ListItem', position: 3, name: 'Marques', url: 'https://brazascent.com/marques' },
+                  { '@type': 'ListItem', position: 4, name: 'Promos', url: 'https://brazascent.com/promos' },
+                ],
+              },
+            ]),
           }}
         />
       </head>

@@ -81,7 +81,6 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedBrand, setSelectedBrand] = useState('all')
   const [selectedFormat, setSelectedFormat] = useState('all')
-  const [selectedGender, setSelectedGender] = useState('all')
   // Si on vient d'une page famille, le filtre est verrouillé
   const [selectedFamille, setSelectedFamille] = useState(familleFilter || 'all')
   const [sortBy, setSortBy] = useState('newest')
@@ -92,7 +91,7 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
   // Sidebar sections open/close (desktop)
-  const [openSections, setOpenSections] = useState({ gender: true, famille: true, category: true, brand: true, format: true, price: true })
+  const [openSections, setOpenSections] = useState({ category: true, brand: true, format: true, price: true })
   const toggleSection = (key: keyof typeof openSections) =>
     setOpenSections(s => ({ ...s, [key]: !s[key] }))
 
@@ -143,7 +142,6 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
   }
 
   const filteredProducts = products
-    .filter(p => selectedGender === 'all' || (p.gender || 'Unisexe') === selectedGender)
     .filter(p => selectedFamille === 'all' || matchesFamille(p, selectedFamille))
     .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
     .filter(p => selectedBrand === 'all' || p.brand === selectedBrand)
@@ -176,7 +174,7 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
   // Réinitialiser la pagination à chaque changement de filtre
   useEffect(() => {
     setVisibleCount(ITEMS_PER_PAGE)
-  }, [selectedCategory, selectedBrand, selectedFormat, selectedGender, selectedFamille, sortBy, searchQuery, priceRange])
+  }, [selectedCategory, selectedBrand, selectedFormat, selectedFamille, sortBy, searchQuery, priceRange])
 
   // Intersection Observer pour l'infinite scroll
   const loadMore = useCallback(() => {
@@ -194,8 +192,6 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
   }, [hasMore, loadMore])
 
   const activeFilterCount = [
-    selectedGender !== 'all',
-    selectedFamille !== 'all',
     selectedCategory !== 'all',
     selectedBrand !== 'all',
     selectedFormat !== 'all',
@@ -203,8 +199,6 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
   ].filter(Boolean).length
 
   const resetFilters = () => {
-    setSelectedGender('all')
-    setSelectedFamille('all')
     setSelectedCategory('all')
     setSelectedBrand('all')
     setSelectedFormat('all')
@@ -240,13 +234,6 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
                 ? `${initialProducts.length} fragrance${initialProducts.length !== 1 ? 's' : ''} dans cette famille olfactive`
                 : `Découvrez notre sélection de fragrances d'exception`}
             </p>
-            <Link
-              href="/quiz"
-              className="inline-flex items-center gap-2 px-6 py-2.5 border border-white/60 text-white text-xs tracking-[0.2em] uppercase hover:bg-white/10 transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Quiz olfactif
-            </Link>
           </m.div>
         </div>
       </section>
@@ -317,32 +304,6 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
                         <button key={o.id} onClick={() => setSortBy(o.id)}
                           className={`w-full text-left text-sm py-2 px-2 transition-colors ${sortBy === o.id ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                           {o.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Genre */}
-                  <div>
-                    <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Genre</p>
-                    <div className="flex flex-wrap gap-2">
-                      {genders.map(g => (
-                        <button key={g.id} onClick={() => setSelectedGender(g.id === selectedGender ? 'all' : g.id)}
-                          className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedGender === g.id ? 'bg-foreground text-background border-foreground' : 'border-border'}`}>
-                          {g.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Famille olfactive */}
-                  <div>
-                    <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Famille olfactive</p>
-                    <div className="space-y-1">
-                      {familles.map(f => (
-                        <button key={f.id} onClick={() => setSelectedFamille(f.id === selectedFamille ? 'all' : f.id)}
-                          className={`w-full text-left text-sm py-2 px-2 flex items-center gap-2 transition-colors ${selectedFamille === f.id ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-                          <span>{f.emoji}</span>{f.label}
                         </button>
                       ))}
                     </div>
@@ -427,15 +388,6 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
             {/* ── Sidebar desktop ── */}
             <aside className="hidden lg:block w-56 flex-shrink-0">
               <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
-                {/* Quiz CTA */}
-                <Link
-                  href="/quiz"
-                  className="flex items-center gap-2 w-full mb-6 px-4 py-3 bg-primary/10 border border-primary/30 text-primary text-xs tracking-[0.15em] uppercase hover:bg-primary/20 transition-colors"
-                >
-                  <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
-                  Trouver mon parfum
-                </Link>
-
                 {/* Search */}
                 <div className="relative mb-5">
                   <input
@@ -467,42 +419,6 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
                       </button>
                     ))}
                   </div>
-                </div>
-
-                {/* Genre */}
-                <div className="mb-5">
-                  <SectionHeader label="Genre" sectionKey="gender" />
-                  {openSections.gender && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {genders.map(g => (
-                        <button
-                          key={g.id}
-                          onClick={() => setSelectedGender(g.id === selectedGender ? 'all' : g.id)}
-                          className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedGender === g.id ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'}`}
-                        >
-                          {g.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Famille olfactive */}
-                <div className="mb-5">
-                  <SectionHeader label="Famille olfactive" sectionKey="famille" />
-                  {openSections.famille && (
-                    <div className="mt-2 space-y-1">
-                      {familles.map(f => (
-                        <button
-                          key={f.id}
-                          onClick={() => setSelectedFamille(f.id === selectedFamille ? 'all' : f.id)}
-                          className={`w-full text-left text-sm py-1.5 px-2 transition-colors flex items-center gap-2 ${selectedFamille === f.id ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
-                        >
-                          <span>{f.emoji}</span>{f.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 {/* Catégorie */}
