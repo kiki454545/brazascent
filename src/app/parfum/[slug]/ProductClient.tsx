@@ -719,7 +719,7 @@ export default function ProductPage() {
       </div>
 
       {/* Reviews */}
-      <ReviewSection productId={product.id} />
+      <ReviewSection productId={product.id} productName={product.name} productSlug={product.slug} />
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (

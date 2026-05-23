@@ -94,12 +94,24 @@ async function getProductJsonLd(slug: string) {
   try {
     const { data: product } = await supabase
       .from('products')
-      .select('name, brand, description, short_description, images, price, original_price, stock, slug, sizes, price_by_size')
+      .select('id, name, brand, description, short_description, images, price, original_price, stock, slug, sizes, price_by_size')
       .eq('slug', slug)
       .eq('is_active', true)
       .single()
 
     if (!product) return null
+
+    // Récupérer les avis approuvés pour AggregateRating
+    const { data: reviewsData } = await supabase
+      .from('product_reviews')
+      .select('rating')
+      .eq('product_id', product.id)
+      .eq('is_approved', true)
+
+    const reviewCount = reviewsData?.length ?? 0
+    const avgRating = reviewCount > 0
+      ? reviewsData!.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+      : 0
 
     // Déterminer la disponibilité
     const inStock = product.stock === null || product.stock === undefined || product.stock > 0
@@ -136,7 +148,7 @@ async function getProductJsonLd(slug: string) {
       product.description ||
       `Découvrez ${product.name} sur Braza Scent.`
 
-    const jsonLd = {
+    const jsonLd: Record<string, unknown> = {
       '@context': 'https://schema.org',
       '@type': 'Product',
       name: product.name,
@@ -146,6 +158,15 @@ async function getProductJsonLd(slug: string) {
         brand: {
           '@type': 'Brand',
           name: product.brand,
+        },
+      }),
+      ...(reviewCount > 0 && {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: Math.round(avgRating * 10) / 10,
+          reviewCount,
+          bestRating: 5,
+          worstRating: 1,
         },
       }),
       offers: lowPrice !== highPrice

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Gift } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Gift, Copy, Check, Loader2 } from 'lucide-react'
 import { AccountSidebar } from '@/components/AccountSidebar'
 import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
@@ -30,6 +30,10 @@ export default function ComptePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [loyaltyPoints, setLoyaltyPoints] = useState(0)
   const [loyaltyHistory, setLoyaltyHistory] = useState<{ reason: string; points: number; created_at: string }[]>([])
+  const [redeemLoading, setRedeemLoading] = useState(false)
+  const [redeemedCode, setRedeemedCode] = useState<{ code: string; discountEuros: number; newBalance: number } | null>(null)
+  const [redeemError, setRedeemError] = useState<string | null>(null)
+  const [codeCopied, setCodeCopied] = useState(false)
 
   useEffect(() => {
     if (!isInitialized) {
@@ -47,20 +51,19 @@ export default function ComptePage() {
     }
   }, [profile])
 
-  useEffect(() => {
+  const fetchLoyalty = async () => {
     if (!user) return
-    supabase
-      .from('loyalty_points')
-      .select('points, reason, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(5)
-      .then(({ data }) => {
-        if (data) {
-          setLoyaltyPoints(data.reduce((sum, r) => sum + r.points, 0))
-          setLoyaltyHistory(data)
-        }
-      })
+    const [{ data: allData }, { data: historyData }] = await Promise.all([
+      supabase.from('loyalty_points').select('points').eq('user_id', user.id),
+      supabase.from('loyalty_points').select('points, reason, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
+    ])
+    if (allData) setLoyaltyPoints(allData.reduce((sum, r) => sum + r.points, 0))
+    if (historyData) setLoyaltyHistory(historyData)
+  }
+
+  useEffect(() => {
+    fetchLoyalty()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -111,6 +114,39 @@ export default function ComptePage() {
   const handleLogout = async () => {
     await signOut()
     router.push('/')
+  }
+
+  const handleRedeemPoints = async () => {
+    setRedeemLoading(true)
+    setRedeemError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/loyalty/redeem', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setRedeemError(data.error || 'Erreur lors de l\'échange')
+      } else {
+        setRedeemedCode(data)
+        setLoyaltyPoints(data.newBalance)
+        await fetchLoyalty()
+      }
+    } catch {
+      setRedeemError('Erreur de connexion')
+    } finally {
+      setRedeemLoading(false)
+    }
+  }
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code)
+    setCodeCopied(true)
+    setTimeout(() => setCodeCopied(false), 2000)
   }
 
   // Si l'utilisateur est connecté, afficher le dashboard
@@ -257,17 +293,55 @@ export default function ComptePage() {
                     <h2 className="text-xl tracking-[0.1em] uppercase">Programme Fidélité</h2>
                   </div>
 
+                  {/* Solde + conversion */}
                   <div className="flex items-center gap-6 p-5 border border-primary/20 bg-primary/5 mb-5">
-                    <div className="text-center">
+                    <div className="text-center min-w-[80px]">
                       <p className="text-3xl font-light text-primary">{loyaltyPoints}</p>
                       <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground mt-1">Points</p>
                     </div>
                     <div className="flex-1 text-sm text-muted-foreground leading-relaxed">
                       <p>Vous gagnez <strong className="text-foreground">1 point par euro</strong> dépensé.</p>
-                      <p className="mt-1">Les points seront bientôt échangeables contre des réductions.</p>
+                      <p className="mt-1"><strong className="text-foreground">100 points</strong> = code promo <strong className="text-foreground">10€</strong> de réduction.</p>
                     </div>
                   </div>
 
+                  {/* Bouton échange */}
+                  {loyaltyPoints >= 100 && !redeemedCode && (
+                    <div className="mb-5">
+                      <button
+                        onClick={handleRedeemPoints}
+                        disabled={redeemLoading}
+                        className="w-full py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {redeemLoading ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" /> Génération en cours…</>
+                        ) : (
+                          <><Gift className="w-4 h-4" /> Échanger {Math.floor(loyaltyPoints / 100) * 100} pts contre {Math.floor(loyaltyPoints / 100) * 10}€</>
+                        )}
+                      </button>
+                      {redeemError && <p className="text-xs text-red-500 mt-2">{redeemError}</p>}
+                    </div>
+                  )}
+
+                  {/* Code généré */}
+                  {redeemedCode && (
+                    <div className="mb-5 p-4 bg-green-50 border border-green-200">
+                      <p className="text-sm text-green-700 font-medium mb-2">Votre code promo de {redeemedCode.discountEuros}€ :</p>
+                      <div className="flex items-center gap-2">
+                        <span className="flex-1 font-mono text-lg font-bold text-green-800 tracking-wider">{redeemedCode.code}</span>
+                        <button
+                          onClick={() => handleCopyCode(redeemedCode.code)}
+                          className="p-2 hover:bg-green-100 rounded transition-colors"
+                          title="Copier"
+                        >
+                          {codeCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-green-600" />}
+                        </button>
+                      </div>
+                      <p className="text-xs text-green-600 mt-1">Valable 90 jours — utilisable lors de votre prochain achat. Nouveau solde : {redeemedCode.newBalance} pts.</p>
+                    </div>
+                  )}
+
+                  {/* Historique */}
                   {loyaltyHistory.length > 0 && (
                     <div>
                       <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-3">Historique récent</p>
@@ -275,7 +349,9 @@ export default function ComptePage() {
                         {loyaltyHistory.map((entry, i) => (
                           <div key={i} className="flex items-center justify-between py-2 border-b border-border/50 text-sm">
                             <span className="text-muted-foreground">{entry.reason}</span>
-                            <span className="text-primary font-medium">+{entry.points} pts</span>
+                            <span className={`font-medium ${entry.points < 0 ? 'text-red-500' : 'text-primary'}`}>
+                              {entry.points > 0 ? '+' : ''}{entry.points} pts
+                            </span>
                           </div>
                         ))}
                       </div>

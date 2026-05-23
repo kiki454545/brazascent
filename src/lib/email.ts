@@ -314,6 +314,64 @@ export async function sendStockAlertEmail({
   }
 }
 
+export async function sendReviewNotificationEmail({
+  productName,
+  productSlug,
+  userName,
+  rating,
+  comment,
+}: {
+  productName: string
+  productSlug: string
+  userName: string
+  rating: number
+  comment: string
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const adminEmail = process.env.ADMIN_EMAIL || 'brazascent@gmail.com'
+  const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating)
+
+  const html = wrapEmail(`
+    <tr>
+      <td style="padding: 40px; text-align: center;">
+        <h2 style="margin: 0 0 10px; color: #19110B; font-size: 22px; font-weight: 400;">
+          Nouvel avis client à modérer
+        </h2>
+        <p style="margin: 0; color: #666; font-size: 15px;">${escapeHtml(productName)}</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 30px;">
+        <div style="background-color: #f9f6f1; padding: 20px; border-left: 3px solid #C9A962;">
+          <p style="margin: 0 0 6px; color: #19110B;"><strong>Client :</strong> ${escapeHtml(userName)}</p>
+          <p style="margin: 0 0 6px; color: #C9A962; font-size: 18px;">${stars}</p>
+          <p style="margin: 0; color: #444; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(comment)}</p>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 40px; text-align: center;">
+        <a href="https://brazascent.com/admin/avis" style="display: inline-block; padding: 14px 32px; background-color: #19110B; color: #C9A962; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">
+          Modérer les avis
+        </a>
+      </td>
+    </tr>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: 'Braza Scent <commandes@brazascent.com>',
+      to: adminEmail,
+      subject: `[Avis] Nouvel avis ${stars} sur "${productName}"`,
+      html,
+    })
+  } catch (error) {
+    console.error('Erreur envoi email avis admin:', error)
+  }
+}
+
 export async function sendProcessingEmail({
   customerEmail,
   customerName,

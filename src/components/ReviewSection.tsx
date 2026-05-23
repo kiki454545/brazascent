@@ -15,6 +15,8 @@ interface Review {
 
 interface ReviewSectionProps {
   productId: string
+  productName?: string
+  productSlug?: string
 }
 
 function StarRating({ value, onChange }: { value: number; onChange?: (v: number) => void }) {
@@ -44,7 +46,7 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
   )
 }
 
-export default function ReviewSection({ productId }: ReviewSectionProps) {
+export default function ReviewSection({ productId, productName, productSlug }: ReviewSectionProps) {
   const { user, profile } = useAuthStore()
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
@@ -97,6 +99,18 @@ export default function ReviewSection({ productId }: ReviewSectionProps) {
       setShowForm(false)
       setRating(0)
       setComment('')
+      // Notifier l'admin (fire & forget)
+      fetch('/api/email/review-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productName: productName || 'Produit',
+          productSlug: productSlug || '',
+          userName,
+          rating,
+          comment: comment.trim(),
+        }),
+      }).catch(() => {})
     }
   }
 
