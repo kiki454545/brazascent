@@ -8,6 +8,12 @@ import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react
 import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
 import { HomePack } from './page'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export interface DraggableCarouselHandle {
   scrollByAmount: (amount: number) => void
@@ -285,6 +291,32 @@ export default function HomeClient({ featuredProducts, newProducts, packs }: Hom
   const bestsellersCarouselRef = useRef<DraggableCarouselHandle>(null)
   const newProductsCarouselRef = useRef<DraggableCarouselHandle>(null)
   const scrollStep = 320
+  const [videos, setVideos] = useState<string[]>(['/videos/decantage.mp4'])
+  const [videoIndex, setVideoIndex] = useState(0)
+  const [videoVisible, setVideoVisible] = useState(true)
+
+  useEffect(() => {
+    supabase
+      .from('home_videos')
+      .select('url, order_index')
+      .eq('active', true)
+      .order('order_index')
+      .then(({ data }) => {
+        if (data && data.length > 0) setVideos(data.map(v => v.url))
+      })
+  }, [])
+
+  useEffect(() => {
+    if (videos.length <= 1) return
+    const interval = setInterval(() => {
+      setVideoVisible(false)
+      setTimeout(() => {
+        setVideoIndex(i => (i + 1) % videos.length)
+        setVideoVisible(true)
+      }, 600)
+    }, 8000)
+    return () => clearInterval(interval)
+  }, [videos])
 
   return (
     <div className="min-h-screen">
@@ -333,11 +365,17 @@ export default function HomeClient({ featuredProducts, newProducts, packs }: Hom
         <div className="px-6 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16 items-center">
             <div className="animate-fade-in-left relative aspect-[9/16] w-[360px] max-w-full mx-auto lg:col-span-2 overflow-hidden bg-black">
-              <video src="/videos/decantage.mp4" poster="/images/hero-bg.webp" autoPlay muted loop playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute bottom-6 left-6 lg:bottom-10 lg:left-10 bg-background/95 backdrop-blur px-6 py-4 border-l-2 border-primary">
-                <p className="text-[10px] tracking-[0.3em] uppercase text-primary mb-1">Maison</p>
-                <p className="font-serif text-xl">Braza Scent</p>
-              </div>
+              <video
+                key={videos[videoIndex]}
+                src={videos[videoIndex]}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-600"
+                style={{ opacity: videoVisible ? 1 : 0 }}
+              />
             </div>
             <div className="lg:col-span-3">
               <span className="text-xs tracking-[0.35em] uppercase text-primary mb-4 block">Notre approche</span>
