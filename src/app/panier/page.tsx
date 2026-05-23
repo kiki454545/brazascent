@@ -1,11 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { m } from 'framer-motion'
-import { Minus, Plus, X, ShoppingBag, ArrowRight, Truck, Gift, Shield, AlertTriangle } from 'lucide-react'
+import { Minus, Plus, X, ShoppingBag, ArrowRight, Truck, Gift, Shield, AlertTriangle, Tag, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { useSettingsStore } from '@/store/settings'
+import { useAuthStore } from '@/store/auth'
+import { supabase } from '@/lib/supabase'
 import { CartItem } from '@/types'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
 
@@ -24,18 +27,73 @@ const isProductOutOfStock = (product: { stock?: number }) => {
 }
 
 export default function PanierPage() {
-  const { items, removeItem, updateQuantity, getTotal, clearCart } = useCartStore()
+  const { items, removeItem, updateQuantity, getTotal, clearCart, pendingPromoCode, setPendingPromo } = useCartStore()
   const { settings } = useSettingsStore()
+  const { user } = useAuthStore()
+
+  const [promoInput, setPromoInput] = useState('')
+  const [promoError, setPromoError] = useState<string | null>(null)
+  const [promoRequiresLogin, setPromoRequiresLogin] = useState(false)
+  const [validatingPromo, setValidatingPromo] = useState(false)
 
   const subtotal = getTotal()
   const freeThreshold = settings.freeShippingThreshold || 150
   const standardPrice = settings.standardShippingPrice || 9.90
   const shipping = subtotal >= freeThreshold ? 0 : standardPrice
-  const total = subtotal + shipping
+
+  // Calculer la réduction depuis le code stocké
+  const promoDiscount = pendingPromoCode
+    ? pendingPromoCode.discount_type === 'percentage'
+      ? Math.round((subtotal * pendingPromoCode.discount_value) / 100 * 100) / 100
+      : Math.min(pendingPromoCode.discount_value, subtotal)
+    : 0
+
+  const total = subtotal + shipping - promoDiscount
 
   // Vérifier s'il y a des produits en rupture dans le panier
   const outOfStockItems = items.filter(item => isProductOutOfStock(item.product))
   const hasOutOfStockItems = outOfStockItems.length > 0
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return
+    setValidatingPromo(true)
+    setPromoError(null)
+    setPromoRequiresLogin(false)
+
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (user) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
+      const res = await fetch('/api/promo/validate', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ code: promoInput.trim(), orderTotal: subtotal, productIds: items.map(i => i.product.id) }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        if (data.requiresLogin) setPromoRequiresLogin(true)
+        else setPromoError(data.error || 'Code invalide')
+        return
+      }
+
+      setPendingPromo(data.promoCode)
+      setPromoInput('')
+    } catch {
+      setPromoError('Erreur de connexion')
+    } finally {
+      setValidatingPromo(false)
+    }
+  }
+
+  const handleRemovePromo = () => {
+    setPendingPromo(null)
+    setPromoError(null)
+    setPromoRequiresLogin(false)
+  }
 
   if (items.length === 0) {
     return (
@@ -234,8 +292,68 @@ export default function PanierPage() {
                     )}
                   </span>
                 </div>
+                {promoDiscount > 0 && (
+                  <div className="flex items-center justify-between text-green-600">
+                    <span>Réduction ({pendingPromoCode!.code})</span>
+                    <span>−{promoDiscount.toLocaleString('fr-FR')} €</span>
+                  </div>
+                )}
 
                 <FreeShippingBar total={subtotal} />
+              </div>
+
+              {/* Code promo */}
+              <div className="border-t pt-4 mb-6">
+                <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-primary" />
+                  Code promo
+                </p>
+                {pendingPromoCode ? (
+                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200">
+                    <div>
+                      <p className="font-mono font-semibold text-green-700 text-sm">{pendingPromoCode.code}</p>
+                      <p className="text-xs text-green-600">
+                        {pendingPromoCode.discount_type === 'percentage'
+                          ? `−${pendingPromoCode.discount_value}%`
+                          : `−${pendingPromoCode.discount_value} €`}
+                      </p>
+                    </div>
+                    <button onClick={handleRemovePromo} className="p-1 hover:bg-green-100 rounded-full transition-colors">
+                      <X className="w-4 h-4 text-green-600" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoInput}
+                        onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null); setPromoRequiresLogin(false) }}
+                        onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
+                        placeholder="Entrer le code"
+                        className="flex-1 px-3 py-2 border border-border text-sm focus:border-primary focus:outline-none uppercase"
+                      />
+                      <button
+                        onClick={handleApplyPromo}
+                        disabled={validatingPromo || !promoInput.trim()}
+                        className="px-4 py-2 bg-foreground text-background text-sm hover:bg-primary transition-colors disabled:opacity-50"
+                      >
+                        {validatingPromo ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Appliquer'}
+                      </button>
+                    </div>
+                    {promoError && <p className="text-xs text-red-500">{promoError}</p>}
+                    {promoRequiresLogin && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 text-sm space-y-1">
+                        <p className="text-amber-800 font-medium">Ce code est réservé aux comptes connectés.</p>
+                        <div className="flex items-center gap-3 text-amber-700">
+                          <Link href="/compte?redirect=/panier" className="underline hover:text-amber-900">Se connecter</Link>
+                          <span>·</span>
+                          <Link href="/compte?tab=register&redirect=/panier" className="underline hover:text-amber-900">Créer un compte</Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="border-t pt-4 mb-8">

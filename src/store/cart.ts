@@ -3,10 +3,21 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { CartItem, Product } from '@/types'
+import posthog from 'posthog-js'
+
+export interface CartPromoCode {
+  id: string
+  code: string
+  description: string | null
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  min_order_amount: number
+}
 
 interface CartStore {
   items: CartItem[]
   isOpen: boolean
+  pendingPromoCode: CartPromoCode | null
   addItem: (product: Product, size: string, quantity?: number) => void
   removeItem: (productId: string, size: string) => void
   updateQuantity: (productId: string, size: string, quantity: number) => void
@@ -16,6 +27,7 @@ interface CartStore {
   toggleCart: () => void
   getTotal: () => number
   getItemCount: () => number
+  setPendingPromo: (code: CartPromoCode | null) => void
 }
 
 export const useCartStore = create<CartStore>()(
@@ -23,6 +35,7 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      pendingPromoCode: null,
 
       addItem: (product, size, quantity = 1) => {
         set((state) => {
@@ -44,14 +57,35 @@ export const useCartStore = create<CartStore>()(
             items: [...state.items, { product, quantity, selectedSize: size }],
           }
         })
+        posthog.capture('add_to_cart', {
+          product_id: product.id,
+          product_name: product.name,
+          product_brand: product.brand,
+          size,
+          quantity,
+          price: (product.priceBySize && product.priceBySize[size] > 0)
+            ? product.priceBySize[size]
+            : product.price,
+        })
       },
 
       removeItem: (productId, size) => {
+        const removedItem = get().items.find(
+          (item) => item.product.id === productId && item.selectedSize === size
+        )
         set((state) => ({
           items: state.items.filter(
             (item) => !(item.product.id === productId && item.selectedSize === size)
           ),
         }))
+        if (removedItem) {
+          posthog.capture('remove_from_cart', {
+            product_id: productId,
+            product_name: removedItem.product.name,
+            size,
+            quantity: removedItem.quantity,
+          })
+        }
       },
 
       updateQuantity: (productId, size, quantity) => {
@@ -69,7 +103,9 @@ export const useCartStore = create<CartStore>()(
         }))
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], pendingPromoCode: null }),
+
+      setPendingPromo: (code) => set({ pendingPromoCode: code }),
 
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),

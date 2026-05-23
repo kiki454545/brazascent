@@ -68,7 +68,7 @@ interface AppliedPromoCode {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, getTotal } = useCartStore()
+  const { items, getTotal, pendingPromoCode, setPendingPromo } = useCartStore()
   const { user, profile } = useAuthStore()
 
   const [currentStep, setCurrentStep] = useState<Step>('information')
@@ -103,6 +103,18 @@ export default function CheckoutPage() {
   const [promoError, setPromoError] = useState<string | null>(null)
   const [promoRequiresLogin, setPromoRequiresLogin] = useState(false)
   const [validatingPromo, setValidatingPromo] = useState(false)
+
+  // Pré-charger le code promo depuis le cart store
+  useEffect(() => {
+    if (pendingPromoCode && !appliedPromoCode) {
+      setAppliedPromoCode(pendingPromoCode)
+      const discount = pendingPromoCode.discount_type === 'percentage'
+        ? Math.round((subtotal * pendingPromoCode.discount_value) / 100 * 100) / 100
+        : Math.min(pendingPromoCode.discount_value, subtotal)
+      setPromoDiscount(discount)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Charger les méthodes de livraison depuis la BDD
   useEffect(() => {
@@ -223,6 +235,7 @@ export default function CheckoutPage() {
 
       setAppliedPromoCode(data.promoCode)
       setPromoDiscount(data.discountAmount)
+      setPendingPromo(data.promoCode)
       setPromoCode('')
       posthog.capture('promo_code_applied', {
         code: data.promoCode.code,
@@ -242,6 +255,7 @@ export default function CheckoutPage() {
   const handleRemovePromoCode = () => {
     setPromoRequiresLogin(false)
     setAppliedPromoCode(null)
+    setPendingPromo(null)
     setPromoDiscount(0)
     setPromoError(null)
   }
