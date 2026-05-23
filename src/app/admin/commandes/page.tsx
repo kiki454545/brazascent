@@ -290,6 +290,38 @@ export default function AdminOrdersPage() {
     return statusOptions.find(s => s.value === status)?.step || 0
   }
 
+  // Export CSV des commandes filtrées
+  const handleExportCSV = () => {
+    const rows = filteredOrders.length > 0 ? filteredOrders : orders
+    const headers = ['Numéro', 'Date', 'Client', 'Email', 'Ville', 'CP', 'Statut', 'Livraison', 'Sous-total', 'Frais livraison', 'Remise', 'Total', 'Transporteur', 'Numéro de suivi']
+    const csvRows = [
+      headers.join(';'),
+      ...rows.map(o => [
+        o.order_number,
+        new Date(o.created_at).toLocaleDateString('fr-FR'),
+        `${o.shipping_address?.firstName || ''} ${o.shipping_address?.lastName || ''}`.trim(),
+        o.shipping_address?.email || '',
+        o.shipping_address?.city || '',
+        o.shipping_address?.postalCode || '',
+        o.status,
+        o.shipping_method || '',
+        (o.subtotal || 0).toFixed(2),
+        (o.shipping || 0).toFixed(2),
+        (o.discount || 0).toFixed(2),
+        (o.total || 0).toFixed(2),
+        o.carrier || '',
+        o.tracking_number || '',
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'))
+    ]
+    const blob = new Blob(['﻿' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `commandes-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   // Filtrer selon l'onglet actif
   const currentOrders = activeTab === 'active' ? activeOrders : completedOrders
 
@@ -326,9 +358,12 @@ export default function AdminOrdersPage() {
             {activeOrders.length} à traiter · {completedOrders.length} terminées
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors">
+        <button
+          onClick={handleExportCSV}
+          className="flex items-center gap-2 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors"
+        >
           <Download className="w-5 h-5" />
-          Exporter
+          Exporter CSV
         </button>
       </div>
 
@@ -928,17 +963,26 @@ export default function AdminOrdersPage() {
 
               {/* Footer actions */}
               <div className="p-6 border-t border-admin-border bg-admin-surface-alt sticky bottom-0">
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => setSelectedOrder(null)}
-                    className="flex-1 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface transition-colors"
+                    className="px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface transition-colors text-sm"
                   >
                     Fermer
                   </button>
+                  <a
+                    href={`/admin/commandes/${selectedOrder.id}/bon-livraison`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface transition-colors text-sm"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Bon de livraison
+                  </a>
                   <button
                     onClick={saveOrderDetails}
                     disabled={saving}
-                    className="flex-1 px-4 py-2 bg-[#19110B] text-white rounded-lg hover:bg-[#C9A962] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2 bg-[#19110B] text-white rounded-lg hover:bg-[#C9A962] transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
                   >
                     {saving ? (
                       <>
