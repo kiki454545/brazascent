@@ -253,7 +253,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                     <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Catégorie</p>
                     <div className="space-y-1">
                       {categories.map(c => (
-                        <button key={c.id} onClick={() => setSelectedCategory(c.id)}
+                        <button key={c.id} onClick={() => setSelectedCategory(c.id === selectedCategory && c.id !== 'all' ? 'all' : c.id)}
                           className={`w-full text-left text-sm py-2 px-2 transition-colors ${selectedCategory === c.id ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                           {c.name}
                         </button>
@@ -271,7 +271,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                           Toutes
                         </button>
                         {brands.map(b => (
-                          <button key={b.id} onClick={() => setSelectedBrand(b.name)}
+                          <button key={b.id} onClick={() => setSelectedBrand(b.name === selectedBrand ? 'all' : b.name)}
                             className={`w-full text-left text-sm py-2 px-2 transition-colors ${selectedBrand === b.name ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                             {b.name}
                           </button>
@@ -289,7 +289,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                         Tous
                       </button>
                       {formats.map(f => (
-                        <button key={f} onClick={() => setSelectedFormat(f)}
+                        <button key={f} onClick={() => setSelectedFormat(f === selectedFormat ? 'all' : f)}
                           className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedFormat === f ? 'bg-foreground text-background border-foreground' : 'border-border'}`}>
                           {f}
                         </button>
@@ -385,7 +385,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                       {categories.map(c => (
                         <button
                           key={c.id}
-                          onClick={() => setSelectedCategory(c.id)}
+                          onClick={() => setSelectedCategory(c.id === selectedCategory && c.id !== 'all' ? 'all' : c.id)}
                           className={`w-full text-left text-sm py-1.5 px-2 transition-colors ${selectedCategory === c.id ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                           {c.name}
@@ -410,7 +410,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                         {brands.map(b => (
                           <button
                             key={b.id}
-                            onClick={() => setSelectedBrand(b.name)}
+                            onClick={() => setSelectedBrand(b.name === selectedBrand ? 'all' : b.name)}
                             className={`w-full text-left text-sm py-1.5 px-2 transition-colors ${selectedBrand === b.name ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
                           >
                             {b.name}
@@ -435,7 +435,7 @@ export default function ParfumsPage({ initialProducts, initialBrands }: ParfumsC
                       {formats.map(f => (
                         <button
                           key={f}
-                          onClick={() => setSelectedFormat(f)}
+                          onClick={() => setSelectedFormat(f === selectedFormat ? 'all' : f)}
                           className={`px-3 py-1.5 text-xs tracking-wider border transition-colors ${selectedFormat === f ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'}`}
                         >
                           {f}
