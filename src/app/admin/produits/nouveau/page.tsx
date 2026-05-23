@@ -103,8 +103,6 @@ export default function NewProductPage() {
 
   const [newNote, setNewNote] = useState({ top: '', heart: '', base: '' })
   const [newSize, setNewSize] = useState('')
-  const [generatingAccords, setGeneratingAccords] = useState(false)
-  const [generateError, setGenerateError] = useState<string | null>(null)
   const [accordsText, setAccordsText] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -346,26 +344,7 @@ export default function NewProductPage() {
     setForm((prev) => ({ ...prev, accords }))
   }
 
-  const generateAccords = async () => {
-    setGeneratingAccords(true)
-    setGenerateError(null)
-    try {
-      const res = await fetch('/api/admin/generate-accords', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom: form.name, marque: form.brand }),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Erreur API')
-      setForm((prev) => ({ ...prev, accords: json.accords }))
-    } catch (err) {
-      setGenerateError(err instanceof Error ? err.message : 'Erreur inconnue')
-    } finally {
-      setGeneratingAccords(false)
-    }
-  }
-
-  const addSize = () => {
+const addSize = () => {
     const size = newSize.trim()
     if (size && !form.sizes.includes(size)) {
       const newStockBySize = { ...form.stock_by_size, [size]: 50 }
@@ -608,18 +587,6 @@ export default function NewProductPage() {
                 >
                   Appliquer
                 </button>
-                <button
-                  type="button"
-                  onClick={generateAccords}
-                  disabled={generatingAccords || !form.name}
-                  className="flex items-center gap-2 px-4 py-2 bg-admin-surface-alt rounded-lg hover:bg-admin-surface-alt transition-colors text-sm disabled:opacity-50"
-                >
-                  {generatingAccords ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" />Génération…</>
-                  ) : (
-                    <><span>✨</span>Générer avec l&apos;IA</>
-                  )}
-                </button>
                 {form.accords.length > 0 && (
                   <button
                     type="button"
@@ -630,7 +597,6 @@ export default function NewProductPage() {
                   </button>
                 )}
               </div>
-              {generateError && <p className="text-sm text-red-500 mt-3">{generateError}</p>}
               {form.accords.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {form.accords.map((accord) => (

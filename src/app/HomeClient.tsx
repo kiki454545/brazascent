@@ -345,7 +345,7 @@ export default function HomeClient({ featuredProducts, newProducts, packs }: Hom
                 L&apos;exigence du <span className="italic text-primary">détail</span>,<br />au service du parfum.
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-12 max-w-lg">
-                Chaque décant est préparé à la main, à partir de flacons authentiques. Une démarche artisanale pour faire découvrir les plus belles fragrances de niche.
+                Chaque décant est préparé à la main, à partir de flacons authentiques. Une démarche artisanale pour faire découvrir les plus belles fragrances.
               </p>
               <div className="space-y-8">
                 {[
