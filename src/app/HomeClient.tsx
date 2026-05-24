@@ -619,7 +619,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
               Comment ça <span className="italic text-primary">marche ?</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Décanter, c&apos;est découvrir sans se tromper. Voici comment nous garantissons une expérience parfumée authentique, du flacon original jusqu&apos;à ta porte.
+              Chaque commande est préparée à la main, à partir de flacons originaux. L&apos;authenticité du niche, en format découverte.
             </p>
           </div>
 
@@ -631,10 +631,10 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 relative">
               <div className="hidden lg:block absolute top-8 left-[12.5%] right-[12.5%] h-px bg-primary/30" aria-hidden />
               {[
-                { num: '01', title: 'Choisis ton parfum', desc: 'Sélectionne la fragrance et le format (2/5/10ml).' },
-                { num: '02', title: 'Préparation', desc: 'Décantage propre et précis à partir d\'un flacon authentique.' },
-                { num: '03', title: 'Packaging', desc: 'Emballage soigné et sécurisé pour un transport sans stress.' },
-                { num: '04', title: 'Réception', desc: 'Tu testes sur plusieurs jours et tu profites de la niche.' },
+                { num: '01', title: 'Sélection', desc: 'Choisis parmi nos fragrances de niche et définis ton format découverte.' },
+                { num: '02', title: 'Décantage artisanal', desc: 'Prélevé directement du flacon authentique, avec précision et soin. Sans intermédiaire, sans reformulation.' },
+                { num: '03', title: 'Expédition soignée', desc: 'Chaque décant est conditionné avec soin pour arriver intact. Ton expérience commence à l\'ouverture du colis.' },
+                { num: '04', title: 'L\'expérience', desc: 'Porte-le. Vis-le. Décide en toute confiance avant d\'investir dans le flacon complet.' },
               ].map((step) => (
                 <div key={step.num} className="relative text-center">
                   <div className="w-16 h-16 mx-auto mb-6 bg-cream border border-primary rounded-full flex items-center justify-center relative z-10">
