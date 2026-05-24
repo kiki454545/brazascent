@@ -70,7 +70,7 @@ interface AppliedPromoCode {
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, getTotal, pendingPromoCode, setPendingPromo } = useCartStore()
+  const { items, getTotal, removeItem, pendingPromoCode, setPendingPromo } = useCartStore()
   const { user, profile } = useAuthStore()
 
   const [currentStep, setCurrentStep] = useState<Step>('shipping')
@@ -945,7 +945,7 @@ export default function CheckoutPage() {
               {/* Items */}
               <div className="space-y-4 mb-6 pt-2">
                 {items.map((item) => (
-                  <div key={`${item.product.id}-${item.selectedSize}`} className="flex gap-4">
+                  <div key={`${item.product.id}-${item.selectedSize}`} className="flex gap-4 group">
                     <div className="relative w-16 h-16 bg-cream flex-shrink-0 overflow-visible">
                       <Image
                         src={item.product.images[0]}
@@ -962,9 +962,18 @@ export default function CheckoutPage() {
                       <p className="text-sm font-medium truncate">{item.product.name}</p>
                       <p className="text-xs text-muted-foreground">{item.selectedSize}</p>
                     </div>
-                    <p className="text-sm font-medium">
-                      {formatPrice(getItemPrice(item) * item.quantity)} €
-                    </p>
+                    <div className="flex flex-col items-end gap-1">
+                      <p className="text-sm font-medium">
+                        {formatPrice(getItemPrice(item) * item.quantity)} €
+                      </p>
+                      <button
+                        onClick={() => removeItem(item.product.id, item.selectedSize)}
+                        className="text-muted-foreground hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                        title="Supprimer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
