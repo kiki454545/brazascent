@@ -353,7 +353,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                 {([
                   { Icon: ShieldCheck, label: '100% authentique' },
                   { Icon: Zap,         label: 'Expédition 24/48h' },
-                  { Icon: Layers,      label: 'Formats disponibles' },
+                  { Icon: Layers,      label: '2 / 5 / 10 / 30 / 50 ml' },
                   { Icon: Gift,        label: 'Échantillon offert' },
                 ] as const).map(({ Icon, label }) => (
                   <div key={label} className="flex items-center gap-2">
