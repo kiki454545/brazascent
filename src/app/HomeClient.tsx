@@ -349,7 +349,24 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                 </Link>
               </div>
 
-              <div className="animate-fade-in-up stagger-4 mt-8 grid grid-cols-2 gap-x-6 gap-y-3">
+              <div className="animate-fade-in-up stagger-4 mt-8 flex flex-wrap gap-2 mb-6">
+                {[
+                  { label: 'Best sellers', href: '/parfums?sort=bestseller' },
+                  { label: 'Nouveautés',   href: '/parfums?sort=newest' },
+                  { label: 'Packs',        href: '/packs' },
+                  { label: 'Promos',       href: '/promos' },
+                ].map(({ label, href }) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    className="px-4 py-1.5 border border-white/25 text-white/80 text-xs tracking-[0.15em] uppercase hover:border-primary hover:text-primary transition-colors"
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+
+              <div className="animate-fade-in-up stagger-4 grid grid-cols-2 gap-x-6 gap-y-3">
                 {([
                   { Icon: ShieldCheck, label: '100% authentique' },
                   { Icon: Zap,         label: 'Expédition 24/48h' },

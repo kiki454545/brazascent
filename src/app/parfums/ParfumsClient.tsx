@@ -84,7 +84,7 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
   const [selectedFormat, setSelectedFormat] = useState('all')
   // Si on vient d'une page famille, le filtre est verrouillé
   const [selectedFamille, setSelectedFamille] = useState(familleFilter || 'all')
-  const [sortBy, setSortBy] = useState('')
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || '')
   const [searchQuery, setSearchQuery] = useState(initialSearch)
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
 
