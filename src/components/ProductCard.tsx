@@ -214,6 +214,11 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
               {product.collection}
             </p>
           )}
+          {product.brand && (
+            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-0.5 truncate">
+              {product.brand}
+            </p>
+          )}
           <h3 className="text-lg font-light tracking-wide mb-1 group-hover:text-primary transition-colors truncate">
             {product.name}
           </h3>

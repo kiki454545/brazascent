@@ -482,6 +482,13 @@ export default function ProductPage() {
               </p>
             )}
 
+            {/* Brand */}
+            {product.brand && (
+              <p className="text-sm tracking-[0.25em] uppercase text-muted-foreground mb-2">
+                {product.brand}
+              </p>
+            )}
+
             {/* Name */}
             <h1 className="text-4xl lg:text-5xl font-light tracking-[0.1em] mb-4">
               {product.name}
