@@ -75,7 +75,7 @@ export interface HomePack {
 }
 
 export default async function HomePage() {
-  const [bestsellersRes, newProductsRes, promosRes, packsRes] = await Promise.all([
+  const [bestsellersRes, newProductsRes, promosRes, packsRes, ordersRes] = await Promise.all([
     supabase
       .from('products')
       .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order')
@@ -101,12 +101,17 @@ export default async function HomePage() {
       .select('id, name, slug, description, price, original_price, image, tag')
       .eq('is_active', true)
       .limit(3),
+    supabase
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('payment_status', 'paid'),
   ])
 
   const featuredProducts = (bestsellersRes.data || []).map(mapProduct)
   const newProducts = (newProductsRes.data || []).map(mapProduct)
   const promoProducts = (promosRes.data || []).map(mapProduct)
   const packs = (packsRes.data || []) as HomePack[]
+  const orderCount = 100 + (ordersRes.count || 0)
 
-  return <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} promoProducts={promoProducts} packs={packs} />
+  return <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} promoProducts={promoProducts} packs={packs} orderCount={orderCount} />
 }

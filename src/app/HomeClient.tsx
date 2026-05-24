@@ -287,9 +287,10 @@ interface HomeClientProps {
   newProducts: Product[]
   promoProducts: Product[]
   packs: HomePack[]
+  orderCount: number
 }
 
-export default function HomeClient({ featuredProducts, newProducts, promoProducts, packs }: HomeClientProps) {
+export default function HomeClient({ featuredProducts, newProducts, promoProducts, packs, orderCount }: HomeClientProps) {
   const bestsellersCarouselRef = useRef<DraggableCarouselHandle>(null)
   const newProductsCarouselRef = useRef<DraggableCarouselHandle>(null)
   const promosCarouselRef = useRef<DraggableCarouselHandle>(null)
@@ -421,6 +422,13 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
               <p className="text-muted-foreground leading-relaxed mb-12 max-w-lg">
                 Chaque décant est préparé à la main, à partir de flacons authentiques. Une démarche artisanale pour faire découvrir les plus belles fragrances.
               </p>
+              <div className="flex items-center gap-3 mb-10">
+                <div className="flex text-primary text-lg leading-none">{'★★★★★'}</div>
+                <p className="text-sm text-muted-foreground">
+                  Déjà <span className="text-foreground font-medium">{orderCount}</span> commandes expédiées
+                </p>
+              </div>
+
               <div className="space-y-8">
                 {[
                   { num: '01', title: 'Authenticité', desc: 'Décantage exclusivement à partir de flacons originaux, jamais de copies ni de reformulations.' },
