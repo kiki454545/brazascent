@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 're
 import Image from 'next/image'
 import Link from 'next/link'
 import { m, AnimatePresence } from 'framer-motion'
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ShieldCheck, Zap, Layers, Gift } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
 import { HomePack } from './page'
@@ -347,6 +347,20 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                   Découvrir la sélection
                   <ArrowRight className="w-4 h-4" />
                 </Link>
+              </div>
+
+              <div className="animate-fade-in-up stagger-4 mt-8 grid grid-cols-2 gap-x-6 gap-y-3">
+                {([
+                  { Icon: ShieldCheck, label: '100% authentique' },
+                  { Icon: Zap,         label: 'Expédition 24/48h' },
+                  { Icon: Layers,      label: 'Formats disponibles' },
+                  { Icon: Gift,        label: 'Échantillon offert' },
+                ] as const).map(({ Icon, label }) => (
+                  <div key={label} className="flex items-center gap-2">
+                    <Icon className="w-4 h-4 text-primary flex-shrink-0" strokeWidth={1.5} />
+                    <span className="text-xs text-white/75 tracking-wide">{label}</span>
+                  </div>
+                ))}
               </div>
             </div>
             <Link href="#comment-ca-marche" aria-label="Comment ça marche" className="hidden lg:flex absolute bottom-10 left-20 z-10 flex-col items-center gap-3 text-white/70 hover:text-primary transition-colors group">
