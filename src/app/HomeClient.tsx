@@ -9,6 +9,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
 import { HomePack } from './page'
 import { formatPrice } from '@/lib/format'
+import { useSettingsStore } from '@/store/settings'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -291,6 +292,8 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ featuredProducts, newProducts, promoProducts, packs, orderCount }: HomeClientProps) {
+  const { settings } = useSettingsStore()
+  const freeShippingThreshold = settings.freeShippingThreshold || 120
   const bestsellersCarouselRef = useRef<DraggableCarouselHandle>(null)
   const newProductsCarouselRef = useRef<DraggableCarouselHandle>(null)
   const promosCarouselRef = useRef<DraggableCarouselHandle>(null)
@@ -372,7 +375,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                   { Icon: Zap,         label: 'Expédition 24/48h' },
                   { Icon: Layers,      label: 'Formats disponibles', sub: '2 / 5 / 10 ml' },
                   { Icon: Gift,        label: 'Échantillon offert' },
-                  { Icon: Truck,       label: 'Livraison offerte', sub: 'Dès 120 €' },
+                  { Icon: Truck,       label: 'Livraison offerte', sub: `Dès ${freeShippingThreshold} €` },
                 ] as { Icon: React.ElementType; label: string; sub?: string }[]).map(({ Icon, label, sub }) => (
                   <div key={label} className="flex items-start gap-2">
                     <Icon className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" strokeWidth={1.5} />
