@@ -631,9 +631,9 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 relative">
               <div className="hidden lg:block absolute top-8 left-[12.5%] right-[12.5%] h-px bg-primary/30" aria-hidden />
               {[
-                { num: '01', title: 'Sélection', desc: 'Choisis parmi nos fragrances de niche et définis ton format découverte.' },
-                { num: '02', title: 'Décantage artisanal', desc: 'Prélevé directement du flacon authentique, avec précision et soin. Sans intermédiaire, sans reformulation.' },
-                { num: '03', title: 'Expédition soignée', desc: 'Chaque décant est conditionné avec soin pour arriver intact. Ton expérience commence à l\'ouverture du colis.' },
+                { num: '01', title: 'Sélection', desc: 'Choisis parmi notre sélection de fragrances de niche et définis ton format découverte.' },
+                { num: '02', title: 'Décantage précis', desc: 'Prélevé directement du flacon authentique, avec précision et soin. Sans intermédiaire, sans reformulation.' },
+                { num: '03', title: 'Expédition soignée', desc: 'Chaque décant est conditionné avec soin pour arriver intact. L\'expérience commence dès l\'ouverture du colis.' },
                 { num: '04', title: 'L\'expérience', desc: 'Porte-le. Vis-le. Décide en toute confiance avant d\'investir dans le flacon complet.' },
               ].map((step) => (
                 <div key={step.num} className="relative text-center">
