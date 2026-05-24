@@ -71,7 +71,7 @@ export default function CheckoutPage() {
   const { items, getTotal, pendingPromoCode, setPendingPromo } = useCartStore()
   const { user, profile } = useAuthStore()
 
-  const [currentStep, setCurrentStep] = useState<Step>('information')
+  const [currentStep, setCurrentStep] = useState<Step>('shipping')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -94,7 +94,11 @@ export default function CheckoutPage() {
 
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
   const [shippingMethodId, setShippingMethodId] = useState<string | null>(null)
+  const [relayPoint, setRelayPoint] = useState({ name: '', address: '', postalCode: '', city: '' })
   const [acceptTerms, setAcceptTerms] = useState(false)
+
+  const isRelayMethod = (method: ShippingMethod | null) =>
+    !!(method?.title.toLowerCase().includes('relais') || method?.description?.toLowerCase().includes('relais'))
 
   // Code promo
   const [promoCode, setPromoCode] = useState('')
@@ -280,21 +284,34 @@ export default function CheckoutPage() {
 
   // Obtenir l'adresse finale à utiliser
   const getFinalAddress = (): ShippingAddress => {
-    if (useNewAddress) {
-      return shippingAddress
+    const personalInfo = {
+      firstName: useNewAddress ? shippingAddress.firstName : (profile?.first_name || shippingAddress.firstName),
+      lastName: useNewAddress ? shippingAddress.lastName : (profile?.last_name || shippingAddress.lastName),
+      email: user ? (user.email || profile?.email || shippingAddress.email) : shippingAddress.email,
+      phone: shippingAddress.phone,
     }
 
-    const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId)
-    if (selectedAddress) {
+    // Si le mode de livraison est un point relais, utiliser l'adresse du relais
+    if (isRelayMethod(selectedMethod)) {
       return {
-        firstName: profile?.first_name || shippingAddress.firstName,
-        lastName: profile?.last_name || shippingAddress.lastName,
-        email: user?.email || profile?.email || shippingAddress.email,
-        phone: shippingAddress.phone,
-        street: selectedAddress.street,
-        city: selectedAddress.city,
-        postalCode: selectedAddress.postal_code,
-        country: selectedAddress.country,
+        ...personalInfo,
+        street: relayPoint.address,
+        city: relayPoint.city,
+        postalCode: relayPoint.postalCode,
+        country: 'France',
+      }
+    }
+
+    if (!useNewAddress) {
+      const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId)
+      if (selectedAddress) {
+        return {
+          ...personalInfo,
+          street: selectedAddress.street,
+          city: selectedAddress.city,
+          postalCode: selectedAddress.postal_code,
+          country: selectedAddress.country,
+        }
       }
     }
 
@@ -302,6 +319,22 @@ export default function CheckoutPage() {
       ...shippingAddress,
       email: user ? (user.email || profile?.email || shippingAddress.email) : shippingAddress.email,
     }
+  }
+
+  const handleShippingSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!shippingMethodId) {
+      setError('Veuillez sélectionner un mode de livraison')
+      return
+    }
+    if (isRelayMethod(selectedMethod)) {
+      if (!relayPoint.name.trim() || !relayPoint.address.trim() || !relayPoint.postalCode.trim() || !relayPoint.city.trim()) {
+        setError('Veuillez renseigner les informations du point relais')
+        return
+      }
+    }
+    setError(null)
+    setCurrentStep('information')
   }
 
   const handleInformationSubmit = (e: React.FormEvent) => {
@@ -320,16 +353,6 @@ export default function CheckoutPage() {
       return
     }
 
-    setError(null)
-    setCurrentStep('shipping')
-  }
-
-  const handleShippingSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!shippingMethodId) {
-      setError('Veuillez sélectionner un mode de livraison')
-      return
-    }
     setError(null)
     setCurrentStep('payment')
   }
@@ -403,8 +426,8 @@ export default function CheckoutPage() {
   }
 
   const steps = [
-    { id: 'information', label: 'Informations' },
     { id: 'shipping', label: 'Livraison' },
+    { id: 'information', label: 'Informations' },
     { id: 'payment', label: 'Paiement' },
   ]
 
@@ -469,7 +492,135 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {/* Step 1: Information */}
+            {/* Step 1: Livraison */}
+            {currentStep === 'shipping' && (
+              <m.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-cream p-8 shadow-sm"
+              >
+                <h2 className="text-xl tracking-[0.1em] uppercase mb-6">Mode de livraison</h2>
+
+                <form onSubmit={handleShippingSubmit} className="space-y-6">
+                  <div className="space-y-4">
+                    {shippingMethods.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Aucun mode de livraison disponible
+                      </p>
+                    )}
+                    {shippingMethods.map((method) => {
+                      const isSelected = shippingMethodId === method.id
+                      const isFree = method.free_threshold !== null && subtotal >= method.free_threshold
+                      const priceLabel = isFree ? (
+                        <span className="text-green-600">Offerte</span>
+                      ) : (
+                        `${Number(method.price).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+                      )
+
+                      return (
+                        <label
+                          key={method.id}
+                          className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
+                            isSelected ? 'border-primary bg-cream' : 'border-border hover:border-border'
+                          }`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <input
+                              type="radio"
+                              name="shipping"
+                              value={method.id}
+                              checked={isSelected}
+                              onChange={() => setShippingMethodId(method.id)}
+                              className="w-5 h-5 accent-[#C9A962]"
+                            />
+                            {method.image_url && (
+                              <div className="w-12 h-12 relative flex-shrink-0">
+                                <Image src={method.image_url} alt={method.title} fill sizes="48px" className="object-contain" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium">{method.title}</p>
+                              {method.description && <p className="text-sm text-muted-foreground">{method.description}</p>}
+                              {method.description_2 && <p className="text-sm text-muted-foreground">{method.description_2}</p>}
+                              {method.badge && (
+                                <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-cream border border-primary/30 rounded">
+                                  {method.badge}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span className="font-medium">{priceLabel}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+
+                  {/* Formulaire point relais */}
+                  {isRelayMethod(selectedMethod) && (
+                    <div className="p-4 border border-primary/30 bg-primary/5 space-y-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <MapPin className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium">Indiquez votre point relais</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Trouvez un point relais sur le site de votre transporteur, puis renseignez son adresse ci-dessous.
+                      </p>
+                      <div>
+                        <label className="block text-sm text-muted-foreground mb-2">Nom du point relais *</label>
+                        <input
+                          type="text"
+                          value={relayPoint.name}
+                          onChange={(e) => setRelayPoint({ ...relayPoint, name: e.target.value })}
+                          placeholder="Ex : Tabac du Centre"
+                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-muted-foreground mb-2">Adresse du point relais *</label>
+                        <input
+                          type="text"
+                          value={relayPoint.address}
+                          onChange={(e) => setRelayPoint({ ...relayPoint, address: e.target.value })}
+                          placeholder="Ex : 12 rue de la Paix"
+                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-muted-foreground mb-2">Code postal *</label>
+                          <input
+                            type="text"
+                            value={relayPoint.postalCode}
+                            onChange={(e) => setRelayPoint({ ...relayPoint, postalCode: e.target.value })}
+                            placeholder="75001"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-muted-foreground mb-2">Ville *</label>
+                          <input
+                            type="text"
+                            value={relayPoint.city}
+                            onChange={(e) => setRelayPoint({ ...relayPoint, city: e.target.value })}
+                            placeholder="Paris"
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="w-full py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
+                  >
+                    Continuer vers les informations
+                  </button>
+                </form>
+              </m.div>
+            )}
+
+            {/* Step 2: Informations */}
             {currentStep === 'information' && (
               <m.div
                 initial={{ opacity: 0, x: 20 }}
@@ -481,14 +632,30 @@ export default function CheckoutPage() {
                 </h2>
 
                 <form onSubmit={handleInformationSubmit} className="space-y-6">
-                  {/* Adresses sauvegardées */}
-                  {user && !loadingAddresses && savedAddresses.length > 0 && (
+                  {/* Mode de livraison récap */}
+                  {selectedMethod && (
+                    <div className="p-4 bg-muted border">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm text-muted-foreground">Mode de livraison</span>
+                        <button type="button" onClick={() => setCurrentStep('shipping')} className="text-sm text-primary hover:underline">
+                          Modifier
+                        </button>
+                      </div>
+                      <p className="text-sm font-medium">{selectedMethod.title}</p>
+                      {isRelayMethod(selectedMethod) && relayPoint.name && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {relayPoint.name} — {relayPoint.address}, {relayPoint.postalCode} {relayPoint.city}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Adresses sauvegardées — masquées si point relais */}
+                  {!isRelayMethod(selectedMethod) && user && !loadingAddresses && savedAddresses.length > 0 && (
                     <div className="space-y-4">
                       <label className="block text-sm font-medium text-foreground/80 mb-2">
                         Adresse de livraison
                       </label>
-
-                      {/* Liste des adresses sauvegardées */}
                       <div className="space-y-3">
                         {savedAddresses.map((address) => (
                           <label
@@ -503,10 +670,7 @@ export default function CheckoutPage() {
                               type="radio"
                               name="address"
                               checked={!useNewAddress && selectedAddressId === address.id}
-                              onChange={() => {
-                                setSelectedAddressId(address.id)
-                                setUseNewAddress(false)
-                              }}
+                              onChange={() => { setSelectedAddressId(address.id); setUseNewAddress(false) }}
                               className="w-5 h-5 mt-0.5 accent-[#C9A962]"
                             />
                             <div className="flex-1">
@@ -514,25 +678,17 @@ export default function CheckoutPage() {
                                 <MapPin className="w-4 h-4 text-primary" />
                                 <span className="font-medium">{address.label}</span>
                                 {address.is_default && (
-                                  <span className="px-2 py-0.5 bg-primary text-white text-xs uppercase">
-                                    Par défaut
-                                  </span>
+                                  <span className="px-2 py-0.5 bg-primary text-white text-xs uppercase">Par défaut</span>
                                 )}
                               </div>
                               <p className="text-sm text-muted-foreground">{address.street}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {address.postal_code} {address.city}, {address.country}
-                              </p>
+                              <p className="text-sm text-muted-foreground">{address.postal_code} {address.city}, {address.country}</p>
                             </div>
                           </label>
                         ))}
-
-                        {/* Option nouvelle adresse */}
                         <label
                           className={`flex items-center gap-4 p-4 border cursor-pointer transition-colors ${
-                            useNewAddress
-                              ? 'border-primary bg-cream'
-                              : 'border-border hover:border-border'
+                            useNewAddress ? 'border-primary bg-cream' : 'border-border hover:border-border'
                           }`}
                         >
                           <input
@@ -551,107 +707,63 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  {/* Formulaire nouvelle adresse */}
-                  {(useNewAddress || !user || savedAddresses.length === 0) && (
+                  {/* Formulaire adresse — masqué si point relais */}
+                  {!isRelayMethod(selectedMethod) && (useNewAddress || !user || savedAddresses.length === 0) && (
                     <>
                       {user && savedAddresses.length > 0 && (
                         <div className="border-t pt-6 mt-6">
                           <h3 className="text-sm font-medium text-foreground/80 mb-4">Nouvelle adresse</h3>
                         </div>
                       )}
-
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                           <label className="block text-sm text-muted-foreground mb-2">Prénom *</label>
-                          <input
-                            type="text"
-                            value={shippingAddress.firstName}
-                            onChange={(e) =>
-                              setShippingAddress({ ...shippingAddress, firstName: e.target.value })
-                            }
-                            required
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
-                          />
+                          <input type="text" value={shippingAddress.firstName}
+                            onChange={(e) => setShippingAddress({ ...shippingAddress, firstName: e.target.value })}
+                            required className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base" />
                         </div>
                         <div>
                           <label className="block text-sm text-muted-foreground mb-2">Nom *</label>
-                          <input
-                            type="text"
-                            value={shippingAddress.lastName}
-                            onChange={(e) =>
-                              setShippingAddress({ ...shippingAddress, lastName: e.target.value })
-                            }
-                            required
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
-                          />
+                          <input type="text" value={shippingAddress.lastName}
+                            onChange={(e) => setShippingAddress({ ...shippingAddress, lastName: e.target.value })}
+                            required className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base" />
                         </div>
                       </div>
-
                       <div>
                         <label className="block text-sm text-muted-foreground mb-2">
-                          Email *
-                          {user && <span className="ml-2 text-xs text-primary">(lié à votre compte)</span>}
+                          Email *{user && <span className="ml-2 text-xs text-primary">(lié à votre compte)</span>}
                         </label>
-                        <input
-                          type="email"
+                        <input type="email"
                           value={user ? (user.email || '') : shippingAddress.email}
-                          onChange={(e) => {
-                            if (!user) setShippingAddress({ ...shippingAddress, email: e.target.value })
-                          }}
-                          readOnly={!!user}
-                          required
-                          className={`w-full px-4 py-3 border border-border focus:outline-none text-base ${user ? 'bg-muted text-muted-foreground cursor-default focus:border-border' : 'focus:border-primary'}`}
-                        />
+                          onChange={(e) => { if (!user) setShippingAddress({ ...shippingAddress, email: e.target.value }) }}
+                          readOnly={!!user} required
+                          className={`w-full px-4 py-3 border border-border focus:outline-none text-base ${user ? 'bg-muted text-muted-foreground cursor-default focus:border-border' : 'focus:border-primary'}`} />
                       </div>
-
                       <div>
                         <label className="block text-sm text-muted-foreground mb-2">Adresse *</label>
-                        <input
-                          type="text"
-                          value={shippingAddress.street}
-                          onChange={(e) =>
-                            setShippingAddress({ ...shippingAddress, street: e.target.value })
-                          }
-                          required
-                          placeholder="123 rue Example"
-                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
-                        />
+                        <input type="text" value={shippingAddress.street}
+                          onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
+                          required placeholder="123 rue Example"
+                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base" />
                       </div>
-
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                         <div>
                           <label className="block text-sm text-muted-foreground mb-2">Code postal *</label>
-                          <input
-                            type="text"
-                            value={shippingAddress.postalCode}
-                            onChange={(e) =>
-                              setShippingAddress({ ...shippingAddress, postalCode: e.target.value })
-                            }
-                            required
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
-                          />
+                          <input type="text" value={shippingAddress.postalCode}
+                            onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })}
+                            required className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base" />
                         </div>
                         <div>
                           <label className="block text-sm text-muted-foreground mb-2">Ville *</label>
-                          <input
-                            type="text"
-                            value={shippingAddress.city}
-                            onChange={(e) =>
-                              setShippingAddress({ ...shippingAddress, city: e.target.value })
-                            }
-                            required
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
-                          />
+                          <input type="text" value={shippingAddress.city}
+                            onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                            required className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base" />
                         </div>
                         <div className="col-span-2 sm:col-span-1">
                           <label className="block text-sm text-muted-foreground mb-2">Pays *</label>
-                          <select
-                            value={shippingAddress.country}
-                            onChange={(e) =>
-                              setShippingAddress({ ...shippingAddress, country: e.target.value })
-                            }
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
-                          >
+                          <select value={shippingAddress.country}
+                            onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base">
                             <option value="France">France</option>
                             <option value="Belgique">Belgique</option>
                             <option value="Suisse">Suisse</option>
@@ -662,149 +774,55 @@ export default function CheckoutPage() {
                     </>
                   )}
 
+                  {/* Prénom/Nom si point relais (adresse du relais déjà saisie) */}
+                  {isRelayMethod(selectedMethod) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm text-muted-foreground mb-2">Prénom *</label>
+                        <input type="text" value={shippingAddress.firstName}
+                          onChange={(e) => setShippingAddress({ ...shippingAddress, firstName: e.target.value })}
+                          required className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base" />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-muted-foreground mb-2">Nom *</label>
+                        <input type="text" value={shippingAddress.lastName}
+                          onChange={(e) => setShippingAddress({ ...shippingAddress, lastName: e.target.value })}
+                          required className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base" />
+                      </div>
+                    </div>
+                  )}
+                  {isRelayMethod(selectedMethod) && (
+                    <div>
+                      <label className="block text-sm text-muted-foreground mb-2">
+                        Email *{user && <span className="ml-2 text-xs text-primary">(lié à votre compte)</span>}
+                      </label>
+                      <input type="email"
+                        value={user ? (user.email || '') : shippingAddress.email}
+                        onChange={(e) => { if (!user) setShippingAddress({ ...shippingAddress, email: e.target.value }) }}
+                        readOnly={!!user} required
+                        className={`w-full px-4 py-3 border border-border focus:outline-none text-base ${user ? 'bg-muted text-muted-foreground cursor-default focus:border-border' : 'focus:border-primary'}`} />
+                    </div>
+                  )}
+
                   {/* Téléphone - Toujours visible */}
-                  <div className={user && savedAddresses.length > 0 && !useNewAddress ? 'border-t pt-6' : ''}>
+                  <div className={user && savedAddresses.length > 0 && !useNewAddress && !isRelayMethod(selectedMethod) ? 'border-t pt-6' : ''}>
                     <label className="block text-sm text-muted-foreground mb-2">
                       Téléphone * <span className="text-muted-foreground/60">(requis pour la livraison)</span>
                     </label>
-                    <input
-                      type="tel"
-                      value={shippingAddress.phone}
-                      onChange={(e) =>
-                        setShippingAddress({ ...shippingAddress, phone: e.target.value })
-                      }
-                      required
-                      placeholder="+33 6 00 00 00 00"
-                      className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Le transporteur peut vous contacter pour la livraison
-                    </p>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
-                  >
-                    Continuer vers la livraison
-                  </button>
-                </form>
-              </m.div>
-            )}
-
-            {/* Step 2: Shipping */}
-            {currentStep === 'shipping' && (
-              <m.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-cream p-8 shadow-sm"
-              >
-                <h2 className="text-xl tracking-[0.1em] uppercase mb-6">Mode de livraison</h2>
-
-                <form onSubmit={handleShippingSubmit} className="space-y-6">
-                  <div className="space-y-4">
-                    {shippingMethods.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-4">
-                        Aucun mode de livraison disponible
-                      </p>
-                    )}
-                    {shippingMethods.map((method) => {
-                      const isSelected = shippingMethodId === method.id
-                      const isFree =
-                        method.free_threshold !== null &&
-                        subtotal >= method.free_threshold
-                      const priceLabel = isFree ? (
-                        <span className="text-green-600">Offerte</span>
-                      ) : (
-                        `${Number(method.price).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
-                      )
-
-                      return (
-                        <label
-                          key={method.id}
-                          className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${
-                            isSelected
-                              ? 'border-primary bg-cream'
-                              : 'border-border hover:border-border'
-                          }`}
-                        >
-                          <div className="flex items-center gap-4">
-                            <input
-                              type="radio"
-                              name="shipping"
-                              value={method.id}
-                              checked={isSelected}
-                              onChange={() => setShippingMethodId(method.id)}
-                              className="w-5 h-5 accent-[#C9A962]"
-                            />
-                            {method.image_url && (
-                              <div className="w-12 h-12 relative flex-shrink-0">
-                                <Image
-                                  src={method.image_url}
-                                  alt={method.title}
-                                  fill
-                                  sizes="48px"
-                                  className="object-contain"
-                                />
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-medium">{method.title}</p>
-                              {method.description && (
-                                <p className="text-sm text-muted-foreground">{method.description}</p>
-                              )}
-                              {method.description_2 && (
-                                <p className="text-sm text-muted-foreground">{method.description_2}</p>
-                              )}
-                              {method.badge && (
-                                <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-cream border border-primary/30 rounded">
-                                  {method.badge}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <span className="font-medium">{priceLabel}</span>
-                        </label>
-                      )
-                    })}
-                  </div>
-
-                  {/* Adresse récap */}
-                  <div className="p-4 bg-muted border">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Adresse de livraison</span>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep('information')}
-                        className="text-sm text-primary hover:underline"
-                      >
-                        Modifier
-                      </button>
-                    </div>
-                    <p className="text-sm">
-                      {finalAddress.firstName} {finalAddress.lastName}
-                    </p>
-                    <p className="text-sm">{finalAddress.street}</p>
-                    <p className="text-sm">
-                      {finalAddress.postalCode} {finalAddress.city}, {finalAddress.country}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Tél: {finalAddress.phone}
-                    </p>
+                    <input type="tel" value={shippingAddress.phone}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
+                      required placeholder="+33 6 00 00 00 00"
+                      className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base" />
+                    <p className="text-xs text-muted-foreground mt-1">Le transporteur peut vous contacter pour la livraison</p>
                   </div>
 
                   <div className="flex gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep('information')}
-                      className="px-6 py-4 border border-border text-sm tracking-[0.15em] uppercase hover:bg-muted transition-colors"
-                    >
+                    <button type="button" onClick={() => setCurrentStep('shipping')}
+                      className="px-6 py-4 border border-border text-sm tracking-[0.15em] uppercase hover:bg-muted transition-colors">
                       Retour
                     </button>
-                    <button
-                      type="submit"
-                      className="flex-1 py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors"
-                    >
+                    <button type="submit"
+                      className="flex-1 py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors">
                       Continuer vers le paiement
                     </button>
                   </div>
@@ -838,28 +856,34 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  {/* Récap adresse */}
-                  <div className="p-4 bg-muted border">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Adresse de livraison</span>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep('information')}
-                        className="text-sm text-primary hover:underline"
-                      >
+                  {/* Récap livraison */}
+                  <div className="p-4 bg-muted border space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Mode de livraison</span>
+                      <button type="button" onClick={() => setCurrentStep('shipping')} className="text-sm text-primary hover:underline">
                         Modifier
                       </button>
                     </div>
-                    <p className="text-sm">
-                      {finalAddress.firstName} {finalAddress.lastName}
-                    </p>
-                    <p className="text-sm">{finalAddress.street}</p>
-                    <p className="text-sm">
-                      {finalAddress.postalCode} {finalAddress.city}, {finalAddress.country}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Tél: {finalAddress.phone}
-                    </p>
+                    <p className="text-sm font-medium">{selectedMethod?.title}</p>
+                    {isRelayMethod(selectedMethod) && relayPoint.name && (
+                      <p className="text-sm text-muted-foreground">{relayPoint.name} — {relayPoint.address}, {relayPoint.postalCode} {relayPoint.city}</p>
+                    )}
+                  </div>
+                  <div className="p-4 bg-muted border">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">{isRelayMethod(selectedMethod) ? 'Vos informations' : 'Adresse de livraison'}</span>
+                      <button type="button" onClick={() => setCurrentStep('information')} className="text-sm text-primary hover:underline">
+                        Modifier
+                      </button>
+                    </div>
+                    <p className="text-sm">{finalAddress.firstName} {finalAddress.lastName}</p>
+                    {!isRelayMethod(selectedMethod) && (
+                      <>
+                        <p className="text-sm">{finalAddress.street}</p>
+                        <p className="text-sm">{finalAddress.postalCode} {finalAddress.city}, {finalAddress.country}</p>
+                      </>
+                    )}
+                    <p className="text-sm text-muted-foreground mt-1">Tél: {finalAddress.phone}</p>
                   </div>
 
                   {/* Terms */}
@@ -885,7 +909,7 @@ export default function CheckoutPage() {
                   <div className="flex gap-4">
                     <button
                       type="button"
-                      onClick={() => setCurrentStep('shipping')}
+                      onClick={() => setCurrentStep('information')}
                       className="px-6 py-4 border border-border text-sm tracking-[0.15em] uppercase hover:bg-muted transition-colors"
                     >
                       Retour
