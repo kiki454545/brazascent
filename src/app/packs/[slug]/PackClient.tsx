@@ -10,7 +10,6 @@ import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cart'
 import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
-import { Benefits } from '@/components/Benefits'
 import TrustBadges from '@/components/TrustBadges'
 import { Product } from '@/types'
 
@@ -463,7 +462,6 @@ export default function PackDetailPage() {
         </section>
       )}
 
-      <Benefits />
     </div>
   )
 }
