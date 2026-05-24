@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { m } from 'framer-motion'
-import { ChevronRight, Truck, Gift, Loader2, Package, Info } from 'lucide-react'
+import { ChevronRight, Truck, Gift, Loader2, Package, Info, Heart, Share2, Check, CreditCard } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cart'
+import { useWishlistStore } from '@/store/wishlist'
 import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
 import TrustBadges from '@/components/TrustBadges'
@@ -58,15 +59,26 @@ interface ProductData {
 export default function PackDetailPage() {
   const params = useParams()
   const slug = params.slug as string
+  const router = useRouter()
 
   const [pack, setPack] = useState<Pack | null>(null)
   const [packProducts, setPackProducts] = useState<Product[]>([])
   const [productSelections, setProductSelections] = useState<ProductSelection[]>([])
   const [clientSelections, setClientSelections] = useState<ProductSelection[]>([])
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
+  const [canUseApplePay, setCanUseApplePay] = useState(false)
 
   const { addItem, openCart } = useCartStore()
+  const { isInWishlist, toggleItem } = useWishlistStore()
   const { settings } = useSettingsStore()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as unknown as { ApplePaySession?: { canMakePayments?: () => boolean } }).ApplePaySession) {
+      const ap = (window as unknown as { ApplePaySession: { canMakePayments: () => boolean } }).ApplePaySession
+      setCanUseApplePay(ap.canMakePayments?.() ?? false)
+    }
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -207,17 +219,15 @@ export default function PackDetailPage() {
     return pack.price
   }
 
-  const handleAddToCart = () => {
-    if (!pack) return
-
-    const finalPrice = getFinalPackPrice()
-    const packAsProduct = {
+  const buildPackProduct = () => {
+    if (!pack) return null
+    return {
       id: pack.id,
       name: pack.name,
       slug: pack.slug,
       description: pack.description,
       shortDescription: pack.description.substring(0, 100),
-      price: finalPrice,
+      price: getFinalPackPrice(),
       originalPrice: pack.original_price || undefined,
       images: [pack.image],
       category: 'collection' as const,
@@ -225,8 +235,20 @@ export default function PackDetailPage() {
       size: ['Pack'],
       inStock: true,
     }
-    addItem(packAsProduct, 'Pack', 1)
+  }
+
+  const handleAddToCart = () => {
+    const p = buildPackProduct()
+    if (!p) return
+    addItem(p, 'Pack', 1)
     openCart()
+  }
+
+  const handleExpressCheckout = () => {
+    const p = buildPackProduct()
+    if (!p) return
+    addItem(p, 'Pack', 1)
+    router.push('/checkout')
   }
 
   if (loading) {
@@ -431,13 +453,63 @@ export default function PackDetailPage() {
             )}
 
             {/* Actions */}
-            <div className="mb-8">
-              <button
-                onClick={handleAddToCart}
-                className="w-full py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-gold-light transition-colors"
-              >
-                Ajouter au panier
-              </button>
+            <div className="mb-6">
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={handleAddToCart}
+                  className="btn-luxury flex-1 border border-primary bg-primary px-6 py-5 text-sm font-medium uppercase tracking-[0.18em] text-white shadow-[0_18px_40px_rgba(201,169,98,0.28)] transition-all hover:bg-foreground hover:shadow-[0_22px_48px_rgba(0,0,0,0.18)] dark:hover:bg-gold-light dark:hover:border-gold-light dark:hover:text-primary-foreground"
+                >
+                  Ajouter au panier
+                </button>
+                <button
+                  onClick={() => pack && toggleItem(pack.id)}
+                  className={`p-4 border transition-colors ${
+                    pack && isInWishlist(pack.id)
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-border hover:border-foreground'
+                  }`}
+                  title="Ajouter aux favoris"
+                >
+                  <Heart className={`w-5 h-5 ${pack && isInWishlist(pack.id) ? 'fill-current' : ''}`} />
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2000)
+                  }}
+                  className={`p-4 border transition-colors ${
+                    copied
+                      ? 'border-green-500 bg-green-500 text-white'
+                      : 'border-border hover:border-foreground'
+                  }`}
+                  title="Partager"
+                >
+                  {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+                </button>
+              </div>
+
+              {canUseApplePay ? (
+                <button
+                  onClick={handleExpressCheckout}
+                  className="flex w-full items-center justify-center gap-2 py-4 bg-black text-white text-sm font-medium tracking-[0.12em] uppercase hover:bg-foreground transition-colors"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  Acheter avec Apple Pay
+                </button>
+              ) : (
+                <button
+                  onClick={handleExpressCheckout}
+                  className="flex w-full items-center justify-center gap-2 py-4 border border-foreground text-sm font-medium tracking-[0.12em] uppercase hover:bg-foreground hover:text-background transition-colors"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  Paiement express au checkout
+                </button>
+              )}
+
+              {copied && (
+                <p className="text-sm text-green-600 mt-2">Lien copié !</p>
+              )}
             </div>
 
             {/* Trust badges */}
