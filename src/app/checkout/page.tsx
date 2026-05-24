@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
 import { CartItem } from '@/types'
 import posthog from 'posthog-js'
+import { PaymentLogos } from '@/components/PaymentLogos'
 
 // Obtenir le prix d'un article selon sa taille
 const getItemPrice = (item: CartItem) => {
@@ -849,11 +850,7 @@ export default function CheckoutPage() {
                     <p className="text-sm text-muted-foreground">
                       Vous serez redirigé vers la page de paiement sécurisée Stripe pour finaliser votre commande.
                     </p>
-                    <div className="flex gap-2 mt-3">
-                      <div className="px-2 py-1 bg-background rounded text-xs font-bold text-muted-foreground">VISA</div>
-                      <div className="px-2 py-1 bg-background rounded text-xs font-bold text-muted-foreground">Mastercard</div>
-                      <div className="px-2 py-1 bg-background rounded text-xs font-bold text-muted-foreground">CB</div>
-                    </div>
+                    <PaymentLogos className="mt-3" />
                   </div>
 
                   {/* Récap livraison */}

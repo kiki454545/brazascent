@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Mail, MapPin, Phone, Loader2, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useSettingsStore } from '@/store/settings'
+import { PaymentLogos } from '@/components/PaymentLogos'
 
 const footerLinks = {
   boutique: [
@@ -232,6 +233,9 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="px-6 sm:px-10 lg:px-20 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Payment logos */}
+            <PaymentLogos />
+
             {/* Social links */}
             <div className="flex items-center gap-6">
               <a
