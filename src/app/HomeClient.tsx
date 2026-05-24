@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } f
 import Image from 'next/image'
 import Link from 'next/link'
 import { m, AnimatePresence } from 'framer-motion'
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ShieldCheck, Zap, Layers, Gift } from 'lucide-react'
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ShieldCheck, Zap, Layers, Gift, Truck } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
 import { HomePack } from './page'
@@ -372,6 +372,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                   { Icon: Zap,         label: 'Expédition 24/48h' },
                   { Icon: Layers,      label: 'Formats disponibles', sub: '2 / 5 / 10 ml' },
                   { Icon: Gift,        label: 'Échantillon offert' },
+                  { Icon: Truck,       label: 'Livraison offerte', sub: 'Dès 120 €' },
                 ] as { Icon: React.ElementType; label: string; sub?: string }[]).map(({ Icon, label, sub }) => (
                   <div key={label} className="flex items-start gap-2">
                     <Icon className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" strokeWidth={1.5} />
