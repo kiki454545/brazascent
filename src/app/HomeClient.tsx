@@ -334,14 +334,14 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-5 lg:min-h-screen pt-24 lg:pt-0">
           <div className="lg:col-span-3 relative flex items-center px-6 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-0">
             <div className="max-w-4xl relative z-10 text-white w-full">
-              <h1 className="animate-fade-in-up stagger-1 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal leading-[1.1] sm:leading-[1.05] mb-6 sm:mb-8 tracking-tight">
+              <h1 className="animate-fade-in-up stagger-1 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal leading-[1.1] sm:leading-[1.05] tracking-tight">
                 Découvrez des parfums rares<br className="hidden sm:block" />
                 <span className="sm:hidden"> </span>
-                <span className="text-primary italic">sans acheter le flacon</span>
+                <span className="text-primary italic text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl">en formats découverte</span>
               </h1>
-              <p className="animate-fade-in-up stagger-2 text-sm sm:text-base text-white/90 mb-8 sm:mb-10 leading-relaxed max-w-2xl">
-                Braza Scent est spécialisé dans le décantage à partir de flacons authentiques :
-                parfumerie de niche, éditions limitées et pièces issues de collections privées.
+              <p className="animate-fade-in-up stagger-2 text-sm sm:text-base text-white/80 mt-8 sm:mt-10 mb-8 sm:mb-10 leading-relaxed max-w-lg">
+                Décants préparés à partir de flacons 100% authentiques.<br />
+                Parfums de niche, éditions rares et formats découverte.
               </p>
               <div className="animate-fade-in-up stagger-3">
                 <Link href="/parfums" className="btn-luxury inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 sm:px-10 py-3.5 sm:py-4 bg-primary text-primary-foreground text-xs sm:text-sm tracking-[0.2em] uppercase font-medium hover:bg-gold-light transition-colors">
