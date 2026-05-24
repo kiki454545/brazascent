@@ -229,6 +229,13 @@ export function Footer() {
         </div>
       </div>
 
+      {/* Disclaimer */}
+      <div className="border-t border-white/10 px-6 sm:px-10 lg:px-20 py-4">
+        <p className="text-xs text-white/35 text-center leading-relaxed max-w-3xl mx-auto">
+          BrazaScent est indépendant et n&apos;est pas affilié aux marques citées. Les noms des marques sont utilisés uniquement pour identifier les fragrances originales.
+        </p>
+      </div>
+
       {/* Bottom bar */}
       <div className="border-t border-white/10">
         <div className="px-6 sm:px-10 lg:px-20 py-6">
