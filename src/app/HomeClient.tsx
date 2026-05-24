@@ -8,6 +8,7 @@ import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react
 import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
 import { HomePack } from './page'
+import { formatPrice } from '@/lib/format'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -209,7 +210,7 @@ function HeroBestsellersSlider({ products }: { products: Product[] }) {
               <p className="text-[10px] tracking-[0.3em] uppercase text-primary mb-3">Bestseller</p>
               <p className="text-xs uppercase tracking-wider text-white/70 mb-1">{item.brand}</p>
               <h3 className="text-2xl sm:text-3xl font-normal mb-2">{item.name}</h3>
-              <p className="text-sm text-white/90">À partir de {getPrice(item).toFixed(2)} €</p>
+              <p className="text-sm text-white/90">À partir de {formatPrice(getPrice(item))} €</p>
             </div>
           </Link>
         </m.div>
@@ -551,10 +552,10 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                       </h3>
                       <p className="text-sm text-background/60 mb-2 line-clamp-2">{pack.description}</p>
                       <div className="flex items-center gap-3">
-                        <span className="font-medium">{pack.price.toLocaleString('fr-FR')} €</span>
+                        <span className="font-medium">{formatPrice(pack.price)} €</span>
                         {pack.original_price && (
                           <span className="text-sm text-background/40 line-through">
-                            {pack.original_price.toLocaleString('fr-FR')} €
+                            {formatPrice(pack.original_price)} €
                           </span>
                         )}
                       </div>

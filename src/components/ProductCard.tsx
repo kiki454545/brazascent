@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { m } from 'framer-motion'
 import { Heart, ShoppingBag } from 'lucide-react'
 import { Product } from '@/types'
+import { formatPrice } from '@/lib/format'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 
@@ -234,10 +235,10 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
           <div className="flex flex-col items-center gap-0.5">
             <span className="text-[10px] font-serif italic text-foreground/60 tracking-wide">À partir de</span>
             <div className="flex items-center gap-3 flex-wrap justify-center">
-              <span className="text-sm font-medium">{currentPrice.toLocaleString('fr-FR')} €</span>
+              <span className="text-sm font-medium">{formatPrice(currentPrice)} €</span>
               {product.originalPrice && currentPrice < product.originalPrice && (
                 <span className="text-sm text-muted-foreground/60 line-through">
-                  {product.originalPrice.toLocaleString('fr-FR')} €
+                  {formatPrice(product.originalPrice)} €
                 </span>
               )}
             </div>

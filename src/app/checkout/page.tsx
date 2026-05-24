@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase'
 import { CartItem } from '@/types'
 import posthog from 'posthog-js'
 import { PaymentLogos } from '@/components/PaymentLogos'
+import { formatPrice } from '@/lib/format'
 
 // Obtenir le prix d'un article selon sa taille
 const getItemPrice = (item: CartItem) => {
@@ -515,7 +516,7 @@ export default function CheckoutPage() {
                       const priceLabel = isFree ? (
                         <span className="text-green-600">Offerte</span>
                       ) : (
-                        `${Number(method.price).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
+                        `${formatPrice(Number(method.price))} €`
                       )
 
                       return (
@@ -916,7 +917,7 @@ export default function CheckoutPage() {
                       disabled={isLoading}
                       className="flex-1 py-4 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary transition-colors disabled:opacity-50"
                     >
-                      {isLoading ? 'Redirection vers Stripe...' : `Payer ${total.toLocaleString('fr-FR')} €`}
+                      {isLoading ? 'Redirection vers Stripe...' : `Payer ${formatPrice(total)} €`}
                     </button>
                   </div>
                 </form>
@@ -962,7 +963,7 @@ export default function CheckoutPage() {
                       <p className="text-xs text-muted-foreground">{item.selectedSize}</p>
                     </div>
                     <p className="text-sm font-medium">
-                      {(getItemPrice(item) * item.quantity).toLocaleString('fr-FR')} €
+                      {formatPrice(getItemPrice(item) * item.quantity)} €
                     </p>
                   </div>
                 ))}
@@ -1042,12 +1043,12 @@ export default function CheckoutPage() {
               <div className="border-t pt-4 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Sous-total</span>
-                  <span>{subtotal.toLocaleString('fr-FR')} €</span>
+                  <span>{formatPrice(subtotal)} €</span>
                 </div>
                 {promoDiscount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Réduction ({appliedPromoCode?.code})</span>
-                    <span>-{promoDiscount.toLocaleString('fr-FR')} €</span>
+                    <span>-{formatPrice(promoDiscount)} €</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
@@ -1056,13 +1057,13 @@ export default function CheckoutPage() {
                     {shippingCost === 0 ? (
                       <span className="text-green-600">Offerte</span>
                     ) : (
-                      `${shippingCost.toLocaleString('fr-FR')} €`
+                      `${formatPrice(shippingCost)} €`
                     )}
                   </span>
                 </div>
                 <div className="flex justify-between text-lg font-medium pt-3 border-t">
                   <span>Total</span>
-                  <span>{total.toLocaleString('fr-FR')} €</span>
+                  <span>{formatPrice(total)} €</span>
                 </div>
               </div>
             </div>

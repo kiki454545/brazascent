@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Clock } from 'lucide-react'
 import { useRecentlyViewedStore } from '@/store/recentlyViewed'
+import { formatPrice } from '@/lib/format'
 
 interface RecentlyViewedProps {
   excludeId?: string
@@ -57,7 +58,7 @@ export function RecentlyViewed({ excludeId }: RecentlyViewedProps) {
               {item.brand && (
                 <p className="text-xs text-muted-foreground truncate">{item.brand}</p>
               )}
-              <p className="text-xs mt-0.5">{item.price.toLocaleString('fr-FR')} €</p>
+              <p className="text-xs mt-0.5">{formatPrice(item.price)} €</p>
             </Link>
           ))}
         </div>

@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
 import { CartItem } from '@/types'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
+import { formatPrice } from '@/lib/format'
 
 // Obtenir le prix d'un article selon sa taille
 const getItemPrice = (item: CartItem) => {
@@ -256,7 +257,7 @@ export default function PanierPage() {
 
                           {/* Price */}
                           <p className="text-lg font-medium">
-                            {(getItemPrice(item) * item.quantity).toLocaleString('fr-FR')} €
+                            {formatPrice(getItemPrice(item) * item.quantity)} €
                           </p>
                         </div>
                       )}
@@ -280,7 +281,7 @@ export default function PanierPage() {
               <div className="space-y-4 mb-6">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Sous-total</span>
-                  <span>{subtotal.toLocaleString('fr-FR')} €</span>
+                  <span>{formatPrice(subtotal)} €</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Livraison</span>
@@ -288,14 +289,14 @@ export default function PanierPage() {
                     {shipping === 0 ? (
                       <span className="text-green-600">Offerte</span>
                     ) : (
-                      `${shipping.toLocaleString('fr-FR')} €`
+                      `${formatPrice(shipping)} €`
                     )}
                   </span>
                 </div>
                 {promoDiscount > 0 && (
                   <div className="flex items-center justify-between text-green-600">
                     <span>Réduction ({pendingPromoCode!.code})</span>
-                    <span>−{promoDiscount.toLocaleString('fr-FR')} €</span>
+                    <span>−{formatPrice(promoDiscount)} €</span>
                   </div>
                 )}
 
@@ -359,7 +360,7 @@ export default function PanierPage() {
               <div className="border-t pt-4 mb-8">
                 <div className="flex items-center justify-between text-lg font-medium">
                   <span>Total</span>
-                  <span>{total.toLocaleString('fr-FR')} €</span>
+                  <span>{formatPrice(total)} €</span>
                 </div>
               </div>
 

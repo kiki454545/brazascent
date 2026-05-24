@@ -13,6 +13,7 @@ import { useSettingsStore } from '@/store/settings'
 import { ProductCard } from '@/components/ProductCard'
 import TrustBadges from '@/components/TrustBadges'
 import { Product } from '@/types'
+import { formatPrice } from '@/lib/format'
 
 interface ProductSelection {
   productId: string
@@ -345,12 +346,12 @@ export default function PackDetailPage() {
 
             {/* Price */}
             <div className="flex items-center gap-4 mb-8 flex-wrap">
-              <span className="text-3xl font-light">{getFinalPackPrice().toFixed(2)} €</span>
+              <span className="text-3xl font-light">{formatPrice(getFinalPackPrice())} €</span>
               {pack.original_price && !pack.discount_percentage && (
                 <>
                   <span className="text-lg text-muted-foreground/60 line-through">{pack.original_price} €</span>
                   <span className="text-sm text-primary font-medium">
-                    Économisez {(pack.original_price - pack.price).toFixed(2)} €
+                    Économisez {formatPrice(pack.original_price - pack.price)} €
                   </span>
                 </>
               )}
@@ -422,21 +423,21 @@ export default function PackDetailPage() {
                   <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Total à l'unité</span>
-                      <span className="line-through text-muted-foreground/60">{getTotalProductsPrice().toFixed(2)} €</span>
+                      <span className="line-through text-muted-foreground/60">{formatPrice(getTotalProductsPrice())} €</span>
                     </div>
                     <div className="flex items-center justify-between text-sm mt-1">
                       <span className="text-primary font-medium">Réduction pack -{pack.discount_percentage}%</span>
-                      <span className="text-primary font-bold">{getFinalPackPrice().toFixed(2)} €</span>
+                      <span className="text-primary font-bold">{formatPrice(getFinalPackPrice())} €</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Vous économisez {(getTotalProductsPrice() - getFinalPackPrice()).toFixed(2)} €
+                      Vous économisez {formatPrice(getTotalProductsPrice() - getFinalPackPrice())} €
                     </p>
                   </div>
                 )}
 
                 {pack.original_price && !pack.discount_percentage && (
                   <p className="text-sm text-muted-foreground mt-2">
-                    Valeur totale : {pack.original_price} € — Vous économisez {(pack.original_price - pack.price).toFixed(2)} €
+                    Valeur totale : {formatPrice(pack.original_price)} € — Vous économisez {formatPrice(pack.original_price - pack.price)} €
                   </p>
                 )}
               </div>

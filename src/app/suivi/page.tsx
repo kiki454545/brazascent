@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Package, Truck, CheckCircle, Clock, XCircle, Search, ArrowRight } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
+import { formatPrice } from '@/lib/format'
 
 interface OrderItem {
   id: string
@@ -253,7 +254,7 @@ export default function SuiviPage() {
                     <p className="text-sm font-medium truncate">{item.product_name}</p>
                     <p className="text-xs text-muted-foreground">{item.size} · Qté : {item.quantity}</p>
                   </div>
-                  <p className="text-sm font-medium">{item.price.toLocaleString('fr-FR')} €</p>
+                  <p className="text-sm font-medium">{formatPrice(item.price)} €</p>
                 </div>
               ))}
             </div>
@@ -275,15 +276,15 @@ export default function SuiviPage() {
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Sous-total</span>
-                    <span>{order.subtotal.toLocaleString('fr-FR')} €</span>
+                    <span>{formatPrice(order.subtotal)} €</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Livraison</span>
-                    <span>{order.shipping === 0 ? <span className="text-green-600">Offerte</span> : `${order.shipping.toLocaleString('fr-FR')} €`}</span>
+                    <span>{order.shipping === 0 ? <span className="text-green-600">Offerte</span> : `${formatPrice(order.shipping)} €`}</span>
                   </div>
                   <div className="flex justify-between font-medium pt-2 border-t">
                     <span>Total</span>
-                    <span>{order.total.toLocaleString('fr-FR')} €</span>
+                    <span>{formatPrice(order.total)} €</span>
                   </div>
                 </div>
               </div>

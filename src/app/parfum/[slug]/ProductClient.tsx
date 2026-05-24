@@ -20,6 +20,7 @@ import { useSettingsStore } from '@/store/settings'
 import { useRecentlyViewedStore } from '@/store/recentlyViewed'
 import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
+import { formatPrice } from '@/lib/format'
 
 interface SupabaseProductRow {
   id: string
@@ -504,7 +505,7 @@ export default function ProductPage() {
 
             {/* Price */}
             <div className="flex items-center gap-4 mb-8">
-              <span className="text-3xl font-light">{currentPrice.toLocaleString('fr-FR')} €</span>
+              <span className="text-3xl font-light">{formatPrice(currentPrice)} €</span>
               {product.originalPrice && (
                 <span className="text-lg text-muted-foreground/60 line-through">
                   {getSizePrice(selectedSize) * (product.originalPrice / product.price)} €
@@ -543,7 +544,7 @@ export default function ProductPage() {
                         {size}
                       </span>
                       <span className="mt-3 block text-2xl font-light text-foreground">
-                        {getSizePrice(size).toLocaleString('fr-FR')} €
+                        {formatPrice(getSizePrice(size))} €
                       </span>
                       {sprays && (
                         <span className="mt-3 block text-sm text-muted-foreground">
@@ -741,7 +742,7 @@ export default function ProductPage() {
                 {selectedSize}{selectedSprays ? ` • ${selectedSprays}` : ''}
               </p>
             </div>
-            <p className="shrink-0 text-lg font-medium">{currentPrice.toLocaleString('fr-FR')} €</p>
+            <p className="shrink-0 text-lg font-medium">{formatPrice(currentPrice)} €</p>
           </div>
           {isGloballyOutOfStock ? (
             <div className="w-full py-4 bg-muted text-muted-foreground text-center text-sm tracking-[0.15em] uppercase">

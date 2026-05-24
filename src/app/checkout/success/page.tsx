@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { m } from 'framer-motion'
 import { CheckCircle, Package, ArrowRight, Mail } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
+import { formatPrice } from '@/lib/format'
 
 interface SessionData {
   customerEmail: string
@@ -101,7 +102,7 @@ export default function CheckoutSuccessPage() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total payé</span>
-                  <span className="font-medium">{sessionData.amountTotal.toLocaleString('fr-FR')} €</span>
+                  <span className="font-medium">{formatPrice(sessionData.amountTotal)} €</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Statut</span>
