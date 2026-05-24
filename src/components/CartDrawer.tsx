@@ -7,6 +7,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCartStore } from '@/store/cart'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
+import { formatPrice } from '@/lib/format'
 
 // Vérifier si un produit est en rupture (stock = 0 exactement)
 const isProductOutOfStock = (product: { stock?: number }) => {
@@ -197,7 +198,7 @@ export function CartDrawer() {
 
                               {/* Price */}
                               <p className="font-medium">
-                                {(getItemPrice(item) * item.quantity).toLocaleString('fr-FR')} €
+                                {formatPrice(getItemPrice(item) * item.quantity)} €
                               </p>
                             </div>
                           )}
@@ -215,7 +216,7 @@ export function CartDrawer() {
                 {/* Subtotal */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm tracking-[0.1em] uppercase">Sous-total</span>
-                  <span className="font-medium">{total.toLocaleString('fr-FR')} €</span>
+                  <span className="font-medium">{formatPrice(total)} €</span>
                 </div>
 
                 <p className="text-xs text-muted-foreground">
