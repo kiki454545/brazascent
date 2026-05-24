@@ -283,6 +283,32 @@ const reviews = [
   { text: 'Tout est parfait, du site à la livraison.', name: 'Aya***' },
 ]
 
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="py-5">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between gap-6 text-left group"
+      >
+        <span className="text-sm sm:text-base tracking-[0.05em] font-light group-hover:text-primary transition-colors">
+          {question}
+        </span>
+        <span className={`text-primary flex-shrink-0 transition-transform duration-300 ${open ? 'rotate-45' : ''}`}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 1v14M1 8h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </span>
+      </button>
+      {open && (
+        <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-2xl">
+          {answer}
+        </p>
+      )}
+    </div>
+  )
+}
+
 interface HomeClientProps {
   featuredProducts: Product[]
   newProducts: Product[]
@@ -711,6 +737,56 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
               </div>
             ))}
           </m.div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-20 lg:py-32 bg-cream">
+        <div className="px-6 sm:px-10 lg:px-20 max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-xs tracking-[0.3em] uppercase text-primary mb-4 block">Avant votre première commande</span>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase">Questions essentielles</h2>
+            <div className="w-24 h-px bg-primary mx-auto mt-6" />
+            <p className="text-muted-foreground mt-6 text-sm tracking-wide">Tout ce que vous devez savoir avant votre première commande.</p>
+          </div>
+          <div className="divide-y divide-border">
+            {[
+              {
+                q: 'Les parfums sont-ils authentiques ?',
+                a: 'Chaque décant est prélevé directement depuis le flacon original de la marque. Aucune copie, aucune reformulation. Ce que vous recevez, c\'est le parfum tel qu\'il a été créé.',
+              },
+              {
+                q: 'Le parfum est-il dilué ?',
+                a: 'Non. Nos décants sont du parfum pur, sans ajout de solvant ni d\'alcool supplémentaire. La concentration est identique à celle du flacon d\'origine.',
+              },
+              {
+                q: 'Combien de temps dure un format ?',
+                a: 'Un 5ml représente environ 100 à 110 projections — soit 2 à 3 semaines d\'utilisation quotidienne. Largement suffisant pour découvrir une fragrance dans toutes ses dimensions.',
+              },
+              {
+                q: 'Les flacons fuient-ils pendant le transport ?',
+                a: 'Nos contenants sont soigneusement sélectionnés et testés. Chaque commande est conditionnée de façon sécurisée. Votre décant arrive intact, prêt à être découvert.',
+              },
+              {
+                q: 'Pourquoi acheter un décant ?',
+                a: 'Pour tester un parfum à 300€ sans investir à l\'aveugle. Pour explorer des fragrances rares inaccessibles en boutique. Pour construire votre sillage sans compromis.',
+              },
+              {
+                q: 'Proposez-vous des marques de niche ?',
+                a: 'Notre sélection est construite autour de la parfumerie de niche et des créateurs indépendants. Des fragrances rarement disponibles à l\'échantillon, accessibles en format découverte.',
+              },
+              {
+                q: 'Quand vais-je recevoir ma commande ?',
+                a: 'Chaque commande est préparée sous 24h et expédiée en 24 à 48h ouvrées. Un numéro de suivi vous est transmis dès l\'envoi.',
+              },
+              {
+                q: 'Puis-je offrir un décant ?',
+                a: 'Absolument. Nos packs découverte sont pensés comme des coffrets premium — idéaux pour offrir une expérience olfactive sans se tromper de fragrance.',
+              },
+            ].map((item, i) => (
+              <FaqItem key={i} question={item.q} answer={item.a} />
+            ))}
+          </div>
         </div>
       </section>
 
