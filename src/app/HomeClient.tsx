@@ -354,7 +354,6 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                   { label: 'Best sellers', href: '/parfums?sort=bestseller' },
                   { label: 'Nouveautés',   href: '/parfums?sort=newest' },
                   { label: 'Packs',        href: '/packs' },
-                  { label: 'Promos',       href: '/promos' },
                 ].map(({ label, href }) => (
                   <Link
                     key={label}
@@ -370,7 +369,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                 {([
                   { Icon: ShieldCheck, label: '100% authentique' },
                   { Icon: Zap,         label: 'Expédition 24/48h' },
-                  { Icon: Layers,      label: 'Formats disponibles', sub: '2 / 5 / 10 / 30 / 50 ml' },
+                  { Icon: Layers,      label: 'Formats disponibles', sub: '2 / 5 / 10 ml' },
                   { Icon: Gift,        label: 'Échantillon offert' },
                 ] as { Icon: React.ElementType; label: string; sub?: string }[]).map(({ Icon, label, sub }) => (
                   <div key={label} className="flex items-start gap-2">
