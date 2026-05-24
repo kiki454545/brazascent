@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { m, AnimatePresence } from 'framer-motion'
@@ -353,12 +353,15 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                 {([
                   { Icon: ShieldCheck, label: '100% authentique' },
                   { Icon: Zap,         label: 'Expédition 24/48h' },
-                  { Icon: Layers,      label: '2 / 5 / 10 / 30 / 50 ml' },
+                  { Icon: Layers,      label: 'Formats disponibles', sub: '2 / 5 / 10 / 30 / 50 ml' },
                   { Icon: Gift,        label: 'Échantillon offert' },
-                ] as const).map(({ Icon, label }) => (
-                  <div key={label} className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-primary flex-shrink-0" strokeWidth={1.5} />
-                    <span className="text-xs text-white/75 tracking-wide">{label}</span>
+                ] as { Icon: React.ElementType; label: string; sub?: string }[]).map(({ Icon, label, sub }) => (
+                  <div key={label} className="flex items-start gap-2">
+                    <Icon className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+                    <div>
+                      <span className="text-xs text-white/75 tracking-wide">{label}</span>
+                      {sub && <p className="text-[10px] text-white/45 tracking-wide mt-0.5">{sub}</p>}
+                    </div>
                   </div>
                 ))}
               </div>
