@@ -284,12 +284,14 @@ const reviews = [
 interface HomeClientProps {
   featuredProducts: Product[]
   newProducts: Product[]
+  promoProducts: Product[]
   packs: HomePack[]
 }
 
-export default function HomeClient({ featuredProducts, newProducts, packs }: HomeClientProps) {
+export default function HomeClient({ featuredProducts, newProducts, promoProducts, packs }: HomeClientProps) {
   const bestsellersCarouselRef = useRef<DraggableCarouselHandle>(null)
   const newProductsCarouselRef = useRef<DraggableCarouselHandle>(null)
+  const promosCarouselRef = useRef<DraggableCarouselHandle>(null)
   const scrollStep = 320
   const [videos, setVideos] = useState<string[]>(['/videos/decantage.mp4'])
   const [videoIndex, setVideoIndex] = useState(0)
@@ -466,6 +468,35 @@ export default function HomeClient({ featuredProducts, newProducts, packs }: Hom
           <p className="text-center text-muted-foreground py-10">Aucune nouveauté pour le moment</p>
         )}
       </section>
+
+      {/* Promos */}
+      {promoProducts.length > 0 && (
+        <section className="py-20 lg:py-28 bg-background overflow-hidden">
+          <div className="px-6 sm:px-10 lg:px-20">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+              <div>
+                <span className="text-sm tracking-[0.3em] uppercase text-red-500 mb-4 block">Offres limitées</span>
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase">Promos</h2>
+                <div className="w-24 h-px bg-red-500 mt-6" />
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="hidden md:flex items-center gap-2">
+                  <button onClick={() => promosCarouselRef.current?.scrollByAmount(-scrollStep)} aria-label="Précédent" className="w-10 h-10 flex items-center justify-center border border-border hover:border-red-500 hover:text-red-500 transition-colors">
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => promosCarouselRef.current?.scrollByAmount(scrollStep)} aria-label="Suivant" className="w-10 h-10 flex items-center justify-center border border-border hover:border-red-500 hover:text-red-500 transition-colors">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+                <Link href="/promos" className="inline-flex items-center gap-3 text-sm tracking-[0.2em] uppercase hover:text-red-500 transition-colors group">
+                  Voir toutes les promos <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+                </Link>
+              </div>
+            </div>
+          </div>
+          <DraggableCarousel ref={promosCarouselRef} products={promoProducts} />
+        </section>
+      )}
 
       {/* Coffrets & Packs */}
       {packs.length > 0 && (

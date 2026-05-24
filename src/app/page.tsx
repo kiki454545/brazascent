@@ -75,18 +75,26 @@ export interface HomePack {
 }
 
 export default async function HomePage() {
-  const [bestsellersRes, newProductsRes, packsRes] = await Promise.all([
+  const [bestsellersRes, newProductsRes, promosRes, packsRes] = await Promise.all([
     supabase
       .from('products')
       .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order')
       .eq('is_active', true)
       .eq('is_bestseller', true)
+      .or('is_promo.eq.false,is_promo.is.null')
       .order('display_order', { ascending: true }),
     supabase
       .from('products')
       .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order')
       .eq('is_active', true)
       .eq('is_new', true)
+      .or('is_promo.eq.false,is_promo.is.null')
+      .order('display_order', { ascending: true }),
+    supabase
+      .from('products')
+      .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order')
+      .eq('is_active', true)
+      .eq('is_promo', true)
       .order('display_order', { ascending: true }),
     supabase
       .from('packs')
@@ -97,7 +105,8 @@ export default async function HomePage() {
 
   const featuredProducts = (bestsellersRes.data || []).map(mapProduct)
   const newProducts = (newProductsRes.data || []).map(mapProduct)
+  const promoProducts = (promosRes.data || []).map(mapProduct)
   const packs = (packsRes.data || []) as HomePack[]
 
-  return <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} packs={packs} />
+  return <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} promoProducts={promoProducts} packs={packs} />
 }

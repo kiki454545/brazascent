@@ -48,6 +48,7 @@ export default async function ParfumsPage() {
       .from('products')
       .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order, gender, notes_top, notes_heart, notes_base, main_accords')
       .eq('is_active', true)
+      .or('is_promo.eq.false,is_promo.is.null')
       .order('display_order', { ascending: true }),
     supabase
       .from('brands')
