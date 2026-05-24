@@ -84,7 +84,7 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
   const [selectedFormat, setSelectedFormat] = useState('all')
   // Si on vient d'une page famille, le filtre est verrouillé
   const [selectedFamille, setSelectedFamille] = useState(familleFilter || 'all')
-  const [sortBy, setSortBy] = useState('newest')
+  const [sortBy, setSortBy] = useState('')
   const [searchQuery, setSearchQuery] = useState(initialSearch)
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE)
 
@@ -162,11 +162,12 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
     })
     .sort((a, b) => {
       switch (sortBy) {
+        case 'newest': return b.new ? 1 : -1
         case 'price-asc': return getProductDisplayPrice(a) - getProductDisplayPrice(b)
         case 'price-desc': return getProductDisplayPrice(b) - getProductDisplayPrice(a)
         case 'name': return a.name.localeCompare(b.name)
         case 'bestseller': return (b.bestseller ? 1 : 0) - (a.bestseller ? 1 : 0)
-        default: return b.new ? 1 : -1
+        default: return 0
       }
     })
 
@@ -303,7 +304,7 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
                     <p className="text-xs tracking-[0.15em] uppercase text-foreground mb-3 pb-2 border-b border-border">Trier par</p>
                     <div className="space-y-1">
                       {sortOptions.map(o => (
-                        <button key={o.id} onClick={() => setSortBy(o.id)}
+                        <button key={o.id} onClick={() => setSortBy(sortBy === o.id ? '' : o.id)}
                           className={`w-full text-left text-sm py-2 px-2 transition-colors ${sortBy === o.id ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                           {o.name}
                         </button>
@@ -414,7 +415,7 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
                     {sortOptions.map(o => (
                       <button
                         key={o.id}
-                        onClick={() => setSortBy(o.id)}
+                        onClick={() => setSortBy(sortBy === o.id ? '' : o.id)}
                         className={`w-full text-left text-sm py-1.5 px-2 transition-colors ${sortBy === o.id ? 'text-primary font-medium' : 'text-muted-foreground hover:text-foreground'}`}
                       >
                         {o.name}
