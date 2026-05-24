@@ -64,6 +64,7 @@ function matchesFamille(product: Product, famille: string): boolean {
 
 const sortOptions = [
   { id: 'newest', name: 'Nouveautés' },
+  { id: 'bestseller', name: 'Best sellers' },
   { id: 'price-asc', name: 'Prix croissant' },
   { id: 'price-desc', name: 'Prix décroissant' },
   { id: 'name', name: 'Nom A-Z' },
@@ -164,6 +165,7 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
         case 'price-asc': return getProductDisplayPrice(a) - getProductDisplayPrice(b)
         case 'price-desc': return getProductDisplayPrice(b) - getProductDisplayPrice(a)
         case 'name': return a.name.localeCompare(b.name)
+        case 'bestseller': return (b.bestseller ? 1 : 0) - (a.bestseller ? 1 : 0)
         default: return b.new ? 1 : -1
       }
     })
