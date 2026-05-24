@@ -32,6 +32,8 @@ interface Pack {
   tag: string | null
   is_active: boolean
   promo_allowed: boolean
+  allow_size_choice: boolean
+  discount_percentage: number | null
 }
 
 interface ProductData {
@@ -61,6 +63,7 @@ export default function PackDetailPage() {
   const [pack, setPack] = useState<Pack | null>(null)
   const [packProducts, setPackProducts] = useState<Product[]>([])
   const [productSelections, setProductSelections] = useState<ProductSelection[]>([])
+  const [clientSelections, setClientSelections] = useState<ProductSelection[]>([])
   const [loading, setLoading] = useState(true)
 
   const { addItem, openCart } = useCartStore()
@@ -100,6 +103,8 @@ export default function PackDetailPage() {
         // Sauvegarder les sélections de produits
         if (packData.product_selections) {
           setProductSelections(packData.product_selections)
+          // Initialiser les sélections client avec les tailles par défaut du pack
+          setClientSelections(packData.product_selections.map((s: ProductSelection) => ({ ...s })))
         }
 
         // Récupérer les produits du pack
@@ -166,9 +171,16 @@ export default function PackDetailPage() {
     }
   }, [slug])
 
-  // Obtenir la taille et le prix sélectionnés pour un produit
+  const updateClientSize = (productId: string, size: string) => {
+    setClientSelections(prev =>
+      prev.map(s => s.productId === productId ? { ...s, size } : s)
+    )
+  }
+
   const getProductSelectionInfo = (productId: string, product: Product) => {
-    const selection = productSelections.find(s => s.productId === productId)
+    // Si choix client activé, utiliser clientSelections, sinon les sélections fixes du pack
+    const selections = pack?.allow_size_choice ? clientSelections : productSelections
+    const selection = selections.find(s => s.productId === productId)
     const selectedSize = selection?.size || product.size?.[0] || ''
 
     let price = product.price
@@ -179,16 +191,34 @@ export default function PackDetailPage() {
     return { selectedSize, price }
   }
 
+  // Prix total des produits selon les sélections actuelles
+  const getTotalProductsPrice = (): number => {
+    return packProducts.reduce((total, product) => {
+      const { price } = getProductSelectionInfo(product.id, product)
+      return total + price
+    }, 0)
+  }
+
+  // Prix final du pack (dynamique si discount_percentage, fixe sinon)
+  const getFinalPackPrice = (): number => {
+    if (!pack) return 0
+    if (pack.discount_percentage && pack.allow_size_choice) {
+      return getTotalProductsPrice() * (1 - pack.discount_percentage / 100)
+    }
+    return pack.price
+  }
+
   const handleAddToCart = () => {
     if (!pack) return
 
+    const finalPrice = getFinalPackPrice()
     const packAsProduct = {
       id: pack.id,
       name: pack.name,
       slug: pack.slug,
       description: pack.description,
       shortDescription: pack.description.substring(0, 100),
-      price: pack.price,
+      price: finalPrice,
       originalPrice: pack.original_price || undefined,
       images: [pack.image],
       category: 'collection' as const,
@@ -293,17 +323,20 @@ export default function PackDetailPage() {
             <p className="text-muted-foreground mb-6">{pack.description}</p>
 
             {/* Price */}
-            <div className="flex items-center gap-4 mb-8">
-              <span className="text-3xl font-light">{pack.price} €</span>
-              {pack.original_price && (
+            <div className="flex items-center gap-4 mb-8 flex-wrap">
+              <span className="text-3xl font-light">{getFinalPackPrice().toFixed(2)} €</span>
+              {pack.original_price && !pack.discount_percentage && (
                 <>
-                  <span className="text-lg text-muted-foreground/60 line-through">
-                    {pack.original_price} €
-                  </span>
+                  <span className="text-lg text-muted-foreground/60 line-through">{pack.original_price} €</span>
                   <span className="text-sm text-primary font-medium">
                     Économisez {(pack.original_price - pack.price).toFixed(2)} €
                   </span>
                 </>
+              )}
+              {pack.discount_percentage && pack.allow_size_choice && (
+                <span className="px-2 py-1 bg-primary/10 text-primary text-sm font-medium rounded">
+                  -{pack.discount_percentage}% appliqué
+                </span>
               )}
             </div>
 
@@ -318,36 +351,69 @@ export default function PackDetailPage() {
                   {packProducts.map((product) => {
                     const { selectedSize, price } = getProductSelectionInfo(product.id, product)
                     return (
-                      <Link
-                        key={product.id}
-                        href={`/parfum/${product.slug}`}
-                        className="flex items-center gap-4 hover:bg-muted p-2 transition-colors"
-                      >
+                      <div key={product.id} className="flex items-center gap-4 p-2">
                         <div className="relative w-16 h-16 bg-cream overflow-hidden flex-shrink-0">
                           {product.images[0] && (
-                            <Image
-                              src={product.images[0]}
-                              alt={product.name}
-                              fill
-                              sizes="64px"
-                              className="object-cover"
-                            />
+                            <Image src={product.images[0]} alt={product.name} fill sizes="64px" className="object-cover" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{product.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {selectedSize && <span className="text-primary">{selectedSize}</span>}
-                            {selectedSize && ' — '}
-                            {price} €
-                          </p>
+                          <Link href={`/parfum/${product.slug}`} className="font-medium truncate hover:text-primary transition-colors block">
+                            {product.name}
+                          </Link>
+                          {/* Sélecteur de taille si allow_size_choice */}
+                          {pack.allow_size_choice && product.size && product.size.length > 1 ? (
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              {product.size.map((s) => {
+                                const sPrice = product.priceBySize?.[s] ?? product.price
+                                return (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    onClick={() => updateClientSize(product.id, s)}
+                                    className={`px-2 py-0.5 text-xs border rounded transition-colors ${
+                                      selectedSize === s
+                                        ? 'border-primary bg-primary/10 text-primary font-medium'
+                                        : 'border-border hover:border-primary text-muted-foreground'
+                                    }`}
+                                  >
+                                    {s} — {sPrice} €
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                              {selectedSize && <span className="text-primary">{selectedSize}</span>}
+                              {selectedSize && ' — '}
+                              {price} €
+                            </p>
+                          )}
                         </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground/60" />
-                      </Link>
+                        {!pack.allow_size_choice && <ChevronRight className="w-4 h-4 text-muted-foreground/60 flex-shrink-0" />}
+                      </div>
                     )
                   })}
                 </div>
-                {pack.original_price && (
+
+                {/* Récap prix si discount_percentage */}
+                {pack.discount_percentage && pack.allow_size_choice && (
+                  <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Total à l'unité</span>
+                      <span className="line-through text-muted-foreground/60">{getTotalProductsPrice().toFixed(2)} €</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm mt-1">
+                      <span className="text-primary font-medium">Réduction pack -{pack.discount_percentage}%</span>
+                      <span className="text-primary font-bold">{getFinalPackPrice().toFixed(2)} €</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Vous économisez {(getTotalProductsPrice() - getFinalPackPrice()).toFixed(2)} €
+                    </p>
+                  </div>
+                )}
+
+                {pack.original_price && !pack.discount_percentage && (
                   <p className="text-sm text-muted-foreground mt-2">
                     Valeur totale : {pack.original_price} € — Vous économisez {(pack.original_price - pack.price).toFixed(2)} €
                   </p>

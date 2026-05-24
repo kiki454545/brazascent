@@ -29,6 +29,8 @@ interface Pack {
   tag: string | null
   is_active: boolean
   promo_allowed: boolean
+  allow_size_choice: boolean
+  discount_percentage: number | null
   created_at: string
 }
 
@@ -58,6 +60,8 @@ interface PackForm {
   tag: string
   is_active: boolean
   promo_allowed: boolean
+  allow_size_choice: boolean
+  discount_percentage: number | null
 }
 
 const emptyForm: PackForm = {
@@ -71,7 +75,9 @@ const emptyForm: PackForm = {
   product_selections: [],
   tag: '',
   is_active: true,
-  promo_allowed: true
+  promo_allowed: true,
+  allow_size_choice: false,
+  discount_percentage: null,
 }
 
 export default function AdminPacksPage() {
@@ -197,7 +203,9 @@ export default function AdminPacksPage() {
       product_selections: selections,
       tag: pack.tag || '',
       is_active: pack.is_active ?? true,
-      promo_allowed: pack.promo_allowed ?? true
+      promo_allowed: pack.promo_allowed ?? true,
+      allow_size_choice: pack.allow_size_choice ?? false,
+      discount_percentage: pack.discount_percentage ?? null,
     })
     setError(null)
     setShowModal(true)
@@ -226,14 +234,16 @@ export default function AdminPacksPage() {
         name: form.name,
         slug: form.slug || generateSlug(form.name),
         description: form.description,
-        price: form.price,
+        price: form.discount_percentage ? parseFloat(calculatedPackPrice().toFixed(2)) : form.price,
         original_price: form.original_price || null,
         image: form.image,
         product_ids: form.product_ids,
         product_selections: form.product_selections,
         tag: form.tag || null,
         is_active: form.is_active,
-        promo_allowed: form.promo_allowed
+        promo_allowed: form.promo_allowed,
+        allow_size_choice: form.allow_size_choice,
+        discount_percentage: form.discount_percentage,
       }
 
       console.log('Saving pack data:', packData)
@@ -326,6 +336,12 @@ export default function AdminPacksPage() {
       if (!product) return total
       return total + getProductPrice(product, selection.size)
     }, 0)
+  }
+
+  const calculatedPackPrice = (): number => {
+    if (!form.discount_percentage) return form.price
+    const total = calculateTotalOriginalPrice()
+    return total * (1 - form.discount_percentage / 100)
   }
 
   const filteredPacks = packs.filter(pack =>
@@ -706,6 +722,75 @@ export default function AdminPacksPage() {
                   </p>
                 </div>
               )}
+
+              {/* Choix du format par le client */}
+              <div className="space-y-3 p-4 border border-admin-border rounded-lg">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="allow_size_choice"
+                    checked={form.allow_size_choice}
+                    onChange={(e) => setForm(prev => ({ ...prev, allow_size_choice: e.target.checked }))}
+                    className="w-4 h-4 text-[#C9A962] rounded focus:ring-[#C9A962]"
+                  />
+                  <label htmlFor="allow_size_choice" className="text-sm font-medium">
+                    Permettre au client de choisir le format de chaque parfum
+                  </label>
+                </div>
+                {form.allow_size_choice && (
+                  <p className="text-xs text-admin-muted ml-6">
+                    Le client pourra changer la taille (2ml, 5ml, 10ml…) de chaque parfum sur la page du pack. Le prix s'adaptera automatiquement si un pourcentage de réduction est défini.
+                  </p>
+                )}
+              </div>
+
+              {/* Pourcentage de réduction automatique */}
+              <div className="space-y-3 p-4 border border-admin-border rounded-lg">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="use_discount_pct"
+                    checked={form.discount_percentage !== null}
+                    onChange={(e) => setForm(prev => ({ ...prev, discount_percentage: e.target.checked ? 10 : null }))}
+                    className="w-4 h-4 text-[#C9A962] rounded focus:ring-[#C9A962]"
+                  />
+                  <label htmlFor="use_discount_pct" className="text-sm font-medium">
+                    Calculer le prix par pourcentage de réduction
+                  </label>
+                </div>
+                {form.discount_percentage !== null && (
+                  <div className="ml-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="1"
+                          max="99"
+                          value={form.discount_percentage}
+                          onChange={(e) => setForm(prev => ({ ...prev, discount_percentage: parseFloat(e.target.value) || 0 }))}
+                          className="w-20 px-3 py-2 border border-admin-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C9A962] text-center font-bold"
+                        />
+                        <span className="text-lg font-bold text-[#C9A962]">%</span>
+                      </div>
+                      <span className="text-sm text-admin-muted">de réduction sur le total des produits</span>
+                    </div>
+                    {form.product_ids.length > 0 && (
+                      <div className="p-3 bg-[#C9A962]/10 rounded-lg">
+                        <p className="text-xs text-admin-muted">Total produits (tailles fixes) : <strong>{calculateTotalOriginalPrice().toFixed(2)} €</strong></p>
+                        <p className="text-sm font-semibold text-[#C9A962] mt-1">
+                          Prix du pack calculé : {calculatedPackPrice().toFixed(2)} €
+                          <span className="text-xs font-normal text-admin-muted ml-2">(sauvegardé automatiquement)</span>
+                        </p>
+                        {form.allow_size_choice && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            Avec le choix de format activé, ce prix recalcule en temps réel côté client selon les tailles choisies.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Active Status */}
               <div className="flex items-center gap-2">
