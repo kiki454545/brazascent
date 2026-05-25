@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
       session: {
         payment_status: session.payment_status,
         status: session.status,
-        // Ne pas exposer amount_total ni email complet pour éviter l'énumération
         success: session.payment_status === 'paid',
+        amount_total: session.amount_total,
         email_hint: maskedEmail,
       }
     })

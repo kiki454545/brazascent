@@ -9,8 +9,7 @@ import { useCartStore } from '@/store/cart'
 import { formatPrice } from '@/lib/format'
 
 interface SessionData {
-  customerEmail: string
-  amountTotal: number
+  amountTotal: number | null
   paymentStatus: string
 }
 
@@ -34,8 +33,7 @@ export default function CheckoutSuccessPage() {
         .then(data => {
           if (data.session) {
             setSessionData({
-              customerEmail: data.session.customer_email,
-              amountTotal: data.session.amount_total / 100,
+              amountTotal: data.session.amount_total != null ? data.session.amount_total / 100 : null,
               paymentStatus: data.session.payment_status,
             })
           }
@@ -100,10 +98,12 @@ export default function CheckoutSuccessPage() {
                 Détails de la commande
               </h2>
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total payé</span>
-                  <span className="font-medium">{formatPrice(sessionData.amountTotal)} €</span>
-                </div>
+                {sessionData.amountTotal != null && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total payé</span>
+                    <span className="font-medium">{formatPrice(sessionData.amountTotal)} €</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Statut</span>
                   <span className="text-green-600 font-medium">Payé</span>

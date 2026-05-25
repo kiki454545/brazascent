@@ -57,9 +57,12 @@ export async function supabaseFetch<T = any>(
 
     const url = `${supabaseUrl}/rest/v1/${table}?${params.toString()}`
 
+    const { data: { session: authSession } } = await supabase.auth.getSession()
+    const authToken = authSession?.access_token ?? supabaseAnonKey
+
     const headers: Record<string, string> = {
       'apikey': supabaseAnonKey,
-      'Authorization': `Bearer ${supabaseAnonKey}`,
+      'Authorization': `Bearer ${authToken}`,
       'Content-Type': 'application/json',
     }
 
