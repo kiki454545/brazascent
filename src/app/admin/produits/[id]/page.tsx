@@ -83,6 +83,7 @@ export default function EditProductPage() {
   const [uploadingNote, setUploadingNote] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'info' | 'media' | 'inventory'>('info')
+  const [brands, setBrands] = useState<{ id: string; name: string }[]>([])
 
   const [form, setForm] = useState<ProductForm>({
     name: '',
@@ -125,6 +126,9 @@ export default function EditProductPage() {
       const map: Record<string, string> = {}
       for (const row of data || []) map[row.accord_name] = row.bg_color
       setGlobalAccordColors(map)
+    })
+    supabase.from('brands').select('id, name').order('name').then(({ data }) => {
+      if (data) setBrands(data)
     })
   }, [productId])
 
@@ -732,12 +736,18 @@ const saveAccords = async () => {
                   <label className="block text-sm font-medium text-admin-text mb-2">
                     Marque
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={form.brand}
                     onChange={(e) => setForm({ ...form, brand: e.target.value })}
                     className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
-                  />
+                  >
+                    {brands.map(b => (
+                      <option key={b.id} value={b.name}>{b.name}</option>
+                    ))}
+                    {brands.length === 0 && (
+                      <option value={form.brand}>{form.brand}</option>
+                    )}
+                  </select>
                 </div>
 
                 <div>

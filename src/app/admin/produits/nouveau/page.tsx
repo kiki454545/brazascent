@@ -74,6 +74,7 @@ export default function NewProductPage() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'info' | 'media' | 'inventory'>('info')
+  const [brands, setBrands] = useState<{ id: string; name: string }[]>([])
 
   const [form, setForm] = useState<ProductForm>({
     name: '',
@@ -108,6 +109,15 @@ export default function NewProductPage() {
       setForm(f => ({ ...f, is_promo: true }))
     }
   }, [searchParams])
+
+  useEffect(() => {
+    supabase.from('brands').select('id, name').order('name').then(({ data }) => {
+      if (data && data.length > 0) {
+        setBrands(data)
+        setForm(f => ({ ...f, brand: f.brand === 'Braza Scent' ? data[0].name : f.brand }))
+      }
+    })
+  }, [])
 
   const [newNote, setNewNote] = useState({ top: '', heart: '', base: '' })
   const [newSize, setNewSize] = useState('')
@@ -496,12 +506,18 @@ const addSize = () => {
                   <label className="block text-sm font-medium text-admin-text mb-2">
                     Marque
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={form.brand}
                     onChange={(e) => setForm({ ...form, brand: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962]"
-                  />
+                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] bg-white dark:bg-admin-input text-admin-text"
+                  >
+                    {brands.map(b => (
+                      <option key={b.id} value={b.name}>{b.name}</option>
+                    ))}
+                    {brands.length === 0 && (
+                      <option value={form.brand}>{form.brand}</option>
+                    )}
+                  </select>
                 </div>
 
                 <div>
