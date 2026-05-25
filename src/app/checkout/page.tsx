@@ -96,7 +96,7 @@ export default function CheckoutPage() {
 
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
   const [shippingMethodId, setShippingMethodId] = useState<string | null>(null)
-  const [relayPoint, setRelayPoint] = useState({ name: '', address: '', postalCode: '', city: '' })
+  const [relayPoint, setRelayPoint] = useState({ name: '', address: '', postalCode: '', city: '', country: 'France' })
   const [acceptTerms, setAcceptTerms] = useState(false)
 
   const isRelayMethod = (method: ShippingMethod | null) =>
@@ -300,7 +300,7 @@ export default function CheckoutPage() {
         street: relayPoint.address,
         city: relayPoint.city,
         postalCode: relayPoint.postalCode,
-        country: 'France',
+        country: relayPoint.country,
       }
     }
 
@@ -565,7 +565,16 @@ export default function CheckoutPage() {
                         <span className="text-sm font-medium">Indiquez votre point relais</span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Trouvez un point relais sur le site de votre transporteur, puis renseignez son adresse ci-dessous.
+                        Trouvez un point relais sur{' '}
+                        <a
+                          href={`https://www.mondialrelay.${relayPoint.country === 'Espagne' ? 'es' : relayPoint.country === 'Belgique' ? 'be' : relayPoint.country === 'Portugal' ? 'pt' : 'fr'}/trouver-le-point-relais-le-plus-proche-de-chez-moi/`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline text-primary"
+                        >
+                          mondialrelay.{relayPoint.country === 'Espagne' ? 'es' : relayPoint.country === 'Belgique' ? 'be' : relayPoint.country === 'Portugal' ? 'pt' : 'fr'}
+                        </a>
+                        , puis renseignez son adresse ci-dessous.
                       </p>
                       <div>
                         <label className="block text-sm text-muted-foreground mb-2">Nom du point relais *</label>
@@ -586,6 +595,51 @@ export default function CheckoutPage() {
                           placeholder="Ex : 12 rue de la Paix"
                           className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-muted-foreground mb-2">Pays de destination *</label>
+                        <select
+                          value={relayPoint.country}
+                          onChange={(e) => setRelayPoint({ ...relayPoint, country: e.target.value })}
+                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base bg-background"
+                        >
+                          <option value="France">🇫🇷 France</option>
+                          <option value="Guadeloupe">🇬🇵 Guadeloupe</option>
+                          <option value="Martinique">🇲🇶 Martinique</option>
+                          <option value="Réunion">🇷🇪 La Réunion</option>
+                          <option value="Guyane">🇬🇫 Guyane française</option>
+                          <option value="Belgique">🇧🇪 Belgique</option>
+                          <option value="Espagne">🇪🇸 Espagne</option>
+                          <option value="Portugal">🇵🇹 Portugal</option>
+                          <option value="Luxembourg">🇱🇺 Luxembourg</option>
+                          <option value="Pays-Bas">🇳🇱 Pays-Bas</option>
+                          <option value="Allemagne">🇩🇪 Allemagne</option>
+                          <option value="Pologne">🇵🇱 Pologne</option>
+                          <option value="République Tchèque">🇨🇿 République Tchèque</option>
+                          <option value="Slovaquie">🇸🇰 Slovaquie</option>
+                          <option value="Hongrie">🇭🇺 Hongrie</option>
+                          <option value="Roumanie">🇷🇴 Roumanie</option>
+                          <option value="Bulgarie">🇧🇬 Bulgarie</option>
+                          <option value="Croatie">🇭🇷 Croatie</option>
+                          <option value="Slovénie">🇸🇮 Slovénie</option>
+                          <option value="Autriche">🇦🇹 Autriche</option>
+                          <option value="Suède">🇸🇪 Suède</option>
+                          <option value="Finlande">🇫🇮 Finlande</option>
+                          <option value="Danemark">🇩🇰 Danemark</option>
+                          <option value="Estonie">🇪🇪 Estonie</option>
+                          <option value="Lettonie">🇱🇻 Lettonie</option>
+                          <option value="Lituanie">🇱🇹 Lituanie</option>
+                          <option value="Irlande">🇮🇪 Irlande</option>
+                          <option value="Grèce">🇬🇷 Grèce</option>
+                          <option value="Italie">🇮🇹 Italie</option>
+                          <option value="Malte">🇲🇹 Malte</option>
+                          <option value="Chypre">🇨🇾 Chypre</option>
+                        </select>
+                        {relayPoint.country !== 'France' && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                            ⚠️ Livraison internationale — les délais peuvent varier. Vérifiez la disponibilité du point relais dans votre pays.
+                          </p>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -646,7 +700,7 @@ export default function CheckoutPage() {
                       <p className="text-sm font-medium">{selectedMethod.title}</p>
                       {isRelayMethod(selectedMethod) && relayPoint.name && (
                         <p className="text-sm text-muted-foreground mt-1">
-                          {relayPoint.name} — {relayPoint.address}, {relayPoint.postalCode} {relayPoint.city}
+                          {relayPoint.name} — {relayPoint.address}, {relayPoint.postalCode} {relayPoint.city}{relayPoint.country !== 'France' ? `, ${relayPoint.country}` : ''}
                         </p>
                       )}
                     </div>
@@ -864,7 +918,7 @@ export default function CheckoutPage() {
                     </div>
                     <p className="text-sm font-medium">{selectedMethod?.title}</p>
                     {isRelayMethod(selectedMethod) && relayPoint.name && (
-                      <p className="text-sm text-muted-foreground">{relayPoint.name} — {relayPoint.address}, {relayPoint.postalCode} {relayPoint.city}</p>
+                      <p className="text-sm text-muted-foreground">{relayPoint.name} — {relayPoint.address}, {relayPoint.postalCode} {relayPoint.city}{relayPoint.country !== 'France' ? `, ${relayPoint.country}` : ''}</p>
                     )}
                   </div>
                   <div className="p-4 bg-muted border">
