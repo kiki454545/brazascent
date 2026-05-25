@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -24,7 +24,10 @@ import {
   Star,
   BookOpen,
   Video,
-  Percent
+  Percent,
+  GripVertical,
+  RotateCcw,
+  Check
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -51,6 +54,23 @@ const adminNav = [
   { name: 'Paramètres', href: '/admin/parametres', icon: Settings },
 ]
 
+const DEFAULT_ORDER = adminNav.map(item => item.href)
+const NAV_ORDER_KEY = 'admin-nav-order'
+
+function loadOrder(): string[] {
+  try {
+    const saved = localStorage.getItem(NAV_ORDER_KEY)
+    if (saved) {
+      const parsed: string[] = JSON.parse(saved)
+      // keep only valid hrefs, append any new ones at end
+      const valid = parsed.filter(href => DEFAULT_ORDER.includes(href))
+      const missing = DEFAULT_ORDER.filter(href => !valid.includes(href))
+      return [...valid, ...missing]
+    }
+  } catch {}
+  return DEFAULT_ORDER
+}
+
 export default function AdminLayout({
   children,
 }: {
@@ -61,30 +81,73 @@ export default function AdminLayout({
   const { user, profile, isInitialized, initialize } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [reorderMode, setReorderMode] = useState(false)
+  const [navOrder, setNavOrder] = useState<string[]>(DEFAULT_ORDER)
+  const dragItem = useRef<number | null>(null)
+  const dragOver = useRef<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   useEffect(() => {
     setMounted(true)
+    setNavOrder(loadOrder())
     if (!isInitialized) {
-      initialize().catch(() => {
-        // Ignorer les erreurs d'initialisation (AbortError, etc.)
-      })
+      initialize().catch(() => {})
     }
   }, [isInitialized, initialize])
 
   useEffect(() => {
-    // Attendre que tout soit initialisé avant de vérifier
     if (mounted && isInitialized) {
-      // Si pas d'utilisateur ou pas admin, rediriger
       if (!user) {
         router.replace('/compte')
       } else if (profile && !profile.is_admin) {
-        // Le profil est chargé mais l'utilisateur n'est pas admin
         router.replace('/compte')
       }
     }
   }, [mounted, isInitialized, user, profile, router])
 
-  // Afficher le loader pendant le chargement
+  const sortedNav = navOrder
+    .map(href => adminNav.find(item => item.href === href))
+    .filter(Boolean) as typeof adminNav
+
+  const handleDragStart = (index: number) => {
+    dragItem.current = index
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    dragOver.current = index
+    setDragOverIndex(index)
+  }
+
+  const handleDrop = () => {
+    if (dragItem.current === null || dragOver.current === null) return
+    if (dragItem.current === dragOver.current) {
+      dragItem.current = null
+      dragOver.current = null
+      setDragOverIndex(null)
+      return
+    }
+    const newOrder = [...navOrder]
+    const [removed] = newOrder.splice(dragItem.current, 1)
+    newOrder.splice(dragOver.current, 0, removed)
+    setNavOrder(newOrder)
+    localStorage.setItem(NAV_ORDER_KEY, JSON.stringify(newOrder))
+    dragItem.current = null
+    dragOver.current = null
+    setDragOverIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    dragItem.current = null
+    dragOver.current = null
+    setDragOverIndex(null)
+  }
+
+  const resetOrder = () => {
+    setNavOrder(DEFAULT_ORDER)
+    localStorage.removeItem(NAV_ORDER_KEY)
+  }
+
   if (!mounted || !isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-admin-bg">
@@ -96,7 +159,6 @@ export default function AdminLayout({
     )
   }
 
-  // Rediriger si pas connecté
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-admin-bg">
@@ -107,7 +169,6 @@ export default function AdminLayout({
     )
   }
 
-  // Attendre le profil
   if (!profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-admin-bg">
@@ -119,7 +180,6 @@ export default function AdminLayout({
     )
   }
 
-  // Vérifier les droits admin
   if (!profile.is_admin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-admin-bg">
@@ -132,7 +192,6 @@ export default function AdminLayout({
 
   return (
     <div className="admin min-h-screen bg-admin-bg">
-      {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -141,10 +200,11 @@ export default function AdminLayout({
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-[#19110B] text-white transform transition-transform duration-300 lg:translate-x-0 ${
+      <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-[#19110B] text-white flex flex-col transform transition-transform duration-300 lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="p-6 border-b border-white/10">
+        {/* Header */}
+        <div className="shrink-0 p-6 border-b border-white/10">
           <div className="flex items-center justify-between">
             <Link href="/admin" className="text-xl font-light tracking-[0.15em]">
               ADMIN
@@ -159,30 +219,82 @@ export default function AdminLayout({
           <p className="text-sm text-gray-400 mt-1">Braza Scent</p>
         </div>
 
-        <div className="flex flex-col h-[calc(100%-73px)]">
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-            {adminNav.map((item) => {
-              const isActive = pathname === item.href ||
-                (item.href !== '/admin' && pathname.startsWith(item.href))
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-[#C9A962] text-white'
-                      : 'text-gray-300 hover:bg-white/10'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.name}</span>
-                </Link>
-              )
-            })}
-          </nav>
+        {/* Nav — scrollable, takes remaining space */}
+        <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
+          {sortedNav.map((item, index) => {
+            const isActive = pathname === item.href ||
+              (item.href !== '/admin' && pathname.startsWith(item.href))
+            const isDragTarget = dragOverIndex === index
 
-          <div className="shrink-0 p-4 border-t border-white/10">
+            return (
+              <div
+                key={item.href}
+                draggable={reorderMode}
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors group ${
+                  reorderMode ? 'cursor-grab active:cursor-grabbing' : ''
+                } ${
+                  isDragTarget
+                    ? 'border-2 border-[#C9A962] bg-white/5'
+                    : isActive && !reorderMode
+                    ? 'bg-[#C9A962] text-white'
+                    : 'text-gray-300 hover:bg-white/10'
+                }`}
+              >
+                {reorderMode && (
+                  <GripVertical className="w-4 h-4 text-gray-500 shrink-0" />
+                )}
+                {!reorderMode && (
+                  <Link
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 flex-1"
+                  >
+                    <item.icon className="w-5 h-5 shrink-0" />
+                    <span className="text-sm">{item.name}</span>
+                  </Link>
+                )}
+                {reorderMode && (
+                  <>
+                    <item.icon className="w-5 h-5 shrink-0" />
+                    <span className="text-sm">{item.name}</span>
+                  </>
+                )}
+              </div>
+            )
+          })}
+        </nav>
+
+        {/* Footer — always visible */}
+        <div className="shrink-0 border-t border-white/10">
+          {/* Reorder controls */}
+          <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+            <button
+              onClick={() => setReorderMode(r => !r)}
+              className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-md transition-colors ${
+                reorderMode
+                  ? 'bg-[#C9A962] text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {reorderMode ? <Check className="w-3 h-3" /> : <GripVertical className="w-3 h-3" />}
+              {reorderMode ? 'Terminer' : 'Réorganiser'}
+            </button>
+            {reorderMode && (
+              <button
+                onClick={resetOrder}
+                className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                title="Réinitialiser l'ordre"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          <div className="px-4 pb-4 pt-2">
             <Link
               href="/compte"
               className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
@@ -196,7 +308,6 @@ export default function AdminLayout({
 
       {/* Main content */}
       <div className="lg:ml-64">
-        {/* Top bar */}
         <header className="bg-admin-surface shadow-sm sticky top-0 z-30 border-b border-admin-border">
           <div className="flex items-center justify-between px-6 py-4">
             <button
@@ -236,7 +347,6 @@ export default function AdminLayout({
           </div>
         </header>
 
-        {/* Page content */}
         <main className="p-6">
           {children}
         </main>
