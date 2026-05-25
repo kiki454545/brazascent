@@ -611,7 +611,7 @@ export default function CheckoutPage() {
                         <select
                           value={relayPoint.country}
                           onChange={(e) => setRelayPoint({ ...relayPoint, country: e.target.value })}
-                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base bg-background"
+                          className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base bg-background text-foreground"
                         >
                           <option value="France">🇫🇷 France</option>
                           <option value="Guadeloupe">🇬🇵 Guadeloupe</option>
@@ -829,11 +829,38 @@ export default function CheckoutPage() {
                           <label className="block text-sm text-muted-foreground mb-2">Pays *</label>
                           <select value={shippingAddress.country}
                             onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
-                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base">
-                            <option value="France">France</option>
-                            <option value="Belgique">Belgique</option>
-                            <option value="Suisse">Suisse</option>
-                            <option value="Luxembourg">Luxembourg</option>
+                            className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base bg-background">
+                            <option value="France">🇫🇷 France</option>
+                            <option value="Guadeloupe">🇬🇵 Guadeloupe</option>
+                            <option value="Martinique">🇲🇶 Martinique</option>
+                            <option value="Réunion">🇷🇪 La Réunion</option>
+                            <option value="Guyane">🇬🇫 Guyane française</option>
+                            <option value="Belgique">🇧🇪 Belgique</option>
+                            <option value="Espagne">🇪🇸 Espagne</option>
+                            <option value="Portugal">🇵🇹 Portugal</option>
+                            <option value="Luxembourg">🇱🇺 Luxembourg</option>
+                            <option value="Pays-Bas">🇳🇱 Pays-Bas</option>
+                            <option value="Allemagne">🇩🇪 Allemagne</option>
+                            <option value="Pologne">🇵🇱 Pologne</option>
+                            <option value="République Tchèque">🇨🇿 République Tchèque</option>
+                            <option value="Slovaquie">🇸🇰 Slovaquie</option>
+                            <option value="Hongrie">🇭🇺 Hongrie</option>
+                            <option value="Roumanie">🇷🇴 Roumanie</option>
+                            <option value="Bulgarie">🇧🇬 Bulgarie</option>
+                            <option value="Croatie">🇭🇷 Croatie</option>
+                            <option value="Slovénie">🇸🇮 Slovénie</option>
+                            <option value="Autriche">🇦🇹 Autriche</option>
+                            <option value="Suède">🇸🇪 Suède</option>
+                            <option value="Finlande">🇫🇮 Finlande</option>
+                            <option value="Danemark">🇩🇰 Danemark</option>
+                            <option value="Estonie">🇪🇪 Estonie</option>
+                            <option value="Lettonie">🇱🇻 Lettonie</option>
+                            <option value="Lituanie">🇱🇹 Lituanie</option>
+                            <option value="Irlande">🇮🇪 Irlande</option>
+                            <option value="Grèce">🇬🇷 Grèce</option>
+                            <option value="Italie">🇮🇹 Italie</option>
+                            <option value="Malte">🇲🇹 Malte</option>
+                            <option value="Chypre">🇨🇾 Chypre</option>
                           </select>
                         </div>
                       </div>
