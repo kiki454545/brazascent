@@ -567,7 +567,17 @@ export default function CheckoutPage() {
                       <p className="text-xs text-muted-foreground">
                         Trouvez un point relais sur{' '}
                         <a
-                          href={`https://www.mondialrelay.${relayPoint.country === 'Espagne' ? 'es' : relayPoint.country === 'Belgique' ? 'be' : relayPoint.country === 'Portugal' ? 'pt' : 'fr'}/trouver-le-point-relais-le-plus-proche-de-chez-moi/`}
+                          href={({
+                            'France': 'https://www.mondialrelay.fr/trouver-le-point-relais-le-plus-proche-de-chez-moi/',
+                            'Guadeloupe': 'https://www.mondialrelay.fr/trouver-le-point-relais-le-plus-proche-de-chez-moi/',
+                            'Martinique': 'https://www.mondialrelay.fr/trouver-le-point-relais-le-plus-proche-de-chez-moi/',
+                            'Réunion': 'https://www.mondialrelay.fr/trouver-le-point-relais-le-plus-proche-de-chez-moi/',
+                            'Guyane': 'https://www.mondialrelay.fr/trouver-le-point-relais-le-plus-proche-de-chez-moi/',
+                            'Belgique': 'https://www.mondialrelay.be/point-relais/',
+                            'Espagne': 'https://www.mondialrelay.es/localizar-punto-de-recogida/',
+                            'Portugal': 'https://www.mondialrelay.pt/encontrar-ponto-de-recolha/',
+                            'Luxembourg': 'https://www.mondialrelay.fr/trouver-le-point-relais-le-plus-proche-de-chez-moi/',
+                          } as Record<string, string>)[relayPoint.country] ?? 'https://www.mondialrelay.fr/trouver-le-point-relais-le-plus-proche-de-chez-moi/'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="underline text-primary"
