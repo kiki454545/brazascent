@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import ProductClient from './ProductClient'
+import { generateBrazaScentAnalysis } from '@/lib/brazascent-analysis'
 
 const SITE_URL = 'https://brazascent.com'
 
@@ -222,9 +223,55 @@ async function getProductJsonLd(slug: string) {
   }
 }
 
+async function getAnalysisText(slug: string): Promise<string | null> {
+  try {
+    const { data } = await supabase
+      .from('products')
+      .select('name, brand, short_description, accords, notes_top, notes_heart, notes_base, performance_longevity, performance_sillage, performance_seasons, performance_time_of_day, category')
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .single()
+
+    if (!data) return null
+
+    const seasons = (() => {
+      const s = data.performance_seasons
+      if (!s || typeof s !== 'object' || Array.isArray(s)) return {}
+      return s as Record<string, number>
+    })()
+    const timeOfDay = (() => {
+      const t = data.performance_time_of_day
+      if (!t || typeof t !== 'object' || Array.isArray(t)) return {}
+      return t as Record<string, number>
+    })()
+
+    return generateBrazaScentAnalysis({
+      name: data.name,
+      brand: data.brand,
+      shortDescription: data.short_description,
+      accords: data.accords ?? [],
+      notes: {
+        top:   data.notes_top   ?? [],
+        heart: data.notes_heart ?? [],
+        base:  data.notes_base  ?? [],
+      },
+      longevity: data.performance_longevity,
+      sillage:   data.performance_sillage,
+      seasons,
+      timeOfDay,
+      category: data.category,
+    })
+  } catch {
+    return null
+  }
+}
+
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params
-  const schemas = await getProductJsonLd(slug)
+  const [schemas, analysisText] = await Promise.all([
+    getProductJsonLd(slug),
+    getAnalysisText(slug),
+  ])
 
   return (
     <>
@@ -235,7 +282,7 @@ export default async function ProductPage({ params }: PageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
-      <ProductClient />
+      <ProductClient analysisText={analysisText} />
     </>
   )
 }

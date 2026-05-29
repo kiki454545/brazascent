@@ -49,7 +49,11 @@ interface SupabaseProductRow {
   is_bestseller?: boolean
 }
 
-export default function ProductPage() {
+interface ProductClientProps {
+  analysisText?: string | null
+}
+
+export default function ProductPage({ analysisText }: ProductClientProps) {
   const params = useParams()
   const slug = params.slug as string
 
@@ -902,6 +906,18 @@ export default function ProductPage() {
                 )}
               </div>
             )}
+            {/* Analyse BrazaScent */}
+            {analysisText && (
+              <div className="mt-10 p-6 bg-[#19110B] dark:bg-[#0D0A07] border-l-2 border-[#C9A962]">
+                <h2 className="text-xs tracking-[0.3em] uppercase text-[#C9A962] mb-4 font-medium">
+                  Analyse BrazaScent
+                </h2>
+                <p className="text-[#C8B89E] text-sm leading-relaxed">
+                  {analysisText}
+                </p>
+              </div>
+            )}
+
             {/* Pourquoi découvrir en décant */}
             <div className="mt-10 p-5 bg-cream border-l-2 border-primary">
               <h2 className="text-sm tracking-[0.2em] uppercase text-primary mb-3">
