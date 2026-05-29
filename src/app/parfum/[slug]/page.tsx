@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   try {
     const { data: product } = await supabase
       .from('products')
-      .select('name, brand, description, short_description, images, category, price')
+      .select('name, brand, description, short_description, images, category, price, performance_genre')
       .eq('slug', slug)
       .eq('is_active', true)
       .single()
@@ -35,15 +35,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       }
     }
 
+    const normalizeGenre = (g: string | null) => {
+      if (!g) return null
+      if (['Femme','Féminin','Très féminin'].includes(g)) return 'Femme'
+      if (['Homme','Masculin','Très masculin'].includes(g)) return 'Homme'
+      if (['Unisexe'].includes(g)) return 'Unisexe'
+      return null
+    }
+    const genre = normalizeGenre(product.performance_genre)
+    const genreSuffix = genre ? ` - Parfum ${genre} en Décant` : ' - Décant Parfum'
+
     const title = product.brand
-      ? `${product.name} - ${product.brand}${product.category ? ` - ${product.category}` : ''}`
-      : product.name
+      ? `${product.name} - ${product.brand}${genreSuffix}`
+      : `${product.name}${genreSuffix}`
 
     const description =
       product.short_description ||
       (product.description
         ? product.description.substring(0, 160).trim() + '...'
-        : `Découvrez ${product.name} sur Braza Scent. Parfum disponible en formats 2ml, 5ml et 10ml. Livraison rapide en France.`)
+        : `Découvrez ${product.name}${genre ? ` - Parfum ${genre}` : ''} sur Braza Scent. Décant authentique disponible en 2ml, 5ml et 10ml. Livraison rapide en France.`)
 
     const image = Array.isArray(product.images) && product.images.length > 0
       ? product.images[0]
@@ -148,6 +158,16 @@ async function getProductJsonLd(slug: string) {
       product.description ||
       `Découvrez ${product.name} sur Braza Scent.`
 
+    const breadcrumbJsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Accueil', item: SITE_URL },
+        { '@type': 'ListItem', position: 2, name: 'Parfums', item: `${SITE_URL}/parfums` },
+        { '@type': 'ListItem', position: 3, name: product.name, item: `${SITE_URL}/parfum/${product.slug}` },
+      ],
+    }
+
     const jsonLd: Record<string, unknown> = {
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -195,7 +215,7 @@ async function getProductJsonLd(slug: string) {
           },
     }
 
-    return jsonLd
+    return [jsonLd, breadcrumbJsonLd]
   } catch (error) {
     console.error('Erreur génération JSON-LD:', error)
     return null
@@ -204,16 +224,17 @@ async function getProductJsonLd(slug: string) {
 
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params
-  const jsonLd = await getProductJsonLd(slug)
+  const schemas = await getProductJsonLd(slug)
 
   return (
     <>
-      {jsonLd && (
+      {schemas && schemas.map((schema, i) => (
         <script
+          key={i}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
-      )}
+      ))}
       <ProductClient />
     </>
   )

@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { m, AnimatePresence } from 'framer-motion'
-import { Heart, Minus, Plus, ChevronRight, Share2, Check, Star, CreditCard, Truck, X, ZoomIn } from 'lucide-react'
+import { Heart, Minus, Plus, ChevronRight, Share2, Check, Star, Truck, X, ZoomIn } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 import dynamic from 'next/dynamic'
@@ -18,6 +18,7 @@ import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { useSettingsStore } from '@/store/settings'
 import { useRecentlyViewedStore } from '@/store/recentlyViewed'
+import { ExpressCheckoutBlock } from '@/components/ExpressCheckoutBlock'
 import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
 import { formatPrice } from '@/lib/format'
@@ -49,7 +50,6 @@ interface SupabaseProductRow {
 }
 
 export default function ProductPage() {
-  const router = useRouter()
   const params = useParams()
   const slug = params.slug as string
 
@@ -60,13 +60,20 @@ export default function ProductPage() {
   const [unlimitedStock, setUnlimitedStock] = useState(false)
   const [globalStock, setGlobalStock] = useState<number>(1)
   const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null)
+  const [performance, setPerformance] = useState<{
+    longevity: string | null
+    sillage: string | null
+    seasons: Record<string, number>
+    timeOfDay: Record<string, number>
+    genre: string | null
+    updatedAt: string | null
+  }>({ longevity: null, sillage: null, seasons: {}, timeOfDay: {}, genre: null, updatedAt: null })
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const [selectedSize, setSelectedSize] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [copied, setCopied] = useState(false)
-  const [canUseApplePay, setCanUseApplePay] = useState(false)
 
   const { addItem, openCart } = useCartStore()
   const { toggleItem, isInWishlist } = useWishlistStore()
@@ -153,6 +160,14 @@ export default function ProductPage() {
         setProduct(mappedProduct)
         setStockBySize(data.stock_by_size || {})
         setUnlimitedStock(data.unlimited_stock ?? false)
+        setPerformance({
+          longevity:  data.performance_longevity ?? null,
+          sillage:    data.performance_sillage ?? null,
+          seasons:    (() => { const d = data.performance_seasons; if (!d) return {}; if (Array.isArray(d)) return Object.fromEntries(d.map((s: string) => [s, 75])); return d as Record<string, number> })(),
+          timeOfDay:  (() => { const d = data.performance_time_of_day; if (!d) return {}; if (Array.isArray(d)) return Object.fromEntries(d.map((t: string) => [t, 75])); return d as Record<string, number> })(),
+          genre:      data.performance_genre ?? null,
+          updatedAt:  data.performance_updated_at ?? null,
+        })
 
         // Enregistrer dans les produits récemment vus
         const prices = Object.values(parsedPriceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
@@ -277,15 +292,6 @@ export default function ProductPage() {
     }
   }, [slug])
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const applePaySession = (window as Window & {
-      ApplePaySession?: { canMakePayments?: () => boolean }
-    }).ApplePaySession
-
-    setCanUseApplePay(Boolean(applePaySession?.canMakePayments?.()))
-  }, [])
 
   // Gestion clavier lightbox
   useEffect(() => {
@@ -332,11 +338,6 @@ export default function ProductPage() {
     openCart()
   }
 
-  const handleExpressCheckout = () => {
-    if (isGloballyOutOfStock) return
-    addItem(product, selectedSize, quantity)
-    router.push('/checkout')
-  }
 
   // Price based on size from database
   const getSizePrice = (size: string) => {
@@ -484,9 +485,12 @@ export default function ProductPage() {
 
             {/* Brand */}
             {product.brand && (
-              <p className="text-sm tracking-[0.25em] uppercase text-muted-foreground mb-2">
+              <Link
+                href={`/marques/${product.brand.toLowerCase().replace(/\s+/g, '-').replace(/[éèê]/g, 'e').replace(/[àâ]/g, 'a').replace(/[^a-z0-9-]/g, '')}`}
+                className="text-sm tracking-[0.25em] uppercase text-muted-foreground mb-2 block hover:text-primary transition-colors"
+              >
                 {product.brand}
-              </p>
+              </Link>
             )}
 
             {/* Name */}
@@ -658,24 +662,12 @@ export default function ProductPage() {
               </button>
             </div>
 
-            {!isGloballyOutOfStock && canUseApplePay && (
-              <button
-                onClick={handleExpressCheckout}
-                className="mb-8 flex w-full items-center justify-center gap-2 py-4 bg-black text-white text-sm font-medium tracking-[0.12em] uppercase hover:bg-foreground transition-colors"
-              >
-                <CreditCard className="w-5 h-5" />
-                Acheter avec Apple Pay
-              </button>
-            )}
-
-            {!isGloballyOutOfStock && !canUseApplePay && (
-              <button
-                onClick={handleExpressCheckout}
-                className="mb-8 flex w-full items-center justify-center gap-2 py-4 border border-foreground text-sm font-medium tracking-[0.12em] uppercase hover:bg-foreground hover:text-background transition-colors"
-              >
-                <CreditCard className="w-5 h-5" />
-                Paiement express au checkout
-              </button>
+            {!isGloballyOutOfStock && (
+              <div className="mb-8">
+                <ExpressCheckoutBlock
+                  overrideItems={[{ product, selectedSize, quantity }]}
+                />
+              </div>
             )}
 
             {/* Message de copie */}
@@ -704,6 +696,181 @@ export default function ProductPage() {
               <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Description</h2>
               <p className="text-muted-foreground leading-relaxed">{product.description}</p>
             </div>
+
+            {/* Tenue, Sillage, Saisons, Journée */}
+            {(performance.longevity || performance.sillage || Object.keys(performance.seasons).length > 0 || Object.keys(performance.timeOfDay).length > 0 || performance.genre) && (() => {
+              const LONGEVITY_LEVEL: Record<string, number> = { médiocre: 1, faible: 2, modérée: 3, 'longue tenue': 4, 'très longue tenue': 5 }
+              const LONGEVITY_HOURS: Record<string, string> = { médiocre: '< 2h', faible: '~3h', modérée: '~5h', 'longue tenue': '~8h', 'très longue tenue': '+12h' }
+              const SILLAGE_LEVEL: Record<string, number> = { discret: 1, modéré: 2, puissant: 3, énorme: 4 }
+              const SILLAGE_LABEL: Record<string, string> = { discret: 'Discret', modéré: 'Modéré', puissant: 'Puissant', énorme: 'Énorme' }
+              const lonLvl = performance.longevity ? (LONGEVITY_LEVEL[performance.longevity] ?? 0) : 0
+              const silLvl = performance.sillage   ? (SILLAGE_LEVEL[performance.sillage]   ?? 0) : 0
+              const ALL_SEASONS = [
+                { key: 'hiver',     label: 'Hiver',     icon: '❄️', color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300' },
+                { key: 'printemps', label: 'Printemps', icon: '🌸', color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+                { key: 'été',       label: 'Été',       icon: '☀️', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
+                { key: 'automne',   label: 'Automne',   icon: '🍂', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
+              ]
+              const ALL_TIMES = [
+                { key: 'jour', label: 'Jour', icon: '☀️', color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300' },
+                { key: 'nuit', label: 'Nuit', icon: '🌙', color: 'bg-slate-600 text-slate-100 dark:bg-slate-700 dark:text-slate-200' },
+              ]
+              const hasSeasonsData = Object.keys(performance.seasons).length > 0
+              const hasTimeData    = Object.keys(performance.timeOfDay).length > 0
+              // Seuil d'activation : saison active si son % >= 40% du max
+              const maxSeason = Math.max(...Object.values(performance.seasons), 1)
+              const maxTime   = Math.max(...Object.values(performance.timeOfDay), 1)
+              return (
+                <div className="mt-10 space-y-3">
+                  <div className="flex items-center gap-3 mb-5">
+                    <h2 className="text-lg tracking-[0.15em] uppercase">Performance &amp; Utilisation</h2>
+                    {performance.genre && (() => {
+                      const normalizeGenre = (g: string) => {
+                        if (['Femme','Féminin','Très féminin'].includes(g)) return 'Femme'
+                        if (['Homme','Masculin','Très masculin'].includes(g)) return 'Homme'
+                        return 'Unisexe'
+                      }
+                      const genreLabel = normalizeGenre(performance.genre!)
+                      const GENRE_ICON: Record<string, string> = { 'Femme': '♀', 'Homme': '♂', 'Unisexe': '⚥' }
+                      const GENRE_COLOR: Record<string, string> = {
+                        'Femme':   'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
+                        'Unisexe': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+                        'Homme':   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+                      }
+                      return (
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${GENRE_COLOR[genreLabel]}`}>
+                          {GENRE_ICON[genreLabel]} {genreLabel}
+                        </span>
+                      )
+                    })()}
+                  </div>
+
+                  {/* Jauges Longévité + Sillage */}
+                  {(performance.longevity || performance.sillage) && (
+                    <div className="rounded-2xl bg-cream p-5">
+                      <p className="text-xs text-muted-foreground mb-4">performance</p>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <div className="flex items-baseline gap-1.5 mb-2">
+                            <span className="text-sm">⌛</span>
+                            <span className="font-semibold text-foreground text-sm">{performance.longevity ? (LONGEVITY_HOURS[performance.longevity] ?? performance.longevity) : '—'}</span>
+                            <span className="text-xs text-muted-foreground">Tenue</span>
+                          </div>
+                          <div className="flex gap-1">
+                            {[1,2,3,4,5].map(i => (
+                              <div key={i} className={`h-2 flex-1 rounded-full transition-colors ${i <= lonLvl ? 'bg-primary' : 'bg-muted'}`} />
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-baseline gap-1.5 mb-2">
+                            <span className="text-sm font-bold text-muted-foreground">≈</span>
+                            <span className="font-semibold text-foreground text-sm">{performance.sillage ? (SILLAGE_LABEL[performance.sillage] ?? performance.sillage) : '—'}</span>
+                            <span className="text-xs text-muted-foreground">Sillage</span>
+                          </div>
+                          <div className="flex gap-1">
+                            {[1,2,3,4].map(i => (
+                              <div key={i} className={`h-2 flex-1 rounded-full transition-colors ${i <= silLvl ? 'bg-primary' : 'bg-muted'}`} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Journée + Saisons avec jauges proportionnelles */}
+                  {(hasTimeData || hasSeasonsData) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {hasTimeData && (
+                        <div className="rounded-2xl bg-cream p-5">
+                          <p className="text-xs text-muted-foreground mb-4">journée</p>
+                          <div className="space-y-3">
+                            {ALL_TIMES.map(({ key, label, icon, color }) => {
+                              const pct = performance.timeOfDay[key] ?? 0
+                              return (
+                                <div key={key} className="flex items-center gap-3">
+                                  <span className="text-xs w-14 shrink-0 flex items-center gap-1.5 font-medium text-foreground">
+                                    {icon} {label}
+                                  </span>
+                                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                    {pct > 0 && <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      {hasSeasonsData && (
+                        <div className="rounded-2xl bg-cream p-5">
+                          <p className="text-xs text-muted-foreground mb-4">saisons</p>
+                          <div className="space-y-3">
+                            {ALL_SEASONS.map(({ key, label, icon }) => {
+                              const pct = performance.seasons[key] ?? 0
+                              return (
+                                <div key={key} className="flex items-center gap-3">
+                                  <span className="text-xs w-20 shrink-0 flex items-center gap-1.5 font-medium text-foreground">
+                                    {icon} {label}
+                                  </span>
+                                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                    {pct > 0 && <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                </div>
+              )
+            })()}
+
+            {/* Badges d'usage */}
+            {(() => {
+              const LONGEVITY_H: Record<string, number> = { médiocre: 1, faible: 3, modérée: 5, 'longue tenue': 8, 'très longue tenue': 12 }
+              const h = performance.longevity ? (LONGEVITY_H[performance.longevity] ?? 0) : 0
+              const jour  = performance.timeOfDay['jour']  ?? 0
+              const nuit  = performance.timeOfDay['nuit']  ?? 0
+              const ete   = performance.seasons['été']     ?? 0
+              const hiver = performance.seasons['hiver']   ?? 0
+              const sillage = performance.sillage ?? ''
+              const sIntime  = sillage === 'intime'  || sillage === 'discret'
+              const sModere  = sillage === 'modéré'
+              const sPuissant = sillage === 'puissant'
+              const sEnorme  = sillage === 'énorme'
+              const saisons60 = Object.values(performance.seasons).filter(v => v >= 60).length
+
+              const all: { label: string; active: boolean }[] = [
+                { label: 'Bureau',         active: (sIntime || sModere) && jour >= 60 },
+                { label: 'Sortie',         active: nuit >= 60 || sPuissant || sEnorme },
+                { label: 'Quotidien',      active: jour >= 70 && h >= 5 },
+                { label: 'Signature scent',active: h >= 6 && (sModere || sPuissant) && saisons60 >= 2 },
+                { label: 'Soirée',         active: nuit >= 70 },
+                { label: 'Date',           active: (sModere || sPuissant) && nuit >= 50 },
+                { label: 'Été',            active: ete >= 70 },
+                { label: 'Hiver',          active: hiver >= 70 },
+              ]
+
+              const badges = all.filter(b => b.active).slice(0, 4)
+              if (badges.length === 0) return null
+
+              return (
+                <div className="mt-10">
+                  <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Idéal pour</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {badges.map(({ label }) => (
+                      <span key={label} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-foreground text-sm font-medium">
+                        <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Accords + Pyramide côte à côte */}
             {((product.accords?.length ?? 0) > 0 || product.notes.top.length > 0 || product.notes.heart.length > 0 || product.notes.base.length > 0 || product.pyramidImage) && (
@@ -735,6 +902,53 @@ export default function ProductPage() {
                 )}
               </div>
             )}
+            {/* Pourquoi découvrir en décant */}
+            <div className="mt-10 p-5 bg-cream border-l-2 border-primary">
+              <h2 className="text-sm tracking-[0.2em] uppercase text-primary mb-3">
+                Pourquoi découvrir {product.name} en décant ?
+              </h2>
+              <p className="text-muted-foreground text-sm leading-relaxed mb-3">
+                Un flacon complet représente un investissement significatif. Notre décant authentique — prélevé directement depuis le flacon d'origine de la marque — vous permet de vivre cette fragrance sur votre peau, dans votre quotidien, avant tout engagement. La même concentration, la même formule, le même parfum.
+              </p>
+              {product.brand && (
+                <p className="text-muted-foreground text-sm leading-relaxed mb-3">
+                  Découvrez l'ensemble des parfums{' '}
+                  <Link
+                    href={`/marques/${product.brand.toLowerCase().replace(/\s+/g, '-').replace(/[éèê]/g, 'e').replace(/[àâ]/g, 'a').replace(/[^a-z0-9-]/g, '')}`}
+                    className="text-primary hover:underline"
+                  >
+                    {product.brand}
+                  </Link>
+                  {' '}disponibles en décant chez BrazaScent. Explorez aussi notre sélection{' '}
+                  <Link href="/packs" className="text-primary hover:underline">par packs découverte</Link>.
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground/60 italic">
+                BrazaScent propose des décants préparés à partir de flacons authentiques. BrazaScent n'est pas affilié aux marques citées.
+              </p>
+            </div>
+
+            {/* FAQ */}
+            <div className="mt-10">
+              <h2 className="text-lg tracking-[0.15em] uppercase mb-5">Questions fréquentes</h2>
+              <div className="divide-y divide-border">
+                {[
+                  { q: "C'est quoi un décant de parfum ?", a: "Un décant est un prélèvement effectué directement depuis le flacon d'origine de la marque. Vous recevez le parfum authentique — sans dilution, sans reformulation — dans un vaporisateur soigneusement conditionné. La même fragrance qu'en boutique, en format découverte." },
+                  { q: "Le parfum est-il dilué ou modifié ?", a: "Non. Nos décants sont du parfum pur, dans la concentration exacte du flacon d'origine. Aucun ajout de solvant, d'alcool supplémentaire ou de modificateur. Ce que vous recevez est identique à ce que vous trouveriez dans une boutique officielle." },
+                  { q: "Quelle est la durée d'un décant 5ml ?", a: "Un 5ml représente environ 100 à 110 projections, soit 2 à 3 semaines d'utilisation quotidienne (2 à 3 sprays par jour). Suffisant pour découvrir toutes les phases d'évolution d'une fragrance : note de tête, cœur, fond." },
+                  { q: "Puis-je retourner un décant ?", a: "Pour des raisons d'hygiène, les décants ne sont pas retournables une fois expédiés. C'est précisément pourquoi nous proposons des formats aussi petits que 2ml — pour minimiser votre investissement lors de la découverte." },
+                ].map(({ q, a }, i) => (
+                  <details key={i} className="group py-4">
+                    <summary className="flex items-center justify-between cursor-pointer font-medium text-foreground text-sm [&::-webkit-details-marker]:hidden">
+                      <span>{q}</span>
+                      <span className="text-primary ml-4 flex-shrink-0 text-xl leading-none group-open:rotate-45 transition-transform inline-block">+</span>
+                    </summary>
+                    <p className="mt-3 text-muted-foreground text-sm leading-relaxed">{a}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+
           </m.div>
         </div>
       </section>

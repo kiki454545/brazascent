@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@supabase/supabase-js'
+import { noteToSlug } from '@/lib/notes'
 
 const SITE_URL = 'https://brazascent.com'
 
@@ -35,6 +36,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     {
       url: `${SITE_URL}/femme`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/unisexe`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
@@ -124,6 +131,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.85,
     })),
+    // Notes olfactives (index)
+    {
+      url: `${SITE_URL}/notes`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    },
   ]
 
   // 2. Produits dynamiques (depuis Supabase)
@@ -205,5 +219,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Erreur récupération blog pour sitemap:', error)
   }
 
-  return [...staticPages, ...productPages, ...brandPages, ...packPages, ...blogPages]
+  // 6. Pages notes olfactives
+  let notePages: MetadataRoute.Sitemap = []
+  try {
+    const { data: noteData } = await supabase
+      .from('products')
+      .select('notes_top, notes_heart, notes_base')
+      .eq('is_active', true)
+
+    if (noteData) {
+      const slugSet = new Set<string>()
+      for (const p of noteData) {
+        for (const note of [
+          ...(p.notes_top || []),
+          ...(p.notes_heart || []),
+          ...(p.notes_base || []),
+        ]) {
+          if (note) slugSet.add(noteToSlug(note))
+        }
+      }
+      notePages = Array.from(slugSet).map((slug) => ({
+        url: `${SITE_URL}/notes/${slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }))
+    }
+  } catch (error) {
+    console.error('Erreur récupération notes pour sitemap:', error)
+  }
+
+  return [...staticPages, ...productPages, ...brandPages, ...packPages, ...blogPages, ...notePages]
 }
