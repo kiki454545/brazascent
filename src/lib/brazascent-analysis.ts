@@ -67,6 +67,7 @@ const LONGEVITY: Record<string, { adj: string }> = {
   'médiocre':          { adj: 'légère' },
   'faible':            { adj: 'discrète' },
   'modérée':           { adj: 'équilibrée' },
+  'bonne':             { adj: 'généreuse' },
   'longue tenue':      { adj: 'généreuse' },
   'très longue tenue': { adj: 'remarquable' },
 }
@@ -192,9 +193,9 @@ export function generateBrazaScentAnalysis(input: AnalysisInput): string | null 
     const accordStr = rest.join(', ') + ' et ' + last
     const charAdj = accordToChar(sortedAccords[0]?.nom ?? '')
     if (charAdj) {
-      parts.push(`${name} déploie une signature ${charAdj}, portée par des facettes ${accordStr}.`)
+      parts.push(`${name} déploie un caractère ${charAdj}, porté par des facettes ${accordStr}.`)
     } else {
-      parts.push(`${name} se distingue par des facettes ${accordStr} qui lui confèrent un caractère singular et mémorable.`)
+      parts.push(`${name} se distingue par des facettes ${accordStr} qui lui confèrent un caractère singulier et mémorable.`)
     }
   } else if (accordAdjs.length === 1) {
     parts.push(`${name} s'articule autour d'une signature ${accordAdjs[0]}, affirmant une personnalité distincte.`)
