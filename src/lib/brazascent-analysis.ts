@@ -87,8 +87,13 @@ function norm(str: string): string {
 
 function accordToAdj(name: string): string | null {
   const n = norm(name)
+  // Exact match first
   for (const [k, v] of Object.entries(ACCORD_ADJ)) {
-    if (n === k || n.includes(k) || k.includes(n)) return v
+    if (n === k) return v
+  }
+  // Partial : l'accord contient la clé (ex: "épicé chaud" contient "epice")
+  for (const [k, v] of Object.entries(ACCORD_ADJ)) {
+    if (k.length >= 4 && n.includes(k)) return v
   }
   return null
 }
@@ -96,7 +101,10 @@ function accordToAdj(name: string): string | null {
 function accordToChar(name: string): string | null {
   const n = norm(name)
   for (const [k, v] of Object.entries(ACCORD_CHAR)) {
-    if (n === k || n.includes(k) || k.includes(n)) return v
+    if (n === k) return v
+  }
+  for (const [k, v] of Object.entries(ACCORD_CHAR)) {
+    if (k.length >= 4 && n.includes(k)) return v
   }
   return null
 }
