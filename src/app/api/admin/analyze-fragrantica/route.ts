@@ -138,6 +138,7 @@ Si l'image montre des barres de votes : prends la catégorie dominante.
 Si non visible → "?"`,
     seasons:   `Lis le nombre de votes sous chaque SAISON dans cette image. Réponds UNIQUEMENT avec ce JSON : {"hiver":0,"printemps":0,"été":0,"automne":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises : winter/spring/summer/fall.`,
     timeOfDay: `Lis le nombre de votes pour JOUR et NUIT dans cette image. Réponds UNIQUEMENT avec ce JSON : {"jour":0,"nuit":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises : day/night.`,
+    context:   `Lis les données de SAISONS et HEURE DE LA JOURNÉE dans cette image Fragrantica. Réponds UNIQUEMENT avec ce JSON : {"seasons":{"hiver":0,"printemps":0,"été":0,"automne":0},"time_of_day":{"jour":0,"nuit":0}}. Remplace les 0 par les vrais nombres de votes ("2.4k"→2400, "1.3k"→1300). Clés anglaises : winter/spring/summer/fall/day/night. Si une section n'est pas visible → {}.`,
     genre:     `Lis le nombre de votes pour chaque catégorie de GENRE dans cette image. Réponds UNIQUEMENT avec ce JSON : {"très féminin":0,"féminin":0,"unisexe":0,"masculin":0,"très masculin":0}. Remplace les 0 par les vrais nombres. Clés anglaises : very feminine/female/unisex/male/very masculine.`,
     all:       PROMPT,
   }
@@ -198,6 +199,12 @@ Si non visible → "?"`,
   if (type === 'sillage' || type === 'all') {
     result.sillage = normalizeSillage(type === 'sillage' ? parsed : parsed.sillage)
     dbUpdate.performance_sillage = result.sillage
+  }
+  if (type === 'context') {
+    result.seasons    = normalizeSeasons(parsed.seasons)
+    result.time_of_day = normalizeTimeOfDay(parsed.time_of_day)
+    dbUpdate.performance_seasons     = result.seasons
+    dbUpdate.performance_time_of_day = result.time_of_day
   }
   if (type === 'performance') {
     const LON_VALID = new Set(['médiocre','faible','modérée','longue tenue','très longue tenue'])

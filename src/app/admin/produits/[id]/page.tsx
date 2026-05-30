@@ -93,6 +93,83 @@ function FragranticaPerformanceRow({ productId }: { productId: string }) {
   )
 }
 
+// Ligne combinée Saisons + Journée en un seul upload
+function FragranticaContextRow({ productId }: { productId: string }) {
+  const [image, setImage] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [seasons, setSeasons] = useState<string | null>(null)
+  const [timeOfDay, setTimeOfDay] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const analyze = async () => {
+    if (!image) return
+    setLoading(true); setError(null); setSeasons(null); setTimeOfDay(null)
+    try {
+      const fd = new FormData()
+      fd.append('image', image)
+      fd.append('productId', productId)
+      fd.append('type', 'context')
+      const res = await fetch('/api/admin/analyze-fragrantica', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.error) { setError(data.error); return }
+      const s = data.seasons as Record<string, number>
+      const t = data.time_of_day as Record<string, number>
+      setSeasons(s ? Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}%`).join(' · ') : null)
+      setTimeOfDay(t ? Object.entries(t).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}%`).join(' · ') : null)
+    } catch (e) { setError(String(e)) }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div className="flex items-center gap-3 p-3 bg-admin-bg rounded-lg border border-admin-border">
+      <span className="text-xs font-medium text-admin-text w-28 shrink-0">🌍☀️ Saisons + Journée</span>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={e => {
+          const f = e.target.files?.[0]; if (!f) return
+          setImage(f); setSeasons(null); setTimeOfDay(null); setError(null)
+          const r = new FileReader(); r.onload = ev => setPreview(ev.target?.result as string); r.readAsDataURL(f)
+        }}
+      />
+      {preview ? (
+        <div className="relative shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="" className="h-10 w-16 object-cover rounded border border-admin-border" />
+          <button type="button" onClick={() => { setImage(null); setPreview(null); setSeasons(null); setTimeOfDay(null) }}
+            className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white">
+            <X className="w-2.5 h-2.5" />
+          </button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => inputRef.current?.click()}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-admin-border rounded hover:bg-admin-surface-alt transition-colors shrink-0">
+          <Upload className="w-3 h-3" /> Screenshot
+        </button>
+      )}
+      {image && (
+        <button type="button" onClick={analyze} disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#C9A962]/10 border border-[#C9A962]/40 text-[#C9A962] rounded hover:bg-[#C9A962]/20 transition-colors disabled:opacity-50 shrink-0">
+          {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          {loading ? '...' : 'Analyser'}
+        </button>
+      )}
+      <div className="flex-1 min-w-0 space-y-0.5">
+        {(seasons || timeOfDay) ? (
+          <>
+            {seasons   && <p className="text-xs text-emerald-500 font-medium truncate">✓ Saisons : {seasons}</p>}
+            {timeOfDay && <p className="text-xs text-emerald-500 font-medium truncate">✓ Journée : {timeOfDay}</p>}
+          </>
+        ) : error ? (
+          <p className="text-xs text-orange-400 truncate">⚠ {error.slice(0, 60)}</p>
+        ) : (
+          <p className="text-xs text-admin-light">Section &quot;Quand le porter&quot; — saisons + jour/nuit</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function FragranticaRow({ catType, label, hint, productId }: {
   catType: string; label: string; hint: string; productId: string
 }) {
@@ -1000,14 +1077,13 @@ const saveAccords = async () => {
               <h2 className="text-lg font-medium mb-4">Fragrantica — Votes</h2>
               {(() => {
                 const CATEGORIES = [
-                  { type: 'seasons',   label: '🌍 Saisons',  hint: 'Section "Quand le porter" — saisons avec les nombres de votes' },
-                  { type: 'timeOfDay', label: '☀️ Journée',  hint: 'Section "Quand le porter" — jour/nuit avec les nombres de votes' },
-                  { type: 'genre',     label: '⚥ Genre',     hint: 'Section Genre avec les votes par catégorie' },
+                  { type: 'genre', label: '⚥ Genre', hint: 'Section Genre avec les votes par catégorie' },
                 ] as const
 
                 return (
                   <div className="space-y-3">
                     <FragranticaPerformanceRow productId={productId} />
+                    <FragranticaContextRow productId={productId} />
                     {CATEGORIES.map(({ type: catType, label, hint }) => (
                       <FragranticaRow
                         key={catType}
