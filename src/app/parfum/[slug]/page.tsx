@@ -10,8 +10,17 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// ISR : régénère toutes les heures
+// Pré-génère toutes les fiches produit actives au build (SSG)
+// ISR toutes les heures pour les mises à jour
 export const revalidate = 3600
+
+export async function generateStaticParams() {
+  const { data } = await supabase
+    .from('products')
+    .select('slug')
+    .eq('is_active', true)
+  return (data ?? []).map((p: { slug: string }) => ({ slug: p.slug }))
+}
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -233,6 +242,19 @@ export default async function ProductPage({ params }: PageProps) {
 
   const schemas = await getProductJsonLd(product, reviews)
 
+  // Prix minimum pour affichage SEO
+  const priceBySize = typeof product.price_by_size === 'string'
+    ? JSON.parse(product.price_by_size)
+    : (product.price_by_size || {})
+  const prices = Object.values(priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
+  const minPrice = prices.length > 0 ? Math.min(...prices) : product.price
+
+  const allNotes = [
+    ...(product.notes_top ?? []),
+    ...(product.notes_heart ?? []),
+    ...(product.notes_base ?? []),
+  ]
+
   return (
     <>
       {schemas && schemas.map((schema, i) => (
@@ -242,6 +264,20 @@ export default async function ProductPage({ params }: PageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
+
+      {/* Contenu SEO en HTML pur — toujours indexable par Google */}
+      <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
+        <h1>{product.name}{product.brand ? ` — ${product.brand}` : ''}</h1>
+        {product.short_description && <p>{product.short_description}</p>}
+        {product.description && <p>{product.description}</p>}
+        {minPrice > 0 && <p>À partir de {minPrice}€ — disponible en décant 2ml, 5ml, 10ml</p>}
+        {product.category && <p>{product.category}</p>}
+        {allNotes.length > 0 && <p>Notes olfactives : {allNotes.join(', ')}</p>}
+        {analysisText && <p>{analysisText}</p>}
+        <p><a href="/parfums">Tous les parfums</a></p>
+        {product.brand && <p><a href={`/marques/${product.brand.toLowerCase().replace(/\s+/g, '-')}`}>{product.brand}</a></p>}
+      </div>
+
       <ProductClient
         analysisText={analysisText}
         initialProductData={product}
