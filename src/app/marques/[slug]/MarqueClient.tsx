@@ -4,6 +4,7 @@ import { ArrowLeft, Building2, Package } from 'lucide-react'
 import { Product } from '@/types'
 import { ProductCard } from '@/components/ProductCard'
 import { Benefits } from '@/components/Benefits'
+import { generateBrandSeoText } from '@/lib/seo-content'
 
 interface Brand {
   id: string
@@ -19,6 +20,17 @@ interface Props {
 }
 
 export default function MarqueClient({ brand, products }: Props) {
+  const seo = generateBrandSeoText({
+    brandName: brand.name,
+    description: brand.description,
+    products: products.map(p => ({
+      name: p.name,
+      slug: p.slug,
+      brand: p.brand,
+      category: p.category,
+      notes: p.notes,
+    })),
+  })
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -111,42 +123,54 @@ export default function MarqueClient({ brand, products }: Props) {
         </div>
       </section>
 
-      {/* SEO section */}
+      {/* SEO section — contenu généré dynamiquement côté serveur */}
       <section className="py-16 lg:py-20 bg-cream">
         <div className="max-w-4xl mx-auto px-6 sm:px-10 lg:px-20">
-          <h2 className="text-2xl font-light tracking-[0.15em] uppercase mb-6">
-            Découvrir {brand.name} en décants
+          <h2 className="text-2xl font-light tracking-[0.15em] uppercase mb-8">
+            {seo.heading}
           </h2>
-          <div className="text-muted-foreground leading-relaxed space-y-4">
-            <p>
-              Tester un parfum {brand.name} en décant, c&apos;est s&apos;offrir la liberté de vivre la fragrance sur votre peau pendant plusieurs jours — avant tout investissement dans un flacon complet. Nos décants authentiques sont prélevés directement depuis les flacons d&apos;origine, sans dilution ni reformulation.
-            </p>
-            <p>
-              Chaque décant BrazaScent est soigneusement conditionné et expédié sous 24 à 48h. Explorez l&apos;univers {brand.name} en format 2ml, 5ml ou 10ml, selon votre curiosité.
-            </p>
-            <p className="text-xs text-muted-foreground/70 italic">
-              BrazaScent est indépendant et n&apos;est pas affilié à {brand.name}. Les noms de marques sont utilisés uniquement à titre informatif pour identifier les produits.
-            </p>
+
+          <div className="text-muted-foreground leading-relaxed space-y-5 text-sm sm:text-base">
+            <p>{seo.intro}</p>
+            <p>{seo.styleOlfactif}</p>
+            <p>{seo.pourquoiDecant}</p>
           </div>
+
+          {/* Liens internes vers les produits de la marque */}
+          {seo.productLinks.length > 0 && (
+            <div className="mt-8">
+              <p className="text-xs tracking-[0.2em] uppercase text-foreground mb-3">
+                Dans notre sélection {brand.name}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {seo.productLinks.map(p => (
+                  <Link
+                    key={p.slug}
+                    href={`/parfum/${p.slug}`}
+                    className="text-sm border border-border px-3 py-1.5 hover:border-primary hover:text-primary transition-colors"
+                  >
+                    {p.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mt-10 p-6 bg-background border border-border">
-            <p className="text-sm tracking-[0.2em] uppercase text-primary mb-3">Notre blog parfum</p>
-            <p className="text-muted-foreground text-sm mb-5">
-              Conseils sur les décants, guides olfactifs, sélections thématiques — retrouvez nos articles pour approfondir votre découverte de la parfumerie.
-            </p>
-            <Link
-              href="/blog"
-              className="inline-flex items-center gap-2 text-sm tracking-[0.15em] uppercase text-foreground border border-foreground px-5 py-3 hover:bg-foreground hover:text-background transition-colors"
-            >
-              Lire le blog
-            </Link>
+            <p className="text-sm tracking-[0.2em] uppercase text-primary mb-3">BrazaScent</p>
+            <p className="text-muted-foreground text-sm leading-relaxed">{seo.brazen}</p>
           </div>
+
+          {/* FAQ générée dynamiquement */}
           <div className="mt-12">
             <h3 className="text-lg font-light tracking-[0.15em] uppercase mb-6">Questions fréquentes</h3>
             <div className="divide-y divide-border">
               {[
-                { q: `Les parfums ${brand.name} chez BrazaScent sont-ils authentiques ?`, a: `Oui. Nos décants ${brand.name} sont préparés à partir de flacons originaux achetés auprès de revendeurs officiels. Vous recevez le parfum authentique de la marque, dans sa concentration d'origine, sans aucune modification.` },
-                { q: "C'est quoi un décant de parfum ?", a: "Un décant est un prélèvement du parfum original effectué directement depuis le flacon de la marque. Vous recevez la même fragrance que le flacon plein — sans dilution — dans un format de 2ml, 5ml ou 10ml. Idéal pour tester avant d'acheter." },
-                { q: "Pourquoi choisir un décant plutôt qu'un flacon complet ?", a: "Un flacon plein représente souvent un investissement de 100 à 400€. Un décant vous permet de tester le parfum sur votre peau pendant plusieurs semaines avant de vous décider. La décision d'achat devient une certitude, pas un pari à l'aveugle." },
+                ...seo.faq,
+                {
+                  q: "C'est quoi un décant de parfum ?",
+                  a: "Un décant est un prélèvement du parfum original effectué directement depuis le flacon de la marque. Vous recevez la même fragrance que le flacon plein — sans dilution — dans un format de 2ml, 5ml ou 10ml. Idéal pour tester avant d'acheter.",
+                },
               ].map(({ q, a }, i) => (
                 <details key={i} className="group py-5">
                   <summary className="flex items-center justify-between cursor-pointer font-medium text-foreground [&::-webkit-details-marker]:hidden">
@@ -158,6 +182,8 @@ export default function MarqueClient({ brand, products }: Props) {
               ))}
             </div>
           </div>
+
+          <p className="mt-10 text-xs text-muted-foreground/60 italic">{seo.disclaimer}</p>
         </div>
       </section>
 

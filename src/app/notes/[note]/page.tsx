@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { ProductCard } from '@/components/ProductCard'
 import { noteToSlug } from '@/lib/notes'
+import { generateNoteSeoText } from '@/lib/seo-content'
 import type { Product } from '@/types'
 
 const SITE_URL = 'https://brazascent.com'
@@ -161,6 +162,17 @@ export default async function NotePage({ params }: PageProps) {
     }
   })
 
+  const noteSeo = generateNoteSeoText({
+    noteName,
+    products: products.map(p => ({
+      name: p.name,
+      slug: p.slug,
+      brand: p.brand,
+      category: p.category,
+      notes: p.notes,
+    })),
+  })
+
   const faq = [
     {
       q: `Quels parfums contiennent des notes de ${noteName.toLowerCase()} ?`,
@@ -307,26 +319,18 @@ export default async function NotePage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* SEO section */}
+        {/* SEO section — contenu généré dynamiquement côté serveur */}
         <section className="py-16 lg:py-20 bg-cream">
           <div className="max-w-4xl mx-auto px-6 sm:px-10 lg:px-20">
-            <h2 className="text-2xl font-light tracking-[0.15em] uppercase mb-6">
-              Explorer les décants à note {noteName.toLowerCase()}
+            <h2 className="text-2xl font-light tracking-[0.15em] uppercase mb-8">
+              {noteSeo.heading}
             </h2>
-            <div className="text-muted-foreground leading-relaxed space-y-4 text-sm sm:text-base">
-              <p>
-                La note de {noteName.toLowerCase()} est l&apos;une des matières premières utilisées
-                en parfumerie de niche et de luxe. Qu&apos;elle soit employée en note de tête, de
-                cœur ou de fond, elle contribue à l&apos;identité olfactive de chaque fragrance de
-                façon unique. La même note peut être douce et crémeuse dans un parfum, et fumée,
-                presque animale dans un autre.
-              </p>
-              <p>
-                Nos décants vous permettent d&apos;explorer toutes les interprétations de cette
-                note par différentes maisons — à partir de 2ml, soit 40 projections de parfum
-                authentique prélevé directement depuis le flacon d&apos;origine. Expédition sous 24
-                à 48h.
-              </p>
+
+            <div className="text-muted-foreground leading-relaxed space-y-5 text-sm sm:text-base">
+              <p>{noteSeo.explication}</p>
+              <p>{noteSeo.sensations}</p>
+              <p>{noteSeo.familles}</p>
+              <p>{noteSeo.surLeSite}</p>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
