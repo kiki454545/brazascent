@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
   const PROMPTS: Record<string, string> = {
     longevity:    `Lis le nombre de votes pour chaque niveau de TENUE/LONGÉVITÉ dans cette image. Réponds UNIQUEMENT avec ce JSON : {"médiocre":0,"faible":0,"modérée":0,"longue tenue":0,"très longue tenue":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400, "1.3k"→1300). Clés anglaises acceptées : poor/weak/moderate/long lasting/eternal.`,
     sillage:      `Lis le nombre de votes pour chaque niveau de SILLAGE dans cette image. Réponds UNIQUEMENT avec ce JSON : {"discret":0,"modéré":0,"puissant":0,"énorme":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises acceptées : intimate/moderate/strong/enormous.`,
-    performance:  `Cette image Fragrantica montre les données de tenue (longévité) et de sillage. Réponds UNIQUEMENT avec ce JSON : {"longevity":"?","sillage":"?"}
+    performance:  `Cette image Fragrantica montre les données de tenue (longévité) et de sillage. Réponds UNIQUEMENT avec ce JSON : {"longevity":"?","longevity_hours":"?","sillage":"?"}
 
 Pour LONGEVITY — choisis la clé exacte :
 "médiocre" si < 2h ou poor/very weak
@@ -129,11 +129,13 @@ Pour LONGEVITY — choisis la clé exacte :
 Si l'image montre des barres de votes : prends la catégorie dominante.
 Si non visible → "?"
 
+Pour LONGEVITY_HOURS — copie EXACTEMENT le texte d'heures visible dans l'image (ex: "8 h", "5 h", "3 h", "< 2 h", "+12 h"). Si c'est une page de votes sans durée affichée → "?".
+
 Pour SILLAGE — choisis la clé exacte :
-"discret" (intimate/soft)
-"modéré" (moderate)
-"puissant" (strong)
-"énorme" (enormous/huge/Énorme)
+"discret" (intimate/soft/intime)
+"modéré" (moderate/modéré)
+"puissant" (strong/fort/puissant)
+"énorme" (enormous/huge/très fort/énorme)
 Si l'image montre des barres de votes : prends la catégorie dominante.
 Si non visible → "?"`,
     seasons:   `Lis le nombre de votes sous chaque SAISON dans cette image. Réponds UNIQUEMENT avec ce JSON : {"hiver":0,"printemps":0,"été":0,"automne":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises : winter/spring/summer/fall.`,
@@ -211,10 +213,16 @@ Si non visible → "?"`,
     const SIL_VALID = new Set(['discret','modéré','puissant','énorme'])
     const lon = typeof parsed.longevity === 'string' ? parsed.longevity.trim().toLowerCase() : ''
     const sil = typeof parsed.sillage   === 'string' ? parsed.sillage.trim().toLowerCase()   : ''
-    result.longevity = LON_VALID.has(lon) ? lon : normalizeLongevity(parsed.longevity)
-    result.sillage   = SIL_VALID.has(sil) ? sil : normalizeSillage(parsed.sillage)
-    dbUpdate.performance_longevity = result.longevity
-    dbUpdate.performance_sillage   = result.sillage
+    // Heures exactes extraites de l'image (ex: "8 h", "5 h")
+    const lonHours = typeof parsed.longevity_hours === 'string' && parsed.longevity_hours !== '?' && parsed.longevity_hours.trim() !== ''
+      ? parsed.longevity_hours.trim()
+      : null
+    result.longevity       = LON_VALID.has(lon) ? lon : normalizeLongevity(parsed.longevity)
+    result.longevity_hours = lonHours
+    result.sillage         = SIL_VALID.has(sil) ? sil : normalizeSillage(parsed.sillage)
+    dbUpdate.performance_longevity       = result.longevity
+    dbUpdate.performance_longevity_hours = lonHours
+    dbUpdate.performance_sillage         = result.sillage
   }
   if (type === 'seasons' || type === 'all') {
     result.seasons = normalizeSeasons(type === 'seasons' ? parsed : parsed.seasons)

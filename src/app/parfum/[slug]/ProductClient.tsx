@@ -66,12 +66,13 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
   const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null)
   const [performance, setPerformance] = useState<{
     longevity: string | null
+    longevityHours: string | null
     sillage: string | null
     seasons: Record<string, number>
     timeOfDay: Record<string, number>
     genre: string | null
     updatedAt: string | null
-  }>({ longevity: null, sillage: null, seasons: {}, timeOfDay: {}, genre: null, updatedAt: null })
+  }>({ longevity: null, longevityHours: null, sillage: null, seasons: {}, timeOfDay: {}, genre: null, updatedAt: null })
   const [loading, setLoading] = useState(true)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
@@ -165,8 +166,9 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
         setStockBySize(data.stock_by_size || {})
         setUnlimitedStock(data.unlimited_stock ?? false)
         setPerformance({
-          longevity:  data.performance_longevity ?? null,
-          sillage:    data.performance_sillage ?? null,
+          longevity:      data.performance_longevity ?? null,
+          longevityHours: data.performance_longevity_hours ?? null,
+          sillage:        data.performance_sillage ?? null,
           seasons:    (() => { const d = data.performance_seasons; if (!d) return {}; if (Array.isArray(d)) return Object.fromEntries(d.map((s: string) => [s, 75])); return d as Record<string, number> })(),
           timeOfDay:  (() => { const d = data.performance_time_of_day; if (!d) return {}; if (Array.isArray(d)) return Object.fromEntries(d.map((t: string) => [t, 75])); return d as Record<string, number> })(),
           genre:      data.performance_genre ?? null,
@@ -757,7 +759,7 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
                         <div>
                           <div className="flex items-baseline gap-1.5 mb-2">
                             <span className="text-sm">⌛</span>
-                            <span className="font-semibold text-foreground text-sm">{performance.longevity ? (LONGEVITY_HOURS[performance.longevity] ?? performance.longevity) : '—'}</span>
+                            <span className="font-semibold text-foreground text-sm">{performance.longevityHours ?? (performance.longevity ? (LONGEVITY_HOURS[performance.longevity] ?? performance.longevity) : '—')}</span>
                             <span className="text-xs text-muted-foreground">Tenue</span>
                           </div>
                           <div className="flex gap-1">
