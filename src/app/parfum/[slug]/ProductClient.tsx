@@ -834,28 +834,47 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
 
             {/* Badges d'usage */}
             {(() => {
-              const LONGEVITY_H: Record<string, number> = { médiocre: 1, faible: 3, modérée: 5, 'longue tenue': 8, 'très longue tenue': 12 }
-              const h = performance.longevity ? (LONGEVITY_H[performance.longevity] ?? 0) : 0
-              const jour  = performance.timeOfDay['jour']  ?? 0
-              const nuit  = performance.timeOfDay['nuit']  ?? 0
-              const ete   = performance.seasons['été']     ?? 0
-              const hiver = performance.seasons['hiver']   ?? 0
-              const sillage = performance.sillage ?? ''
-              const sIntime  = sillage === 'intime'  || sillage === 'discret'
-              const sModere  = sillage === 'modéré'
-              const sPuissant = sillage === 'puissant'
-              const sEnorme  = sillage === 'énorme'
-              const saisons60 = Object.values(performance.seasons).filter(v => v >= 60).length
+              const LON_H: Record<string, number> = { médiocre: 1, faible: 3, modérée: 5, bonne: 8, 'longue tenue': 8, 'très longue tenue': 12 }
+              const h = performance.longevity ? (LON_H[performance.longevity] ?? 0) : 0
 
-              const all: { label: string; active: boolean }[] = [
-                { label: 'Bureau',         active: (sIntime || sModere) && jour >= 60 },
-                { label: 'Sortie',         active: nuit >= 60 || sPuissant || sEnorme },
-                { label: 'Quotidien',      active: jour >= 70 && h >= 5 },
-                { label: 'Signature scent',active: h >= 6 && (sModere || sPuissant) && saisons60 >= 2 },
-                { label: 'Soirée',         active: nuit >= 70 },
-                { label: 'Date',           active: (sModere || sPuissant) && nuit >= 50 },
-                { label: 'Été',            active: ete >= 70 },
-                { label: 'Hiver',          active: hiver >= 70 },
+              // Pourcentages normalisés jour/nuit
+              const rawJour = performance.timeOfDay['jour'] ?? 0
+              const rawNuit = performance.timeOfDay['nuit'] ?? 0
+              const totalTime = rawJour + rawNuit
+              const jourPct = totalTime > 0 ? rawJour / totalTime : 0
+              const nuitPct = totalTime > 0 ? rawNuit / totalTime : 0
+
+              // Pourcentages normalisés saisons
+              const rawEte       = performance.seasons['été']       ?? 0
+              const rawHiver     = performance.seasons['hiver']     ?? 0
+              const rawPrint     = performance.seasons['printemps'] ?? 0
+              const rawAutomne   = performance.seasons['automne']   ?? 0
+              const totalSaison  = rawEte + rawHiver + rawPrint + rawAutomne
+              const fraisPct     = totalSaison > 0 ? (rawHiver + rawAutomne) / totalSaison : 0
+              const chaudPct     = totalSaison > 0 ? (rawEte + rawPrint)     / totalSaison : 0
+
+              const sil       = performance.sillage ?? ''
+              const sDiscret  = sil === 'discret'
+              const sModere   = sil === 'modéré'
+              const sPuissant = sil === 'puissant'
+              const sEnorme   = sil === 'énorme'
+              const sLeger    = sDiscret || sModere
+
+              const all: { label: string; icon: string; active: boolean }[] = [
+                // Diurne / professionnel
+                { label: 'Bureau',            icon: '💼', active: sLeger && jourPct >= 0.55 },
+                { label: 'Quotidien',         icon: '☀️', active: jourPct >= 0.55 && h >= 5 },
+                // Nocturne / social
+                { label: 'Soirée',            icon: '🌙', active: nuitPct >= 0.55 },
+                { label: 'Date',              icon: '✨', active: (sPuissant || sEnorme) && nuitPct >= 0.45 },
+                // Impact / longévité
+                { label: 'Signature',         icon: '👑', active: h >= 8 && (sPuissant || sEnorme) },
+                { label: 'Longue durée',      icon: '⌛', active: h >= 8 && !(sPuissant || sEnorme) },
+                // Saisons
+                { label: 'Saisons fraîches',  icon: '🍂', active: fraisPct >= 0.58 && totalSaison > 0 },
+                { label: 'Saisons chaudes',   icon: '🌞', active: chaudPct >= 0.58 && totalSaison > 0 },
+                // Discret
+                { label: 'Sillage discret',   icon: '🤫', active: sDiscret },
               ]
 
               const badges = all.filter(b => b.active).slice(0, 4)
@@ -865,9 +884,9 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
                 <div className="mt-10">
                   <h2 className="text-lg tracking-[0.15em] uppercase mb-4">Idéal pour</h2>
                   <div className="flex flex-wrap gap-2">
-                    {badges.map(({ label }) => (
+                    {badges.map(({ label, icon }) => (
                       <span key={label} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-foreground text-sm font-medium">
-                        <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                        <span>{icon}</span>
                         {label}
                       </span>
                     ))}
