@@ -74,8 +74,8 @@ const LONGEVITY: Record<string, { adj: string }> = {
 
 const SILLAGE: Record<string, { adj: string; desc: string }> = {
   'discret':  { adj: 'intime',    desc: 'restant proche de la peau' },
-  'modéré':   { adj: 'présent',   desc: 'présent sans jamais s\'imposer' },
-  'puissant': { adj: 'affirmé',   desc: 'affirmé et immédiatement identifiable' },
+  'modéré':   { adj: 'présent',   desc: 'sans jamais s\'imposer' },
+  'puissant': { adj: 'affirmé',   desc: 'qui marque les esprits' },
   'énorme':   { adj: 'puissant',  desc: 'audacieux, impossible à ignorer' },
 }
 
@@ -256,7 +256,12 @@ export function generateBrazaScentAnalysis(input: AnalysisInput): string | null 
       category === 'Extrait de Parfum' ? 'extrait de parfum' :
       category === 'Eau de Toilette'   ? 'eau de toilette'   :
       'parfum'
-    parts.push(`Tester ce ${concLabel} ${brand} en décant, c'est s'offrir la pleine expérience de la fragrance — sans l'engagement financier d'un flacon complet.`)
+    // "ce" → "cet" devant voyelle, "cette" pour EDT (féminin)
+    const article =
+      category === 'Eau de Toilette'   ? 'cette' :
+      category === 'Extrait de Parfum' ? 'cet'   :
+      'ce'
+    parts.push(`Tester ${article} ${concLabel} ${brand} en décant, c'est s'offrir la pleine expérience de la fragrance — sans l'engagement financier d'un flacon complet.`)
   }
 
   if (parts.length === 0) return null
