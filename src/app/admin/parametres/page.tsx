@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { m, AnimatePresence } from 'framer-motion'
 import {
   Store,
-  Truck,
   Bell,
   Save,
   Check,
@@ -20,6 +19,7 @@ import {
   GripVertical
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useSettingsStore } from '@/store/settings'
 
 // Helper pour ignorer les AbortError
 const isAbortError = (error: unknown): boolean => {
@@ -43,10 +43,6 @@ interface Settings {
   storePhone: string
   storeAddress: string
   currency: string
-  freeShippingThreshold: number
-  standardShippingPrice: number
-  expressShippingPrice: number
-  enableExpressShipping: boolean
   enableNotifications: boolean
   enableEmailConfirmation: boolean
   maintenanceMode: boolean
@@ -61,10 +57,6 @@ const defaultSettings: Settings = {
   storePhone: '+33 1 23 45 67 89',
   storeAddress: '123 Avenue des Champs-Élysées, 75008 Paris',
   currency: 'EUR',
-  freeShippingThreshold: 150,
-  standardShippingPrice: 9.90,
-  expressShippingPrice: 14.90,
-  enableExpressShipping: true,
   enableNotifications: true,
   enableEmailConfirmation: false,
   maintenanceMode: false,
@@ -78,6 +70,7 @@ const defaultSettings: Settings = {
 
 export default function AdminSettingsPage() {
   const router = useRouter()
+  const { refreshSettings } = useSettingsStore()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -122,12 +115,6 @@ export default function AdminSettingsPage() {
             loadedSettings.storePhone = store.storePhone as string || defaultSettings.storePhone
             loadedSettings.storeAddress = store.storeAddress as string || defaultSettings.storeAddress
             loadedSettings.currency = store.currency as string || defaultSettings.currency
-          } else if (row.key === 'shipping') {
-            const shipping = row.value as Record<string, unknown>
-            loadedSettings.freeShippingThreshold = shipping.freeShippingThreshold as number || defaultSettings.freeShippingThreshold
-            loadedSettings.standardShippingPrice = shipping.standardShippingPrice as number || defaultSettings.standardShippingPrice
-            loadedSettings.expressShippingPrice = shipping.expressShippingPrice as number || defaultSettings.expressShippingPrice
-            loadedSettings.enableExpressShipping = shipping.enableExpressShipping as boolean ?? defaultSettings.enableExpressShipping
           } else if (row.key === 'notifications') {
             const notifications = row.value as Record<string, unknown>
             loadedSettings.enableNotifications = notifications.enableNotifications as boolean ?? defaultSettings.enableNotifications
@@ -208,15 +195,6 @@ export default function AdminSettingsPage() {
           }
         },
         {
-          key: 'shipping',
-          value: {
-            freeShippingThreshold: settings.freeShippingThreshold,
-            standardShippingPrice: settings.standardShippingPrice,
-            expressShippingPrice: settings.expressShippingPrice,
-            enableExpressShipping: settings.enableExpressShipping
-          }
-        },
-        {
           key: 'notifications',
           value: {
             enableNotifications: settings.enableNotifications,
@@ -250,6 +228,8 @@ export default function AdminSettingsPage() {
       setSaved(true)
       setOriginalSettings(settings)
       setTimeout(() => setSaved(false), 2000)
+      // Sync the in-memory store so other pages reflect the new values immediately
+      await refreshSettings()
     } catch (err) {
       if (!isAbortError(err)) {
         console.error('Error saving settings:', err)
@@ -461,77 +441,6 @@ export default function AdminSettingsPage() {
               className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
             />
           </div>
-        </div>
-      </m.div>
-
-      {/* Shipping */}
-      <m.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-admin-surface rounded-xl shadow-sm p-6"
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-blue-50 rounded-lg">
-            <Truck className="w-5 h-5 text-blue-500" />
-          </div>
-          <h2 className="text-lg font-medium">Livraison</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-admin-text mb-2">
-              Seuil livraison gratuite (€)
-            </label>
-            <input
-              type="number"
-              value={settings.freeShippingThreshold}
-              onChange={(e) => setSettings({ ...settings, freeShippingThreshold: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-admin-text mb-2">
-              Prix livraison standard (€)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={settings.standardShippingPrice}
-              onChange={(e) => setSettings({ ...settings, standardShippingPrice: parseFloat(e.target.value) || 0 })}
-              className="w-full px-4 py-2 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-admin-text mb-2">
-              Prix livraison express (€)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={settings.expressShippingPrice}
-              onChange={(e) => setSettings({ ...settings, expressShippingPrice: parseFloat(e.target.value) || 0 })}
-              disabled={!settings.enableExpressShipping}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#C9A962] ${!settings.enableExpressShipping ? 'bg-admin-surface-alt text-admin-light' : ''}`}
-            />
-          </div>
-        </div>
-
-        <div className="mt-6 pt-6 border-t">
-          <label className="flex items-center justify-between p-4 bg-admin-surface-alt rounded-lg cursor-pointer">
-            <div>
-              <p className="font-medium">Livraison express</p>
-              <p className="text-sm text-admin-muted">Proposer la livraison express aux clients (1-2 jours ouvrés)</p>
-            </div>
-            <input
-              type="checkbox"
-              checked={settings.enableExpressShipping}
-              onChange={(e) => setSettings({ ...settings, enableExpressShipping: e.target.checked })}
-              className="w-5 h-5 rounded border-admin-border accent-[#C9A962]"
-            />
-          </label>
         </div>
       </m.div>
 

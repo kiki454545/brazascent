@@ -403,11 +403,6 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 flex-wrap">
-                        {product.is_active === false && (
-                          <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">
-                            Inactif
-                          </span>
-                        )}
                         <button
                           onClick={() => toggleProductBadge(product.id, 'is_new')}
                           disabled={!isFromSupabase}
@@ -459,14 +454,23 @@ export default function AdminProductsPage() {
                         <button
                           onClick={() => toggleProductBadge(product.id, 'is_active')}
                           disabled={!isFromSupabase}
-                          className={`px-2 py-1 text-xs rounded transition-all ${
+                          title={product.is_active === false ? 'Activer le produit' : 'Désactiver le produit'}
+                          className={`flex items-center gap-1.5 px-2 py-1 text-xs rounded transition-all ${
+                            !isFromSupabase ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                          } ${
                             product.is_active === false
-                              ? 'bg-orange-100 text-orange-700 ring-1 ring-orange-400'
-                              : 'bg-admin-surface-alt text-admin-light hover:bg-admin-surface-alt'
-                          } ${!isFromSupabase ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                          title={product.is_active === false ? 'Rendre visible' : 'Masquer le produit'}
+                              ? 'bg-admin-surface-alt text-admin-light'
+                              : 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-400'
+                          }`}
                         >
-                          Masquer
+                          <span className={`relative inline-flex w-7 h-4 rounded-full transition-colors flex-shrink-0 ${
+                            product.is_active === false ? 'bg-gray-300 dark:bg-gray-600' : 'bg-emerald-500'
+                          }`}>
+                            <span className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${
+                              product.is_active === false ? 'translate-x-0.5' : 'translate-x-3.5'
+                            }`} />
+                          </span>
+                          Actif
                         </button>
                       </div>
                     </td>

@@ -7,6 +7,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCartStore } from '@/store/cart'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
+import { UpsellBlock } from '@/components/UpsellBlock'
+import { ExpressCheckoutBlock } from '@/components/ExpressCheckoutBlock'
 import { formatPrice } from '@/lib/format'
 
 // Vérifier si un produit est en rupture (stock = 0 exactement)
@@ -210,6 +212,13 @@ export function CartDrawer() {
               )}
             </div>
 
+            {/* Suggestion compacte */}
+            {items.length > 0 && (
+              <div className="px-6 pb-2">
+                <UpsellBlock compact />
+              </div>
+            )}
+
             {/* Footer */}
             {items.length > 0 && (
               <div className="border-t p-6 space-y-4">
@@ -245,6 +254,7 @@ export function CartDrawer() {
                       Passer commande
                     </Link>
                   )}
+                  <ExpressCheckoutBlock hasOutOfStockItems={hasOutOfStockItems} />
                 </div>
 
                 {/* Payment icons */}

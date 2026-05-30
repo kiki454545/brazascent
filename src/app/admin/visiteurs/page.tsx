@@ -16,7 +16,8 @@ import {
   ExternalLink,
   Search,
   Calendar,
-  BarChart3
+  BarChart3,
+  Trash2
 } from 'lucide-react'
 
 interface Visitor {
@@ -83,6 +84,8 @@ export default function AdminVisiteursPage() {
   const [dailyHistory, setDailyHistory] = useState<DailyStats[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [activeTab, setActiveTab] = useState<'visitors' | 'pageviews' | 'history'>('visitors')
   const [daysFilter, setDaysFilter] = useState(7)
   const [searchQuery, setSearchQuery] = useState('')
@@ -129,6 +132,19 @@ export default function AdminVisiteursPage() {
   const handleRefresh = () => {
     setRefreshing(true)
     fetchData()
+  }
+
+  const handleReset = async () => {
+    setResetting(true)
+    try {
+      await fetch('/api/tracking?type=all', { method: 'DELETE' })
+      setShowResetConfirm(false)
+      await fetchData()
+    } catch (error) {
+      console.error('Reset error:', error)
+    } finally {
+      setResetting(false)
+    }
   }
 
   const getDeviceIcon = (device: string) => {
@@ -196,8 +212,47 @@ export default function AdminVisiteursPage() {
             <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
             Actualiser
           </button>
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+          >
+            <Trash2 className="w-5 h-5" />
+            Réinitialiser
+          </button>
         </div>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-admin-surface rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-red-100 dark:bg-red-950/40 rounded-lg">
+                <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-semibold">Réinitialiser les statistiques</h3>
+            </div>
+            <p className="text-sm text-admin-muted mb-6">
+              Cette action supprimera définitivement tous les visiteurs, pages vues et l&apos;historique des statistiques. Cette action est irréversible.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 px-4 py-2 border border-admin-border rounded-lg hover:bg-admin-surface-alt transition-colors text-sm"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleReset}
+                disabled={resetting}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                {resetting ? 'Suppression...' : 'Réinitialiser'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       {stats && (

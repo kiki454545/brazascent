@@ -27,7 +27,9 @@ import {
   Percent,
   GripVertical,
   RotateCcw,
-  Check
+  Check,
+  Zap,
+  Calculator
 } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -49,8 +51,10 @@ const adminNav = [
   { name: 'Blog', href: '/admin/blog', icon: BookOpen },
   { name: 'Tickets', href: '/admin/tickets', icon: MessageSquare },
   { name: 'Vidéos', href: '/admin/videos', icon: Video },
+  { name: 'Automations', href: '/admin/automations', icon: Zap },
   { name: 'Newsletter', href: '/admin/newsletter', icon: Mail },
   { name: 'Utilisateurs', href: '/admin/utilisateurs', icon: Users },
+  { name: 'Calculateur prix', href: '/admin/prix', icon: Calculator },
   { name: 'Paramètres', href: '/admin/parametres', icon: Settings },
 ]
 

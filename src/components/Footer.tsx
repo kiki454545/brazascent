@@ -19,6 +19,7 @@ const footerLinks = {
   services: [
     { name: 'Mon Compte', href: '/compte' },
     { name: 'Suivi de commande', href: '/compte/commandes' },
+    { name: 'Avis clients', href: '/avis' },
     { name: 'Contact', href: '/contact' },
     { name: 'Livraison', href: '/livraison' },
     { name: 'Retours', href: '/retours' },
