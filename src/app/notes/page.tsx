@@ -156,7 +156,7 @@ export default async function NotesPage() {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <span className="block truncate text-sm font-medium group-hover:text-primary transition-colors">
+                        <span className="block text-sm font-medium leading-tight group-hover:text-primary transition-colors">
                           {name}
                         </span>
                         <span className="text-xs text-muted-foreground group-hover:text-primary/70 transition-colors">
