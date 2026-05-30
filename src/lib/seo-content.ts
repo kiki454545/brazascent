@@ -331,6 +331,65 @@ function getSpecificNoteContent(noteName: string): { explication: string; sensat
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   Descriptions officielles des marques (priorité sur la DB et le généré)
+══════════════════════════════════════════════════════════════════════════ */
+
+const BRAND_DESCRIPTIONS: Record<string, string> = {
+  'born to stand out':
+    `Born to Stand Out est une maison de parfumerie de niche fondée par Sébastien Jara, créateur français qui a bâti sa réputation sur l'audace et la singularité. Ses fragrances mixtes s'adressent à ceux qui refusent les codes convenus — elles jouent sur des matières premières inattendues, des ouvertures provocatrices et des fonds persistants qui s'inscrivent dans la mémoire. La maison incarne une vision de la parfumerie comme affirmation d'identité, loin des formules rassurantes.`,
+
+  'bvlgari':
+    `Bvlgari est une maison de joaillerie romaine fondée en 1884, qui a étendu son héritage à la parfumerie avec une vision singulière : capturer l'essence du thé, de la Méditerranée et des pierres précieuses en fragrance. Des eaux de Cologne légères de la collection Eau Parfumée aux profondeurs orientales de la ligne Allegra, Bvlgari conjugue l'élégance classique italienne à une créativité internationale. Chaque flacon est conçu comme un bijou — équilibre entre transparence et opulence.`,
+
+  "d'orsay":
+    `La maison D'Orsay est l'une des plus anciennes parfumeries françaises, fondée à Paris en 1830 par le Comte Alfred Guillaume Gabriel d'Orsay. Elle perpétue depuis près de deux siècles un savoir-faire artisanal parisien, avec des créations inspirées de la Belle Époque et de l'aristocratie française. Ses fragrances, souvent pudiques et raffinées, sont le reflet d'une certaine conception de l'élégance — celle qui ne cherche pas à s'imposer mais à séduire dans la durée.`,
+
+  'dior':
+    `Fondée par Christian Dior en 1946, la maison Dior est l'un des piliers de la haute couture et de la parfumerie française. De Miss Dior à Sauvage, en passant par J'adore, Fahrenheit et la Collection Privée, Dior cultive un univers olfactif à la fois romantique, puissant et intemporel. Chaque fragrance est le résultat d'une collaboration étroite entre les équipes créatives de la maison et les plus grands parfumeurs indépendants, avec une exigence constante sur la qualité des matières premières.`,
+
+  'ex nihilo':
+    `Ex Nihilo est une maison de parfumerie de niche parisienne fondée en 2013, dont le nom latin — "à partir de rien" — traduit une déclaration d'intention créative radicale. La maison s'est rapidement imposée dans la haute parfumerie internationale grâce à son service de personnalisation unique et à ses créations qui mêlent tradition française et modernité conceptuelle. Ses flacons épurés et ses formules développées avec des parfumeurs de renom en font une référence pour les amateurs exigeants.`,
+
+  'guerlain':
+    `Fondée à Paris en 1828, Guerlain est l'une des plus anciennes et plus prestigieuses maisons de parfumerie au monde. À l'origine de créations légendaires comme Shalimar (1925), Mitsouko (1919), L'Heure Bleue (1912) et Jicky (1889), elle continue d'innover avec des collections comme Les Absolus d'Orient et La Petite Robe Noire. Le savoir-faire Guerlain repose sur l'usage d'ingrédients d'exception — iris de Florence, rose de Mai, ylang-ylang des Comores — et une maîtrise de la formulation transmise sur cinq générations.`,
+
+  'kilian paris':
+    `Kilian Paris est une maison de parfumerie de luxe fondée en 2007 par Kilian Hennessy, héritier de la famille Moët Hennessy. Dès ses premières collections, la maison a imposé un positionnement ultra-luxe avec ses flacons rechargeables en métal précieux, ses coffrets de voyage réutilisables et ses créations olfactives intenses — souvent orientées vers le musc, l'ambre et le cuir. Des fragrances comme Good Girl Gone Bad, Roses on Ice ou Intoxicated sont devenues des classiques modernes de la niche.`,
+
+  'louis vuitton':
+    `Louis Vuitton a fait son entrée dans la haute parfumerie en 2016, avec une collection inaugurale de sept fragrances signées par le maître parfumeur Jacques Cavallier Belletrud. Depuis, la maison a développé un univers olfactif cohérent et ambitieux — Matière Noire, Ombre Nomade, Les Sables Roses, Contre Moi — qui conjugue l'héritage du voyage avec des ingrédients d'exception sourcés aux quatre coins du monde. Chaque fragrance est un récit, une destination, une invitation à l'exploration sensorielle.`,
+
+  'maison crivelli':
+    `Maison Crivelli est une maison de parfumerie de niche fondée par Thibault Crivelli, dont l'approche créative est résolument géographique : chaque fragrance est ancrée dans une région du monde, une matière première locale, une rencontre humaine spécifique. Du Néroli Calabria au Hibiscus Mahajad, en passant par le Cedrus, chaque création raconte un voyage et met en lumière une note d'exception travaillée à sa quintessence. Un positionnement rare qui conjugue naturalité, précision et storytelling.`,
+
+  'maison francis kurkdjian':
+    `Maison Francis Kurkdjian a été fondée en 2009 par le parfumeur éponyme, l'un des créateurs les plus influents de sa génération — à l'origine, entre autres, de Jean Paul Gaultier Le Male et Narciso Rodriguez For Her. Sa propre maison se distingue par une précision formelle remarquable et une capacité à rendre accessibles des accords d'une grande complexité. Baccarat Rouge 540, Aqua Celestia, OUD Satin Mood ou À la Rose sont devenus des références mondiales que les passionnés de parfumerie s'arrachent.`,
+
+  'matière première':
+    `MATIÈRE PREMIÈRE est une maison de parfumerie parisienne fondée en 2019 par Firman Bergès et le parfumeur Antoine Maisondieu. Son concept fondateur est radical et limpide : chaque fragrance met en valeur une unique matière première d'exception — cristal de thé, fleur de santal, neroli des Cyclades, citrus paradisi. Ce parti pris minimaliste et contemporain, associé à des formules d'une précision rare, a rapidement séduit une clientèle internationale exigeante à la recherche d'une parfumerie honnête et sincère.`,
+
+  'place de la rêverie':
+    `Place de la Rêverie est une maison de parfumerie de niche française qui cultive un imaginaire poétique, nostalgique et singulier. Ses créations explorent des territoires olfactifs inattendus, inspirés de la littérature, de la flânerie urbaine et d'une certaine idée du romantisme parisien. La maison privilégie une approche artisanale, des tirages confidentiels et une sensibilité narrative qui distingue chaque fragrance comme un chapitre d'un récit plus vaste.`,
+
+  'stephane humbert lucas':
+    `Stephane Humbert Lucas 777 est une maison de parfumerie de niche fondée par le créateur éponyme, ancien directeur artistique dans la mode internationale. Ses flacons sculptés en verre soufflé — véritables œuvres d'art signées — sont aussi reconnaissables que ses fragrances intenses et opulentes. Profondément teintées d'orient, de résines et de spiritualité, les créations Stephane Humbert Lucas oscillent entre luxe sensoriel et dimension contemplative : Mortal Skin, Oumma, She Was An Angel sont des expériences autant que des parfums.`,
+
+  'xerjoff':
+    `Xerjoff est une maison de parfumerie italienne fondée en 2003 à Turin, reconnue pour ses compositions olfactives opulentes, ses flacons en cristal travaillé et son positionnement résolument ultra-luxe. La collection Casamorati rend hommage à l'histoire de la parfumerie italienne du début du XXe siècle, tandis que les éditions de la ligne XJ offrent des accords boisés, floraux et orientaux d'une richesse remarquable. Chaque flacon est une pièce de collection autant qu'une fragrance.`,
+
+  'yves saint laurent':
+    `Fondée en 1961 par Yves Saint Laurent et Pierre Bergé, la maison YSL a révolutionné la mode et la parfumerie françaises. De l'iconique Opium (1977) à Libre, en passant par Y, Black Opium, Manifesto et L'Homme, Yves Saint Laurent incarne une féminité forte et une masculinité affirmée. Ses fragrances reflètent la vision transgressive et toujours contemporaine de son fondateur — luxe populaire, sensualité assumée, signature immédiatement reconnaissable.`,
+}
+
+function getCuratedDescription(brandName: string): string | null {
+  const key = normalize(brandName)
+  for (const [k, v] of Object.entries(BRAND_DESCRIPTIONS)) {
+    if (normalize(k) === key) return v
+  }
+  return null
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    generateBrandSeoText
 ══════════════════════════════════════════════════════════════════════════ */
 
@@ -343,14 +402,17 @@ export function generateBrandSeoText(input: BrandSeoInput): BrandSeoContent {
   const topNotesArr = topNotes(products, 4)
   const productLinks = products.slice(0, 6).map(p => ({ name: p.name, slug: p.slug }))
 
-  // ── Intro ────────────────────────────────────────────────────────────────
+  // ── Intro : priorité description officielle > DB > généré ────────────────
   let intro: string
 
-  if (description && description.length > 80) {
-    const short = description.length > 500
-      ? description.slice(0, description.lastIndexOf(' ', 500)) + '.'
-      : description
-    intro = `${short} Sur BrazaScent, ${count > 1 ? `${count} fragrances ${brandName}` : `une fragrance ${brandName}`} ${count > 1 ? 'sont disponibles' : 'est disponible'} en décant, permettant de les tester dans leur version authentique avant d'investir dans le flacon complet.`
+  const curated = getCuratedDescription(brandName)
+  const effectiveDescription = curated ?? (description && description.length > 80 ? description : null)
+
+  if (effectiveDescription) {
+    const short = effectiveDescription.length > 600
+      ? effectiveDescription.slice(0, effectiveDescription.lastIndexOf(' ', 600)) + '.'
+      : effectiveDescription
+    intro = `${short} Sur BrazaScent, ${count > 1 ? `${count} fragrances ${brandName}` : `une fragrance ${brandName}`} ${count > 1 ? 'sont disponibles' : 'est disponible'} en décant, permettant de les explorer dans leur formule authentique avant tout investissement dans le flacon complet.`
   } else if (count === 1) {
     intro = `La maison ${brandName} est représentée sur BrazaScent par une fragrance disponible en décant. Tester ce parfum sur votre peau — dans un format 2ml, 5ml ou 10ml — reste la seule façon de savoir avec certitude s'il correspond à votre olfaction avant d'acheter le flacon original.`
   } else if (count <= 4) {
