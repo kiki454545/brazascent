@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 export async function GET(
   request: NextRequest,
@@ -17,6 +19,7 @@ export async function GET(
     return NextResponse.json({ error: 'Token invalide' }, { status: 400 })
   }
 
+  const supabaseAdmin = getAdmin()
   const tokenHash = createHash('sha256').update(token).digest('hex')
 
   const { data: cart, error } = await supabaseAdmin
