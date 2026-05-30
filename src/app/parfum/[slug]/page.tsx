@@ -47,6 +47,97 @@ async function getReviews(productId: string) {
   return data ?? []
 }
 
+// ─── Génération meta description 140-160 chars ────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildMetaDescription(product: Record<string, any>): string {
+  const name   = (product.name  as string) || ''
+  const brand  = (product.brand as string | null) || ''
+  const cat    = (product.category as string | null) || 'Parfum'
+  const sizes  = ((product.sizes as string[] | null) ?? ['2ml', '5ml', '10ml']).slice(0, 3)
+
+  // Notes : cœur + fond (plus distinctives) puis tête
+  const notes: string[] = [
+    ...((product.notes_heart as string[] | null) ?? []),
+    ...((product.notes_base  as string[] | null) ?? []),
+    ...((product.notes_top   as string[] | null) ?? []),
+  ].filter((v, i, arr) => arr.indexOf(v) === i)
+
+  // Genre
+  const rawGenre = product.performance_genre as string | null
+  let genreLabel = ''
+  if (rawGenre) {
+    if (['Femme','Féminin','Très féminin'].includes(rawGenre))       genreLabel = 'femme'
+    else if (['Homme','Masculin','Très masculin'].includes(rawGenre)) genreLabel = 'homme'
+    else if (['Unisexe'].includes(rawGenre))                          genreLabel = 'mixte'
+  }
+
+  // Moment idéal (depuis performance_time_of_day)
+  const tod = product.performance_time_of_day as Record<string, number> | null
+  let timeLabel = ''
+  if (tod && typeof tod === 'object' && !Array.isArray(tod)) {
+    const j = tod['jour'] ?? 0, n = tod['nuit'] ?? 0, total = j + n
+    if (total > 0) {
+      if (n / total >= 0.60)      timeLabel = 'soirée'
+      else if (j / total >= 0.60) timeLabel = 'journée'
+    }
+  }
+
+  const formatsStr = sizes.join(', ')
+
+  // Assemblage adaptatif : réduit les notes jusqu'à entrer dans 140-160 chars
+  for (let n = Math.min(notes.length, 5); n >= 0; n--) {
+    const notesStr = n > 0 ? notes.slice(0, n).join(', ') : ''
+
+    let desc = brand ? `${name} de ${brand}` : name
+    if (notesStr) desc += ` — ${notesStr}.`
+    else          desc += '.'
+
+    const ctx: string[] = [cat]
+    if (genreLabel) ctx.push(genreLabel)
+    if (timeLabel)  ctx.push(`idéal en ${timeLabel}`)
+    desc += ` ${ctx.join(', ')}.`
+
+    desc += ` Décant ${formatsStr} sur BrazaScent. Livraison rapide.`
+
+    if (desc.length >= 140 && desc.length <= 160) return desc
+    if (desc.length > 160) continue  // trop long, réduire les notes
+
+    // Trop court : compléter
+    for (const add of [' Authentique.', " Testez avant d'acheter.", ' Livraison en France.']) {
+      if (desc.length + add.length <= 160) {
+        desc += add
+        if (desc.length >= 140) return desc
+      }
+    }
+    return desc
+  }
+
+  // Fallback
+  const fb = brand
+    ? `Décant ${name} de ${brand}. ${cat}. Disponible en ${formatsStr} sur BrazaScent. Livraison rapide.`
+    : `Décant ${name}. ${cat}. Disponible en ${formatsStr} sur BrazaScent. Livraison rapide.`
+  return fb.substring(0, 160)
+}
+
+// ─── Titre SEO ────────────────────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildTitle(product: Record<string, any>): string {
+  const genre = (() => {
+    const g = product.performance_genre as string | null
+    if (!g) return null
+    if (['Femme','Féminin','Très féminin'].includes(g))       return 'Femme'
+    if (['Homme','Masculin','Très masculin'].includes(g))     return 'Homme'
+    if (['Unisexe'].includes(g))                              return 'Unisexe'
+    return null
+  })()
+  const genreSuffix = genre ? ` - Parfum ${genre} en Décant` : ' - Décant Parfum'
+  return product.brand
+    ? `${product.name} - ${product.brand}${genreSuffix}`
+    : `${product.name}${genreSuffix}`
+}
+
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -60,32 +151,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
 
-  const normalizeGenre = (g: string | null) => {
-    if (!g) return null
-    if (['Femme','Féminin','Très féminin'].includes(g)) return 'Femme'
-    if (['Homme','Masculin','Très masculin'].includes(g)) return 'Homme'
-    if (['Unisexe'].includes(g)) return 'Unisexe'
-    return null
-  }
-  const genre = normalizeGenre(product.performance_genre)
-  const genreSuffix = genre ? ` - Parfum ${genre} en Décant` : ' - Décant Parfum'
-
-  const title = product.brand
-    ? `${product.name} - ${product.brand}${genreSuffix}`
-    : `${product.name}${genreSuffix}`
-
-  // Description riche : priorité à la description complète, sinon construction automatique
-  const notesPreview = [
-    ...(product.notes_top ?? []),
-    ...(product.notes_heart ?? []),
-    ...(product.notes_base ?? []),
-  ].slice(0, 5).join(', ')
-
-  const description = product.short_description && product.short_description.length > 30
-    ? `${product.short_description} — Décant authentique disponible en 2ml, 5ml et 10ml. ${notesPreview ? `Notes : ${notesPreview}.` : ''} Livraison rapide en France.`.slice(0, 160)
-    : product.description
-    ? product.description.substring(0, 155).trim() + '…'
-    : `Découvrez ${product.name}${product.brand ? ` de ${product.brand}` : ''}${genre ? ` - Parfum ${genre}` : ''} en décant sur BrazaScent. Formats 2ml, 5ml, 10ml. Livraison rapide.`
+  const title       = buildTitle(product)
+  const description = buildMetaDescription(product)
 
   const image = Array.isArray(product.images) && product.images.length > 0
     ? product.images[0]
@@ -145,9 +212,7 @@ async function getProductJsonLd(product: Record<string, any>, reviews: Array<{ r
     ? (product.images as string[])[0]
     : `${SITE_URL}/images/parfums-hero.jpg`
 
-  const description = (product.short_description as string)
-    || (product.description as string)
-    || `Découvrez ${product.name} sur Braza Scent.`
+  const description = buildMetaDescription(product)
 
   // Notes pour le schéma
   const allNotes = [
