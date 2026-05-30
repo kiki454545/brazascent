@@ -639,3 +639,88 @@ export async function sendReviewRequestEmail({
     console.error('Erreur envoi email demande avis:', error)
   }
 }
+
+// ── Email J+30 : suggestion de réachat ──────────────────────────────────────
+
+export async function sendReorderEmail({
+  customerEmail,
+  customerName,
+  orderNumber,
+  products,
+}: {
+  customerEmail: string
+  customerName: string
+  orderNumber: string
+  products: Array<{ name: string; slug: string; image?: string; brand?: string; price?: number }>
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const greeting = customerName ? `${escapeHtml(customerName)},` : 'Bonjour,'
+
+  const productsHtml = products.slice(0, 3).map(p => `
+    <tr>
+      <td style="padding: 12px 0; border-bottom: 1px solid #eee;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            ${p.image ? `
+            <td style="width: 60px; padding-right: 15px; vertical-align: top;">
+              <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" width="60" height="60"
+                style="object-fit: cover; border-radius: 2px;">
+            </td>` : ''}
+            <td style="vertical-align: top;">
+              ${p.brand ? `<p style="margin: 0 0 2px; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.1em;">${escapeHtml(p.brand)}</p>` : ''}
+              <p style="margin: 0 0 4px; font-weight: 500; color: #19110B;">${escapeHtml(p.name)}</p>
+              ${p.price ? `<p style="margin: 0; font-size: 13px; color: #C9A962;">dès ${p.price.toFixed(2)} €</p>` : ''}
+            </td>
+            <td style="vertical-align: middle; text-align: right; white-space: nowrap;">
+              <a href="https://brazascent.com/parfum/${escapeHtml(p.slug)}"
+                style="display: inline-block; padding: 8px 16px; background-color: #C9A962; color: #19110B; text-decoration: none; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">
+                Découvrir
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>`).join('')
+
+  const html = wrapEmail(`
+    <tr>
+      <td style="padding: 40px; color: #333333;">
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 16px;">${greeting}</p>
+        <p style="font-size: 16px; line-height: 1.6; margin: 0 0 8px;">
+          Votre commande <strong>#${escapeHtml(orderNumber)}</strong> a été livrée il y a un mois.
+          Il est peut-être temps d'enrichir votre collection.
+        </p>
+        <p style="font-size: 14px; line-height: 1.6; color: #666; margin: 0 0 28px;">
+          Voici une sélection qui pourrait vous plaire, en accord avec vos préférences olfactives.
+        </p>
+
+        <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.15em; color: #19110B; margin: 0 0 12px; border-bottom: 2px solid #C9A962; padding-bottom: 8px;">
+          Ma nouvelle découverte
+        </h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          ${productsHtml}
+        </table>
+
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="https://brazascent.com/parfums"
+            style="display: inline-block; padding: 15px 38px; background-color: #19110B; color: #C9A962; text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;">
+            Explorer la boutique
+          </a>
+        </div>
+      </td>
+    </tr>
+  `)
+
+  try {
+    await resend.emails.send({
+      from: 'Braza Scent <commandes@brazascent.com>',
+      to: customerEmail,
+      subject: 'Une nouvelle découverte pour compléter votre collection',
+      html,
+    })
+  } catch (error) {
+    console.error('Erreur envoi email réachat:', error)
+  }
+}

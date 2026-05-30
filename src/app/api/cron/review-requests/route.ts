@@ -7,8 +7,7 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Envoyer la demande d'avis 7 jours après livraison
-const DAYS_AFTER_DELIVERY = 7
+const SELECT_FIELDS = `id, order_number, customer_email, customer_name, items, delivered_at, review_email_sent_at`
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,35 +20,55 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Commandes livrées depuis >= 7 jours sans email d'avis envoyé
-    const deliveryThreshold = new Date(
-      Date.now() - DAYS_AFTER_DELIVERY * 24 * 60 * 60 * 1000
-    ).toISOString()
+    const now = Date.now()
+    const deliveryThreshold = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const paidThreshold     = new Date(now - 10 * 24 * 60 * 60 * 1000).toISOString()
 
-    const { data: orders, error: fetchError } = await supabaseAdmin
+    // Requête 1 : statut delivered depuis >= 7j
+    const { data: deliveredOrders, error: err1 } = await supabaseAdmin
       .from('orders')
-      .select(`
-        id,
-        order_number,
-        customer_email,
-        customer_name,
-        items,
-        delivered_at,
-        review_email_sent_at
-      `)
+      .select(SELECT_FIELDS)
       .eq('status', 'delivered')
       .is('review_email_sent_at', null)
       .lte('delivered_at', deliveryThreshold)
       .not('customer_email', 'is', null)
       .limit(50)
 
-    if (fetchError) {
-      console.error('Error fetching delivered orders:', fetchError)
-      return NextResponse.json({ error: 'Erreur récupération commandes' }, { status: 500 })
+    if (err1) {
+      console.error('Error fetching delivered orders:', err1)
+      return NextResponse.json({ error: 'Erreur récupération commandes (delivered)' }, { status: 500 })
     }
 
-    if (!orders || orders.length === 0) {
-      return NextResponse.json({ success: true, message: 'Aucune commande à traiter', processed: 0 })
+    // Requête 2 : payée depuis >= 10j, pas annulée/remboursée
+    const { data: paidOrders, error: err2 } = await supabaseAdmin
+      .from('orders')
+      .select(SELECT_FIELDS)
+      .is('review_email_sent_at', null)
+      .lte('created_at', paidThreshold)
+      .eq('payment_status', 'completed')
+      .not('status', 'in', '("cancelled","refunded")')
+      .not('customer_email', 'is', null)
+      .limit(50)
+
+    if (err2) {
+      console.error('Error fetching paid orders:', err2)
+      return NextResponse.json({ error: 'Erreur récupération commandes (paid)' }, { status: 500 })
+    }
+
+    // Fusion + déduplication par ID
+    const seen = new Set<string>()
+    const orders = [...(deliveredOrders || []), ...(paidOrders || [])].filter(o => {
+      if (seen.has(o.id)) return false
+      seen.add(o.id)
+      return true
+    })
+
+    if (orders.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'Aucune commande à traiter',
+        reviewsSent: 0,
+      })
     }
 
     if (!process.env.RESEND_API_KEY) {
@@ -107,8 +126,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `${results.emailsSent} emails envoyés sur ${orders.length} commandes livrées`,
-      ...results,
+      message: `${results.emailsSent} demande${results.emailsSent > 1 ? 's' : ''} d'avis envoyée${results.emailsSent > 1 ? 's' : ''}.`,
+      reviewsSent: results.emailsSent,
     })
   } catch (error) {
     console.error('Cron review-requests error:', error)

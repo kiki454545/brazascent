@@ -283,6 +283,8 @@ export async function POST(request: NextRequest) {
           payment_status: 'completed',
           stripe_session_id: session.id,
           stripe_payment_intent: session.payment_intent,
+          customer_email: session.customer_email || shippingData?.email || null,
+          customer_name: shippingData?.name || null,
         })
         .select()
         .single()
@@ -329,19 +331,23 @@ export async function POST(request: NextRequest) {
           console.error('Error creating order items:', itemsError)
         }
 
-        // Déduire le stock pour chaque article commandé
-        for (const item of rawItems as Array<{ id: string; q: number }>) {
+        // Déduire le stock (unités + ml) pour chaque article commandé
+        for (const item of rawItems as Array<{ id: string; s: string; q: number }>) {
           const { data: prod } = await supabaseAdmin
             .from('products')
-            .select('stock')
+            .select('stock, ml_stock')
             .eq('id', item.id)
             .maybeSingle()
 
-          if (prod && prod.stock !== null) {
-            await supabaseAdmin
-              .from('products')
-              .update({ stock: Math.max(0, prod.stock - item.q) })
-              .eq('id', item.id)
+          if (prod) {
+            const mlPerUnit = parseFloat((item.s || '').replace(',', '.').match(/([\d.]+)\s*ml/i)?.[1] || '0')
+            const mlDeducted = mlPerUnit * item.q
+            const updates: Record<string, number> = {}
+            if (prod.stock !== null) updates.stock = Math.max(0, prod.stock - item.q)
+            if (prod.ml_stock !== null && mlDeducted > 0) updates.ml_stock = Math.max(0, prod.ml_stock - mlDeducted)
+            if (Object.keys(updates).length > 0) {
+              await supabaseAdmin.from('products').update(updates).eq('id', item.id)
+            }
           }
         }
       }
@@ -413,9 +419,238 @@ export async function POST(request: NextRequest) {
             itemCount: orderItemsForEmail.length,
           }),
         ])
+
+        // Programmer l'email de réachat J+30 (non-bloquant)
+        const reorderScheduledFor = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        supabaseAdmin.from('post_purchase_emails').insert({
+          order_id: order.id,
+          email_type: 'reorder_suggestion',
+          email: session.customer_email,
+          scheduled_for: reorderScheduledFor,
+          status: 'pending',
+        }).then(({ error }) => {
+          if (error) console.error('Error scheduling reorder email:', error)
+        })
       }
     } catch (error) {
       console.error('Error processing webhook:', error)
+      return NextResponse.json({ error: 'Error processing order' }, { status: 500 })
+    }
+  }
+
+  if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent
+
+    // Traiter uniquement les paiements express checkout (pas les sessions Stripe Checkout normales)
+    if (paymentIntent.metadata?.source !== 'express_checkout') {
+      return NextResponse.json({ received: true })
+    }
+
+    try {
+      // IDEMPOTENCE: vérifier si ce payment intent a déjà été traité
+      const { data: existingOrder } = await supabaseAdmin
+        .from('orders')
+        .select('id')
+        .eq('stripe_payment_intent', paymentIntent.id)
+        .maybeSingle()
+
+      if (existingOrder) {
+        console.log('Express checkout déjà traité:', paymentIntent.id)
+        return NextResponse.json({ received: true })
+      }
+
+      const metadata = paymentIntent.metadata || {}
+      const shippingData = metadata.shipping ? JSON.parse(metadata.shipping) : null
+      const rawItems = metadata.items ? JSON.parse(metadata.items) : []
+      const shippingMethodId = metadata.shippingMethodId || null
+      const shippingMethodTitle = metadata.shippingMethodTitle || 'Livraison à domicile'
+      const promoCode = metadata.promoCodeCode || null
+      const promoDiscount = metadata.promoCodeDiscount ? parseFloat(metadata.promoCodeDiscount) : null
+
+      const customerEmail: string | null = shippingData?.email || null
+
+      // SÉCURITÉ: résoudre le userId depuis l'email (jamais faire confiance au client)
+      let resolvedUserId: string | null = null
+      if (customerEmail) {
+        const { data: profile } = await supabaseAdmin
+          .from('user_profiles')
+          .select('id')
+          .eq('email', customerEmail)
+          .maybeSingle()
+        if (profile) resolvedUserId = profile.id
+      }
+
+      const productIds = rawItems.map((item: { id: string }) => item.id)
+      const { data: products } = await supabaseAdmin
+        .from('products')
+        .select('id, name, images')
+        .in('id', productIds)
+
+      const productMap = new Map(products?.map(p => [p.id, p]) || [])
+
+      const subtotal = rawItems.reduce((sum: number, item: { p: number; q: number }) =>
+        sum + item.p * item.q, 0
+      )
+      const shippingCost = metadata.shippingCost ? parseFloat(metadata.shippingCost) : 0
+
+      // Créer la commande
+      const { data: order, error: orderError } = await supabaseAdmin
+        .from('orders')
+        .insert({
+          user_id: resolvedUserId,
+          status: 'confirmed',
+          subtotal,
+          shipping: shippingCost,
+          discount: promoDiscount,
+          promo_code: promoCode,
+          total: paymentIntent.amount / 100,
+          shipping_address: shippingData,
+          shipping_method: shippingMethodTitle,
+          shipping_method_id: shippingMethodId,
+          payment_method: 'stripe',
+          payment_status: 'completed',
+          stripe_session_id: null,
+          stripe_payment_intent: paymentIntent.id,
+          customer_email: customerEmail,
+          customer_name: shippingData?.name || null,
+        })
+        .select()
+        .single()
+
+      if (orderError) {
+        console.error('Express checkout — error creating order:', orderError)
+        throw orderError
+      }
+
+      const orderItemsForEmail: Array<{ product_name: string; size: string; quantity: number; price: number }> = []
+
+      if (rawItems.length > 0 && order) {
+        const orderItems = rawItems.map((item: { id: string; s: string; q: number; p: number }) => {
+          const product = productMap.get(item.id)
+          const orderItem = {
+            order_id: order.id,
+            product_id: item.id,
+            product_name: product?.name || 'Produit',
+            product_image: product?.images?.[0] || '',
+            size: item.s,
+            quantity: item.q,
+            price: item.p * item.q,
+          }
+          orderItemsForEmail.push({
+            product_name: orderItem.product_name,
+            size: orderItem.size,
+            quantity: orderItem.quantity,
+            price: orderItem.price,
+          })
+          return orderItem
+        })
+
+        const { error: itemsError } = await supabaseAdmin
+          .from('order_items')
+          .insert(orderItems)
+
+        if (itemsError) console.error('Express checkout — error creating order items:', itemsError)
+
+        // Déduire le stock (unités + ml) pour chaque article commandé
+        for (const item of rawItems as Array<{ id: string; s: string; q: number }>) {
+          const { data: prod } = await supabaseAdmin
+            .from('products')
+            .select('stock, ml_stock')
+            .eq('id', item.id)
+            .maybeSingle()
+
+          if (prod) {
+            const mlPerUnit = parseFloat((item.s || '').replace(',', '.').match(/([\d.]+)\s*ml/i)?.[1] || '0')
+            const mlDeducted = mlPerUnit * item.q
+            const updates: Record<string, number> = {}
+            if (prod.stock !== null) updates.stock = Math.max(0, prod.stock - item.q)
+            if (prod.ml_stock !== null && mlDeducted > 0) updates.ml_stock = Math.max(0, prod.ml_stock - mlDeducted)
+            if (Object.keys(updates).length > 0) {
+              await supabaseAdmin.from('products').update(updates).eq('id', item.id)
+            }
+          }
+        }
+      }
+
+      console.log('Express checkout order created:', order?.order_number)
+
+      if (order) {
+        const posthog = getPostHogClient()
+        const distinctId = resolvedUserId ?? (customerEmail ?? paymentIntent.id)
+        posthog.capture({
+          distinctId,
+          event: 'order_created',
+          properties: {
+            order_number: order.order_number,
+            order_id: order.id,
+            subtotal,
+            shipping_cost: shippingCost,
+            total: paymentIntent.amount / 100,
+            item_count: rawItems.length,
+            shipping_method: shippingMethodTitle,
+            promo_code: promoCode ?? null,
+            promo_discount: promoDiscount ?? null,
+            payment_method: 'stripe',
+            source: 'express_checkout',
+          },
+        })
+        await posthog.shutdown()
+      }
+
+      if (order && resolvedUserId) {
+        const pointsToCredit = Math.floor(subtotal)
+        if (pointsToCredit > 0) {
+          await supabaseAdmin
+            .from('loyalty_points')
+            .insert({
+              user_id: resolvedUserId,
+              points: pointsToCredit,
+              reason: `Commande #${order.order_number}`,
+              order_id: order.id,
+            })
+            .then(({ error }) => {
+              if (error) console.error('Express checkout — error crediting loyalty points:', error)
+            })
+        }
+      }
+
+      if (order && customerEmail) {
+        const total = paymentIntent.amount / 100
+        const customerName = shippingData?.name || customerEmail
+
+        await Promise.all([
+          sendOrderConfirmationEmail(
+            customerEmail,
+            order.order_number,
+            orderItemsForEmail,
+            shippingData,
+            subtotal,
+            shippingCost,
+            total,
+            shippingMethodTitle
+          ),
+          sendAdminOrderNotification({
+            orderNumber: order.order_number,
+            customerName,
+            customerEmail,
+            total,
+            itemCount: orderItemsForEmail.length,
+          }),
+        ])
+
+        const reorderScheduledFor = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        supabaseAdmin.from('post_purchase_emails').insert({
+          order_id: order.id,
+          email_type: 'reorder_suggestion',
+          email: customerEmail,
+          scheduled_for: reorderScheduledFor,
+          status: 'pending',
+        }).then(({ error }) => {
+          if (error) console.error('Express checkout — error scheduling reorder email:', error)
+        })
+      }
+    } catch (error) {
+      console.error('Error processing express checkout webhook:', error)
       return NextResponse.json({ error: 'Error processing order' }, { status: 500 })
     }
   }

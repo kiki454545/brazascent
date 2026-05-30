@@ -340,6 +340,29 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// DELETE pour reset les stats
+export async function DELETE(request: NextRequest) {
+  try {
+    const { supabaseAdmin, error: configError } = getSupabaseAdmin()
+    if (configError) return configError
+
+    const { searchParams } = new URL(request.url)
+    const type = searchParams.get('type') || 'all'
+
+    if (type === 'all' || type === 'visitors') {
+      await supabaseAdmin.from('page_views').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+      await supabaseAdmin.from('daily_visits').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+      await supabaseAdmin.from('daily_stats').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+      await supabaseAdmin.from('visitors').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Tracking DELETE error:', error)
+    return NextResponse.json({ error: 'Erreur reset' }, { status: 500 })
+  }
+}
+
 // GET pour les stats admin
 export async function GET(request: NextRequest) {
   try {
