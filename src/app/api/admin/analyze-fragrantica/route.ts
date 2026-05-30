@@ -118,7 +118,24 @@ export async function POST(request: NextRequest) {
   const PROMPTS: Record<string, string> = {
     longevity:    `Lis le nombre de votes pour chaque niveau de TENUE/LONGÉVITÉ dans cette image. Réponds UNIQUEMENT avec ce JSON : {"médiocre":0,"faible":0,"modérée":0,"longue tenue":0,"très longue tenue":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400, "1.3k"→1300). Clés anglaises acceptées : poor/weak/moderate/long lasting/eternal.`,
     sillage:      `Lis le nombre de votes pour chaque niveau de SILLAGE dans cette image. Réponds UNIQUEMENT avec ce JSON : {"discret":0,"modéré":0,"puissant":0,"énorme":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises acceptées : intimate/moderate/strong/enormous.`,
-    performance:  `Lis les données de TENUE et SILLAGE dans cette image. Réponds UNIQUEMENT avec ce JSON : {"longevity":{"médiocre":0,"faible":0,"modérée":0,"longue tenue":0,"très longue tenue":0},"sillage":{"discret":0,"modéré":0,"puissant":0,"énorme":0}}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Si une section n'est pas visible → {}.`,
+    performance:  `Cette image Fragrantica montre les données de tenue (longévité) et de sillage. Réponds UNIQUEMENT avec ce JSON : {"longevity":"?","sillage":"?"}
+
+Pour LONGEVITY — choisis la clé exacte :
+"médiocre" si < 2h ou poor/very weak
+"faible" si ~3h ou weak
+"modérée" si ~5h ou moderate
+"longue tenue" si ~7-8h ou long lasting
+"très longue tenue" si +12h ou eternal/very long
+Si l'image montre des barres de votes : prends la catégorie dominante.
+Si non visible → "?"
+
+Pour SILLAGE — choisis la clé exacte :
+"discret" (intimate/soft)
+"modéré" (moderate)
+"puissant" (strong)
+"énorme" (enormous/huge/Énorme)
+Si l'image montre des barres de votes : prends la catégorie dominante.
+Si non visible → "?"`,
     seasons:   `Lis le nombre de votes sous chaque SAISON dans cette image. Réponds UNIQUEMENT avec ce JSON : {"hiver":0,"printemps":0,"été":0,"automne":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises : winter/spring/summer/fall.`,
     timeOfDay: `Lis le nombre de votes pour JOUR et NUIT dans cette image. Réponds UNIQUEMENT avec ce JSON : {"jour":0,"nuit":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises : day/night.`,
     genre:     `Lis le nombre de votes pour chaque catégorie de GENRE dans cette image. Réponds UNIQUEMENT avec ce JSON : {"très féminin":0,"féminin":0,"unisexe":0,"masculin":0,"très masculin":0}. Remplace les 0 par les vrais nombres. Clés anglaises : very feminine/female/unisex/male/very masculine.`,
@@ -183,8 +200,12 @@ export async function POST(request: NextRequest) {
     dbUpdate.performance_sillage = result.sillage
   }
   if (type === 'performance') {
-    result.longevity = normalizeLongevity(parsed.longevity)
-    result.sillage   = normalizeSillage(parsed.sillage)
+    const LON_VALID = new Set(['médiocre','faible','modérée','longue tenue','très longue tenue'])
+    const SIL_VALID = new Set(['discret','modéré','puissant','énorme'])
+    const lon = typeof parsed.longevity === 'string' ? parsed.longevity.trim().toLowerCase() : ''
+    const sil = typeof parsed.sillage   === 'string' ? parsed.sillage.trim().toLowerCase()   : ''
+    result.longevity = LON_VALID.has(lon) ? lon : normalizeLongevity(parsed.longevity)
+    result.sillage   = SIL_VALID.has(sil) ? sil : normalizeSillage(parsed.sillage)
     dbUpdate.performance_longevity = result.longevity
     dbUpdate.performance_sillage   = result.sillage
   }
