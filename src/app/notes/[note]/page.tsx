@@ -15,6 +15,25 @@ const supabase = createClient(
 
 export const revalidate = 3600
 
+export async function generateStaticParams() {
+  const { data } = await supabase
+    .from('products')
+    .select('notes_top, notes_heart, notes_base')
+    .eq('is_active', true)
+
+  const noteSet = new Set<string>()
+  for (const p of data ?? []) {
+    for (const note of [
+      ...((p.notes_top as string[]) ?? []),
+      ...((p.notes_heart as string[]) ?? []),
+      ...((p.notes_base as string[]) ?? []),
+    ]) {
+      if (note) noteSet.add(noteToSlug(note))
+    }
+  }
+  return [...noteSet].map((note) => ({ note }))
+}
+
 interface PageProps {
   params: Promise<{ note: string }>
 }

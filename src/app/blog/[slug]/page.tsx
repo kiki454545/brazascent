@@ -21,6 +21,14 @@ const CATEGORY_LABELS: Record<string, string> = {
   actualites: 'Actualités',
 }
 
+export async function generateStaticParams() {
+  const { data } = await supabase
+    .from('blog_posts')
+    .select('slug')
+    .eq('is_published', true)
+  return (data ?? []).map((p: { slug: string }) => ({ slug: p.slug }))
+}
+
 interface PageProps {
   params: Promise<{ slug: string }>
 }
