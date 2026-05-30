@@ -51,17 +51,76 @@ interface SupabaseProductRow {
 
 interface ProductClientProps {
   analysisText?: string | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialProductData?: Record<string, any> | null
 }
 
-export default function ProductPage({ analysisText }: ProductClientProps) {
+function mapSupabaseToProduct(data: Record<string, any>): { product: Product; stockBySize: Record<string, number>; priceBySize: Record<string, number>; unlimitedStock: boolean; performance: { longevity: string|null; longevityHours: string|null; sillage: string|null; seasons: Record<string,number>; timeOfDay: Record<string,number>; genre: string|null; updatedAt: string|null } } {
+  const parsedPriceBySize = typeof data.price_by_size === 'string'
+    ? JSON.parse(data.price_by_size)
+    : (data.price_by_size || {})
+
+  const product: Product = {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+    description: data.description || '',
+    shortDescription: data.short_description || '',
+    price: data.price,
+    originalPrice: data.original_price,
+    priceBySize: parsedPriceBySize,
+    images: data.images || [],
+    size: data.sizes || [],
+    category: data.category || 'unisexe',
+    collection: data.collection,
+    notes: {
+      top: data.notes_top || [],
+      heart: data.notes_heart || [],
+      base: data.notes_base || [],
+    },
+    mainAccords: data.main_accords || [],
+    noteImages: data.note_images || {},
+    pyramidImage: data.pyramid_image || undefined,
+    accords: data.accords || [],
+    stock: data.stock ?? 1,
+    inStock: (data.unlimited_stock ?? false) || (data.stock || 0) > 0,
+    new: data.is_new,
+    bestseller: data.is_bestseller,
+    featured: data.is_bestseller,
+    brand: data.brand || '',
+  }
+
+  const performance = {
+    longevity:      data.performance_longevity ?? null,
+    longevityHours: data.performance_longevity_hours ?? null,
+    sillage:        data.performance_sillage ?? null,
+    seasons:    (() => { const d = data.performance_seasons; if (!d || typeof d !== 'object' || Array.isArray(d)) return {}; return d })(),
+    timeOfDay:  (() => { const d = data.performance_time_of_day; if (!d || typeof d !== 'object' || Array.isArray(d)) return {}; return d })(),
+    genre:      data.performance_genre ?? null,
+    updatedAt:  data.performance_updated_at ?? null,
+  }
+
+  return {
+    product,
+    stockBySize: data.stock_by_size || {},
+    priceBySize: parsedPriceBySize,
+    unlimitedStock: data.unlimited_stock ?? false,
+    performance,
+  }
+}
+
+export default function ProductPage({ analysisText, initialProductData }: ProductClientProps) {
   const params = useParams()
   const slug = params.slug as string
 
-  const [product, setProduct] = useState<Product | null>(null)
+  // Initialisation depuis les données serveur si disponibles (évite le spinner au SSR)
+  const serverMapped = initialProductData ? mapSupabaseToProduct(initialProductData) : null
+
+  const [product, setProduct] = useState<Product | null>(serverMapped?.product ?? null)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
-  const [stockBySize, setStockBySize] = useState<Record<string, number>>({})
-  const [priceBySize, setPriceBySize] = useState<Record<string, number>>({})
-  const [unlimitedStock, setUnlimitedStock] = useState(false)
+  const [stockBySize, setStockBySize] = useState<Record<string, number>>(serverMapped?.stockBySize ?? {})
+  const [priceBySize, setPriceBySize] = useState<Record<string, number>>(serverMapped?.priceBySize ?? {})
+  const [unlimitedStock, setUnlimitedStock] = useState(serverMapped?.unlimitedStock ?? false)
   const [globalStock, setGlobalStock] = useState<number>(1)
   const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null)
   const [performance, setPerformance] = useState<{
@@ -72,8 +131,9 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
     timeOfDay: Record<string, number>
     genre: string | null
     updatedAt: string | null
-  }>({ longevity: null, longevityHours: null, sillage: null, seasons: {}, timeOfDay: {}, genre: null, updatedAt: null })
-  const [loading, setLoading] = useState(true)
+  }>(serverMapped?.performance ?? { longevity: null, longevityHours: null, sillage: null, seasons: {}, timeOfDay: {}, genre: null, updatedAt: null })
+  // loading=false si données serveur disponibles → pas de spinner au SSR
+  const [loading, setLoading] = useState(!initialProductData)
   const [selectedImage, setSelectedImage] = useState(0)
   const [isLightboxOpen, setIsLightboxOpen] = useState(false)
   const [selectedSize, setSelectedSize] = useState('')
