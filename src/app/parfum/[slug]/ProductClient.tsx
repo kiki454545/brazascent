@@ -759,7 +759,7 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
                         <div>
                           <div className="flex items-baseline gap-1.5 mb-2">
                             <span className="text-sm">⌛</span>
-                            <span className="font-semibold text-foreground text-sm">{performance.longevityHours ?? (performance.longevity ? (LONGEVITY_HOURS[performance.longevity] ?? performance.longevity) : '—')}</span>
+                            <span className="font-semibold text-foreground text-sm">{(() => { const v = performance.longevityHours ?? (performance.longevity ? (LONGEVITY_HOURS[performance.longevity] ?? performance.longevity) : null); if (!v) return '—'; return /^[<+]/.test(v) ? v : `~${v}` })()}</span>
                             <span className="text-xs text-muted-foreground">Tenue</span>
                           </div>
                           <div className="flex gap-1">
