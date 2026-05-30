@@ -89,6 +89,7 @@ const navigation = [
   { name: 'Parfums', href: '/parfums' },
   { name: 'Marques', href: '/marques' },
   { name: 'Packs', href: '/packs' },
+  { name: 'Notes olfactives', href: '/notes' },
   { name: 'Promos 🔥', href: '/promos' },
   { name: 'Quiz', href: '/quiz' },
   { name: 'Blog', href: '/blog' },
