@@ -11,6 +11,8 @@ import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
 import { CartItem } from '@/types'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
+import { UpsellBlock } from '@/components/UpsellBlock'
+import { ExpressCheckoutBlock } from '@/components/ExpressCheckoutBlock'
 import { formatPrice } from '@/lib/format'
 
 // Obtenir le prix d'un article selon sa taille
@@ -169,7 +171,7 @@ export default function PanierPage() {
               </div>
             )}
 
-            <div className="space-y-8">
+            <div className="space-y-8" id="cart-items">
               {items.map((item, index) => {
                 const itemOutOfStock = isProductOutOfStock(item.product)
                 return (
@@ -364,6 +366,9 @@ export default function PanierPage() {
                 </div>
               </div>
 
+              {/* Paiement express Apple Pay / Google Pay */}
+              <ExpressCheckoutBlock hasOutOfStockItems={hasOutOfStockItems} />
+
               {hasOutOfStockItems ? (
                 <div className="block w-full py-4 text-center bg-muted text-muted-foreground text-sm tracking-[0.15em] uppercase cursor-not-allowed mb-4">
                   Retirez les produits indisponibles
@@ -392,7 +397,7 @@ export default function PanierPage() {
                 </div>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <Gift className="w-5 h-5 text-primary" />
-                  <span>Emballage cadeau offert</span>
+                  <span>Échantillon offert</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
                   <Shield className="w-5 h-5 text-primary" />
@@ -402,6 +407,9 @@ export default function PanierPage() {
             </m.div>
           </div>
         </div>
+
+        {/* Upsell — pleine largeur sous le panier */}
+        <UpsellBlock />
       </div>
     </div>
   )

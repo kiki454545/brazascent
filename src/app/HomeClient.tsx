@@ -91,8 +91,10 @@ const DraggableCarousel = forwardRef<DraggableCarouselHandle, { products: Produc
   const handleMouseLeave = () => { if (isDown.current) handleMouseUp() }
 
   const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
   const touchScrollLeft = useRef(0)
   const hasTouchDragged = useRef(false)
+  const isVerticalGesture = useRef(false)
   const touchLastX = useRef(0)
   const touchLastTime = useRef(0)
 
@@ -100,24 +102,37 @@ const DraggableCarousel = forwardRef<DraggableCarouselHandle, { products: Produc
     if (!containerRef.current) return
     stopMomentum()
     touchStartX.current = e.touches[0].pageX
+    touchStartY.current = e.touches[0].pageY
     touchLastX.current = e.touches[0].pageX
     touchLastTime.current = Date.now()
     touchScrollLeft.current = containerRef.current.scrollLeft
     hasTouchDragged.current = false
+    isVerticalGesture.current = false
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!containerRef.current) return
+    if (!containerRef.current || isVerticalGesture.current) return
     const x = e.touches[0].pageX
-    const diff = touchStartX.current - x
+    const y = e.touches[0].pageY
+    const diffX = touchStartX.current - x
+    const diffY = touchStartY.current - y
     const now = Date.now()
     const dt = now - touchLastTime.current
-    if (Math.abs(diff) > dragThreshold) hasTouchDragged.current = true
+
+    // Détermine la direction dominante au premier mouvement significatif
+    if (!hasTouchDragged.current && (Math.abs(diffX) > 5 || Math.abs(diffY) > 5)) {
+      if (Math.abs(diffY) > Math.abs(diffX)) {
+        isVerticalGesture.current = true
+        return
+      }
+    }
+
+    if (Math.abs(diffX) > dragThreshold) hasTouchDragged.current = true
     if (hasTouchDragged.current) {
       if (dt > 0) velocity.current = (touchLastX.current - x) / dt * 15
       touchLastX.current = x
       touchLastTime.current = now
-      containerRef.current.scrollLeft = touchScrollLeft.current + diff
+      containerRef.current.scrollLeft = touchScrollLeft.current + diffX
     }
   }
 
@@ -125,6 +140,17 @@ const DraggableCarousel = forwardRef<DraggableCarouselHandle, { products: Produc
     if (hasTouchDragged.current && Math.abs(velocity.current) > 1) applyMomentum()
     setTimeout(() => { hasTouchDragged.current = false }, 100)
   }
+
+  // Listener non-passif pour bloquer le scroll vertical pendant un glissement horizontal
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const onTouchMove = (e: TouchEvent) => {
+      if (hasTouchDragged.current && !isVerticalGesture.current) e.preventDefault()
+    }
+    container.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => container.removeEventListener('touchmove', onTouchMove)
+  }, [])
 
   const handleClick = (e: React.MouseEvent) => {
     if (hasDragged.current || hasTouchDragged.current) { e.preventDefault(); e.stopPropagation() }

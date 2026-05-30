@@ -16,18 +16,21 @@ interface SessionData {
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('session_id')
+  // Express checkout: Stripe ajoute ?payment_intent=...&redirect_status=succeeded
+  const paymentIntentId = searchParams.get('payment_intent')
+  const redirectStatus = searchParams.get('redirect_status')
+  const isExpressCheckout = !!paymentIntentId && redirectStatus === 'succeeded'
+
   const { clearCart } = useCartStore()
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Vider le panier après un paiement réussi
     clearCart()
   }, [clearCart])
 
   useEffect(() => {
     if (sessionId) {
-      // Récupérer les infos de la session Stripe
       fetch(`/api/checkout/session?session_id=${sessionId}`)
         .then(res => res.json())
         .then(data => {
@@ -45,7 +48,7 @@ export default function CheckoutSuccessPage() {
     }
   }, [sessionId])
 
-  if (!loading && !sessionId) {
+  if (!loading && !sessionId && !isExpressCheckout) {
     return (
       <div className="min-h-screen pt-32 pb-24 bg-background flex items-center justify-center">
         <div className="max-w-md mx-auto px-6 text-center">

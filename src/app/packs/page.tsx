@@ -1,12 +1,15 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { m } from 'framer-motion'
-import { Gift, Loader2 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { useCartStore } from '@/store/cart'
+import { Gift } from 'lucide-react'
+import { createClient } from '@supabase/supabase-js'
+import PackAddButton from './PackAddButton'
+
+export const revalidate = 3600
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 interface Pack {
   id: string
@@ -18,7 +21,6 @@ interface Pack {
   image: string
   product_ids: string[]
   tag: string | null
-  is_active: boolean
 }
 
 interface Product {
@@ -26,100 +28,27 @@ interface Product {
   name: string
 }
 
-export default function PacksPage() {
-  const [packs, setPacks] = useState<Pack[]>([])
-  const [products, setProducts] = useState<Record<string, Product>>({})
-  const [loading, setLoading] = useState(true)
-  const { addItem } = useCartStore()
+export default async function PacksPage() {
+  const [{ data: packsData }, { data: productsData }] = await Promise.all([
+    supabase
+      .from('packs')
+      .select('id, name, slug, description, price, original_price, image, product_ids, tag')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('products')
+      .select('id, name'),
+  ])
 
-  useEffect(() => {
-    let isMounted = true
+  const packs: Pack[] = packsData || []
 
-    const isAbortError = (error: unknown): boolean => {
-      if (!error) return false
-      const message = (error as { message?: string }).message || String(error)
-      return message.includes('AbortError') || message.includes('aborted')
-    }
-
-    const fetchData = async () => {
-      try {
-        // Fetch packs
-        const { data: packsData, error: packsError } = await supabase
-          .from('packs')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-
-        if (!isMounted) return
-        if (packsError) throw packsError
-
-        // Fetch products for names
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select('id, name')
-
-        if (!isMounted) return
-        if (productsError) throw productsError
-
-        // Create products lookup
-        const productsLookup: Record<string, Product> = {}
-        productsData?.forEach(p => {
-          productsLookup[p.id] = p
-        })
-
-        setPacks(packsData || [])
-        setProducts(productsLookup)
-      } catch (error) {
-        if (!isAbortError(error)) {
-          console.error('Error fetching packs:', error)
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    fetchData()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
-
-  const getProductNames = (productIds: string[]) => {
-    return productIds
-      .map(id => products[id]?.name)
-      .filter(Boolean)
-      .join(', ')
+  const productsMap: Record<string, string> = {}
+  for (const p of (productsData || []) as Product[]) {
+    productsMap[p.id] = p.name
   }
 
-  const handleAddToCart = (pack: Pack) => {
-    // Créer un objet Product compatible pour le panier
-    const packAsProduct = {
-      id: pack.id,
-      name: pack.name,
-      slug: pack.slug,
-      description: pack.description,
-      shortDescription: pack.description.substring(0, 100),
-      price: pack.price,
-      originalPrice: pack.original_price || undefined,
-      images: [pack.image],
-      category: 'collection' as const,
-      notes: { top: [], heart: [], base: [] },
-      size: ['Pack'],
-      inStock: true,
-    }
-    addItem(packAsProduct, 'Pack', 1)
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    )
-  }
+  const getProductNames = (ids: string[]) =>
+    ids.map((id) => productsMap[id]).filter(Boolean).join(', ')
 
   return (
     <div className="min-h-screen">
@@ -135,12 +64,7 @@ export default function PacksPage() {
         />
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 flex items-center justify-center text-center text-white px-6 pt-24 sm:pt-0">
-          <m.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-3xl"
-          >
+          <div className="max-w-3xl animate-fade-in-up">
             <span className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary mb-4 block">
               Packs
             </span>
@@ -150,7 +74,7 @@ export default function PacksPage() {
             <p className="text-sm sm:text-lg font-light max-w-xl mx-auto">
               Explorez une sélection de packs soigneusement composés pour vous faire voyager à travers différentes maisons et univers olfactifs.
             </p>
-          </m.div>
+          </div>
         </div>
       </section>
 
@@ -164,15 +88,8 @@ export default function PacksPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
-              {packs.map((pack, index) => (
-                <m.div
-                  key={pack.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="group"
-                >
+              {packs.map((pack) => (
+                <div key={pack.id} className="group">
                   <Link href={`/packs/${pack.slug}`} className="block">
                     <div className="relative aspect-square overflow-hidden mb-6 bg-cream">
                       <Image
@@ -198,36 +115,63 @@ export default function PacksPage() {
 
                     {pack.product_ids?.length > 0 && (
                       <div className="text-xs text-muted-foreground mb-4">
-                        <p className="line-clamp-1 break-words">Contient : {getProductNames(pack.product_ids)}</p>
+                        <p className="line-clamp-1 break-words">
+                          Contient : {getProductNames(pack.product_ids)}
+                        </p>
                       </div>
                     )}
 
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-xl font-medium">{pack.price} €</span>
                       {pack.original_price && (
-                        <span className="text-muted-foreground/60 line-through">{pack.original_price} €</span>
-                      )}
-                      {pack.original_price && (
-                        <span className="text-xs text-primary font-medium">
-                          -{Math.round((1 - pack.price / pack.original_price) * 100)}%
-                        </span>
+                        <>
+                          <span className="text-muted-foreground/60 line-through">{pack.original_price} €</span>
+                          <span className="text-xs text-primary font-medium">
+                            -{Math.round((1 - pack.price / pack.original_price) * 100)}%
+                          </span>
+                        </>
                       )}
                     </div>
                   </Link>
 
-                  <button
-                    onClick={() => handleAddToCart(pack)}
-                    className="w-full mt-4 py-3 bg-foreground text-background text-sm tracking-[0.15em] uppercase hover:bg-primary dark:bg-primary dark:text-primary-foreground dark:hover:bg-gold-light transition-colors"
-                  >
-                    Ajouter au panier
-                  </button>
-                </m.div>
+                  <PackAddButton pack={pack} />
+                </div>
               ))}
             </div>
           )}
         </div>
       </section>
 
+      {/* SEO Text + FAQ */}
+      <section className="py-16 lg:py-20 bg-cream">
+        <div className="max-w-4xl mx-auto px-6 sm:px-10 lg:px-20">
+          <h2 className="text-2xl font-light tracking-[0.15em] uppercase mb-6">Découvrir la parfumerie de niche avec nos packs</h2>
+          <div className="text-muted-foreground leading-relaxed space-y-4">
+            <p>Nos packs de décants parfum sont pensés pour celles et ceux qui veulent explorer plusieurs univers olfactifs sans avoir à choisir. Chaque coffret réunit des fragrances sélectionnées selon un fil conducteur commun : famille de notes, intensité, saison, occasion. Un pack découverte BrazaScent, c&apos;est la liberté d&apos;un voyage olfactif curatif.</p>
+            <p>Idéaux en cadeau ou pour enrichir votre collection personnelle, nos packs sont composés de décants authentiques en 2ml, 5ml ou 10ml. Prix avantageux, conditionnement soigné, expédition sous 24 à 48h. Chaque pack est une invitation à découvrir la parfumerie de niche sans compromis.</p>
+            <p className="text-xs text-muted-foreground/70 italic">BrazaScent propose des décants préparés à partir de flacons authentiques. BrazaScent n&apos;est pas affilié aux marques citées. Les noms de marques sont utilisés uniquement à titre informatif.</p>
+          </div>
+          <div className="mt-12">
+            <h3 className="text-lg font-light tracking-[0.15em] uppercase mb-6">Questions fréquentes sur les packs</h3>
+            <div className="divide-y divide-border">
+              {[
+                { q: "C'est quoi un pack de décants ?", a: "Un pack de décants est une sélection de plusieurs échantillons de parfums authentiques réunis sous un thème commun (famille olfactive, occasion, intensité). Chaque décant est prélevé depuis le flacon d'origine de la marque. C'est la façon la plus économique d'explorer plusieurs fragrances." },
+                { q: "Les packs sont-ils adaptés pour offrir ?", a: "Oui. Nos packs sont pensés comme des coffrets premium — idéaux pour offrir une expérience olfactive sans risquer de se tromper de fragrance. Le destinataire peut tester chaque parfum et choisir son préféré en connaissance de cause." },
+                { q: "Puis-je personnaliser un pack ?", a: "Actuellement nos packs sont des sélections fixes curatées par nos soins. Si vous avez une demande particulière — un thème olfactif, une occasion spéciale — n'hésitez pas à nous contacter via notre formulaire de contact." },
+                { q: "Les parfums des packs sont-ils les mêmes qu'en fiche individuelle ?", a: "Oui. Les décants inclus dans nos packs sont strictement identiques aux décants vendus individuellement — même produit, même concentration, même origine. La seule différence est le conditionnement groupé." },
+              ].map(({ q, a }, i) => (
+                <details key={i} className="group py-5">
+                  <summary className="flex items-center justify-between cursor-pointer font-medium text-foreground [&::-webkit-details-marker]:hidden">
+                    <span>{q}</span>
+                    <span className="text-primary ml-4 flex-shrink-0 text-xl leading-none group-open:rotate-45 transition-transform inline-block">+</span>
+                  </summary>
+                  <p className="mt-3 text-muted-foreground text-sm leading-relaxed">{a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

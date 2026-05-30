@@ -113,5 +113,52 @@ export default async function HomePage() {
   const packs = (packsRes.data || []) as HomePack[]
   const orderCount = 100 + (ordersRes.count || 0)
 
-  return <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} promoProducts={promoProducts} packs={packs} orderCount={orderCount} />
+  const homeFaqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      { '@type': 'Question', name: 'Les parfums sont-ils authentiques ?', acceptedAnswer: { '@type': 'Answer', text: "Chaque décant est prélevé directement depuis le flacon original de la marque. Aucune copie, aucune reformulation. Ce que vous recevez, c'est le parfum tel qu'il a été créé." } },
+      { '@type': 'Question', name: 'Le parfum est-il dilué ?', acceptedAnswer: { '@type': 'Answer', text: "Non. Nos décants sont du parfum pur, sans ajout de solvant ni d'alcool supplémentaire. La concentration est identique à celle du flacon d'origine." } },
+      { '@type': 'Question', name: 'Combien de temps dure un format ?', acceptedAnswer: { '@type': 'Answer', text: "Un 5ml représente environ 100 à 110 projections — soit 2 à 3 semaines d'utilisation quotidienne. Largement suffisant pour découvrir une fragrance dans toutes ses dimensions." } },
+      { '@type': 'Question', name: 'Les flacons fuient-ils pendant le transport ?', acceptedAnswer: { '@type': 'Answer', text: "Nos contenants sont soigneusement sélectionnés et testés. Chaque commande est conditionnée de façon sécurisée. Votre décant arrive intact, prêt à être découvert." } },
+      { '@type': 'Question', name: 'Pourquoi acheter un décant ?', acceptedAnswer: { '@type': 'Answer', text: "Pour tester un parfum à 300€ sans investir à l'aveugle. Pour explorer des fragrances rares inaccessibles en boutique. Pour construire votre sillage sans compromis." } },
+      { '@type': 'Question', name: 'Proposez-vous des marques de niche ?', acceptedAnswer: { '@type': 'Answer', text: "Notre sélection est construite autour de la parfumerie de niche et des créateurs indépendants. Des fragrances rarement disponibles à l'échantillon, accessibles en format découverte." } },
+      { '@type': 'Question', name: 'Quand vais-je recevoir ma commande ?', acceptedAnswer: { '@type': 'Answer', text: "Chaque commande est préparée sous 24h et expédiée en 24 à 48h ouvrées. Un numéro de suivi vous est transmis dès l'envoi." } },
+      { '@type': 'Question', name: 'Puis-je offrir un décant ?', acceptedAnswer: { '@type': 'Answer', text: "Absolument. Nos packs découverte sont pensés comme des coffrets premium — idéaux pour offrir une expérience olfactive sans se tromper de fragrance." } },
+    ],
+  }
+
+  const organizationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Braza Scent',
+    url: SITE_URL,
+    logo: `${SITE_URL}/images/logo.png`,
+    description: "Boutique en ligne de décants et échantillons de parfum. Testez les plus grands parfums en 2ml, 5ml et 10ml.",
+    sameAs: ['https://www.instagram.com/brazascent/'],
+  }
+
+  const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Braza Scent',
+    url: SITE_URL,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${SITE_URL}/parfums?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqJsonLd) }}
+      />
+      <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} promoProducts={promoProducts} packs={packs} orderCount={orderCount} />
+    </>
+  )
 }

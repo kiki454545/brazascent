@@ -29,6 +29,7 @@ interface SettingsStore {
   settings: Settings
   isLoaded: boolean
   fetchSettings: () => Promise<void>
+  refreshSettings: () => Promise<void>
 }
 
 const defaultSettings: Settings = {
@@ -65,17 +66,26 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   settings: defaultSettings,
   isLoaded: false,
 
+  refreshSettings: async () => {
+    set({ isLoaded: false })
+    await get().fetchSettings()
+  },
+
   fetchSettings: async () => {
     // Ne pas recharger si déjà chargé
     if (get().isLoaded) return
 
     try {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('key, value')
+      const [{ data, error }, { data: shippingMethods }] = await Promise.all([
+        supabase.from('settings').select('key, value'),
+        supabase
+          .from('shipping_methods')
+          .select('title, price, free_threshold')
+          .eq('enabled', true)
+          .order('sort_order', { ascending: true }),
+      ])
 
       if (error) {
-        // Ignorer les erreurs d'annulation
         if (isAbortError(error)) {
           set({ isLoaded: true })
           return
@@ -85,9 +95,21 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         return
       }
 
-      if (data && data.length > 0) {
-        const loadedSettings: Partial<Settings> = {}
+      const loadedSettings: Partial<Settings> = {}
 
+      // Lire les méthodes de livraison depuis shipping_methods (source de vérité)
+      const homeMethod =
+        shippingMethods?.find(m => m.title.toLowerCase().includes('domicile')) ??
+        shippingMethods?.find(m => {
+          const t = m.title.toLowerCase()
+          return !t.includes('relais') && !t.includes('express') && !t.includes('chrono')
+        })
+      if (homeMethod) {
+        loadedSettings.freeShippingThreshold = homeMethod.free_threshold ?? defaultSettings.freeShippingThreshold
+        loadedSettings.standardShippingPrice = homeMethod.price ?? defaultSettings.standardShippingPrice
+      }
+
+      if (data && data.length > 0) {
         data.forEach((row) => {
           if (row.key === 'store') {
             const store = row.value as Record<string, unknown>
@@ -96,11 +118,6 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
             loadedSettings.storePhone = store.storePhone as string || defaultSettings.storePhone
             loadedSettings.storeAddress = store.storeAddress as string || defaultSettings.storeAddress
             loadedSettings.currency = store.currency as string || defaultSettings.currency
-          } else if (row.key === 'shipping') {
-            const shipping = row.value as Record<string, unknown>
-            loadedSettings.freeShippingThreshold = shipping.freeShippingThreshold as number ?? defaultSettings.freeShippingThreshold
-            loadedSettings.standardShippingPrice = shipping.standardShippingPrice as number ?? defaultSettings.standardShippingPrice
-            loadedSettings.expressShippingPrice = shipping.expressShippingPrice as number ?? defaultSettings.expressShippingPrice
           } else if (row.key === 'payment') {
             const payment = row.value as Record<string, unknown>
             loadedSettings.taxRate = payment.taxRate as number ?? defaultSettings.taxRate
@@ -116,13 +133,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
             loadedSettings.announcementSpeed = (announcements.speed as number) ?? defaultSettings.announcementSpeed
           }
         })
-
-        set({ settings: { ...defaultSettings, ...loadedSettings }, isLoaded: true })
-      } else {
-        set({ isLoaded: true })
       }
+
+      set({ settings: { ...defaultSettings, ...loadedSettings }, isLoaded: true })
     } catch (err: any) {
-      // Ignorer les erreurs d'annulation
       if (isAbortError(err)) {
         set({ isLoaded: true })
         return

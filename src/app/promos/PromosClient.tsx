@@ -108,13 +108,6 @@ export default function PromosClient() {
     }
   }, [])
 
-  // Calculer la remise maximum pour afficher dans le hero
-  const maxDiscount = products.reduce((max, p) => {
-    if (!p.originalPrice) return max
-    const discount = Math.round((1 - p.price / p.originalPrice) * 100)
-    return discount > max ? discount : max
-  }, 0)
-
   return (
     <div className="min-h-screen">
       {/* Hero rouge "Soldes" */}
@@ -150,16 +143,6 @@ export default function PromosClient() {
               Découvrez nos parfums à prix réduits. Une sélection de fragrances de luxe et de niche, à saisir avant qu'elles ne disparaissent.
             </p>
 
-            {maxDiscount > 0 && (
-              <m.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.3, type: 'spring' }}
-                className="inline-block px-8 py-3 bg-white text-red-700 text-2xl lg:text-3xl font-bold tracking-wider"
-              >
-                Jusqu'à -{maxDiscount}%
-              </m.div>
-            )}
           </m.div>
         </div>
       </section>

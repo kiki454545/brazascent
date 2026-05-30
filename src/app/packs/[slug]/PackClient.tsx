@@ -1,15 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { m } from 'framer-motion'
-import { ChevronRight, Truck, Gift, Loader2, Package, Info, Heart, Share2, Check, CreditCard } from 'lucide-react'
+import { ChevronRight, Truck, Gift, Loader2, Package, Info, Heart, Share2, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { useSettingsStore } from '@/store/settings'
+import { ExpressCheckoutBlock } from '@/components/ExpressCheckoutBlock'
 import { ProductCard } from '@/components/ProductCard'
 import TrustBadges from '@/components/TrustBadges'
 import { Product } from '@/types'
@@ -57,31 +58,34 @@ interface ProductData {
   is_bestseller: boolean
 }
 
-export default function PackDetailPage() {
+interface Props {
+  initialPack?: Pack | null
+  initialProducts?: Product[]
+}
+
+export default function PackDetailPage({ initialPack, initialProducts }: Props) {
   const params = useParams()
   const slug = params.slug as string
-  const router = useRouter()
 
-  const [pack, setPack] = useState<Pack | null>(null)
-  const [packProducts, setPackProducts] = useState<Product[]>([])
-  const [productSelections, setProductSelections] = useState<ProductSelection[]>([])
-  const [clientSelections, setClientSelections] = useState<ProductSelection[]>([])
-  const [loading, setLoading] = useState(true)
+  const [pack, setPack] = useState<Pack | null>(initialPack ?? null)
+  const [packProducts, setPackProducts] = useState<Product[]>(initialProducts ?? [])
+  const [productSelections, setProductSelections] = useState<ProductSelection[]>(
+    initialPack?.product_selections ?? []
+  )
+  const [clientSelections, setClientSelections] = useState<ProductSelection[]>(
+    initialPack?.product_selections?.map((s) => ({ ...s })) ?? []
+  )
+  const [loading, setLoading] = useState(!initialPack)
   const [copied, setCopied] = useState(false)
-  const [canUseApplePay, setCanUseApplePay] = useState(false)
 
   const { addItem, openCart } = useCartStore()
   const { isInWishlist, toggleItem } = useWishlistStore()
   const { settings } = useSettingsStore()
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as unknown as { ApplePaySession?: { canMakePayments?: () => boolean } }).ApplePaySession) {
-      const ap = (window as unknown as { ApplePaySession: { canMakePayments: () => boolean } }).ApplePaySession
-      setCanUseApplePay(ap.canMakePayments?.() ?? false)
-    }
-  }, [])
+    // Skip fetch if server already provided the data
+    if (initialPack) return
 
-  useEffect(() => {
     let isMounted = true
 
     const isAbortError = (error: unknown): boolean => {
@@ -92,7 +96,6 @@ export default function PackDetailPage() {
 
     const fetchPack = async () => {
       try {
-        // Récupérer le pack par slug
         const { data: packData, error: packError } = await supabase
           .from('packs')
           .select('*')
@@ -112,14 +115,11 @@ export default function PackDetailPage() {
 
         setPack(packData)
 
-        // Sauvegarder les sélections de produits
         if (packData.product_selections) {
           setProductSelections(packData.product_selections)
-          // Initialiser les sélections client avec les tailles par défaut du pack
           setClientSelections(packData.product_selections.map((s: ProductSelection) => ({ ...s })))
         }
 
-        // Récupérer les produits du pack
         if (packData.product_ids && packData.product_ids.length > 0) {
           const { data: productsData, error: productsError } = await supabase
             .from('products')
@@ -130,15 +130,11 @@ export default function PackDetailPage() {
 
           if (!productsError && productsData) {
             const mappedProducts: Product[] = productsData.map((p: ProductData) => {
-              // Calculer le prix à partir de price_by_size si disponible
               let displayPrice = p.price
               if (p.price_by_size && Object.keys(p.price_by_size).length > 0) {
                 const prices = Object.values(p.price_by_size).filter(price => price > 0)
-                if (prices.length > 0) {
-                  displayPrice = Math.min(...prices) // Afficher le prix minimum (plus petite taille)
-                }
+                if (prices.length > 0) displayPrice = Math.min(...prices)
               }
-
               return {
                 id: p.id,
                 name: p.name,
@@ -174,14 +170,10 @@ export default function PackDetailPage() {
       }
     }
 
-    if (slug) {
-      fetchPack()
-    }
+    if (slug) fetchPack()
 
-    return () => {
-      isMounted = false
-    }
-  }, [slug])
+    return () => { isMounted = false }
+  }, [slug, initialPack])
 
   const updateClientSize = (productId: string, size: string) => {
     setClientSelections(prev =>
@@ -190,7 +182,6 @@ export default function PackDetailPage() {
   }
 
   const getProductSelectionInfo = (productId: string, product: Product) => {
-    // Si choix client activé, utiliser clientSelections, sinon les sélections fixes du pack
     const selections = pack?.allow_size_choice ? clientSelections : productSelections
     const selection = selections.find(s => s.productId === productId)
     const selectedSize = selection?.size || product.size?.[0] || ''
@@ -203,7 +194,6 @@ export default function PackDetailPage() {
     return { selectedSize, price }
   }
 
-  // Prix total des produits selon les sélections actuelles
   const getTotalProductsPrice = (): number => {
     return packProducts.reduce((total, product) => {
       const { price } = getProductSelectionInfo(product.id, product)
@@ -211,7 +201,6 @@ export default function PackDetailPage() {
     }, 0)
   }
 
-  // Prix final du pack (dynamique si discount_percentage, fixe sinon)
   const getFinalPackPrice = (): number => {
     if (!pack) return 0
     if (pack.discount_percentage && pack.allow_size_choice) {
@@ -243,13 +232,6 @@ export default function PackDetailPage() {
     if (!p) return
     addItem(p, 'Pack', 1)
     openCart()
-  }
-
-  const handleExpressCheckout = () => {
-    const p = buildPackProduct()
-    if (!p) return
-    addItem(p, 'Pack', 1)
-    router.push('/checkout')
   }
 
   if (loading) {
@@ -308,8 +290,6 @@ export default function PackDetailPage() {
                 className="object-cover"
                 priority
               />
-
-              {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
                 {pack.tag && (
                   <span className="px-3 py-1 bg-primary text-white text-xs tracking-[0.15em] uppercase">
@@ -331,20 +311,14 @@ export default function PackDetailPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            {/* Tag */}
-            <p className="text-sm tracking-[0.2em] uppercase text-primary mb-2">
-              Coffret
-            </p>
+            <p className="text-sm tracking-[0.2em] uppercase text-primary mb-2">Coffret</p>
 
-            {/* Name */}
             <h1 className="text-4xl lg:text-5xl font-light tracking-[0.1em] mb-4">
               {pack.name}
             </h1>
 
-            {/* Description */}
             <p className="text-muted-foreground mb-6">{pack.description}</p>
 
-            {/* Price */}
             <div className="flex items-center gap-4 mb-8 flex-wrap">
               <span className="text-3xl font-light">{formatPrice(getFinalPackPrice())} €</span>
               {pack.original_price && !pack.discount_percentage && (
@@ -362,7 +336,6 @@ export default function PackDetailPage() {
               )}
             </div>
 
-            {/* Pack contents */}
             {packProducts.length > 0 && (
               <div className="mb-8">
                 <p className="text-sm tracking-[0.15em] uppercase mb-3 flex items-center gap-2">
@@ -383,7 +356,6 @@ export default function PackDetailPage() {
                           <Link href={`/parfum/${product.slug}`} className="font-medium truncate hover:text-primary transition-colors block">
                             {product.name}
                           </Link>
-                          {/* Sélecteur de taille si allow_size_choice */}
                           {pack.allow_size_choice && product.size && product.size.length > 1 ? (
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               {product.size.map((s) => {
@@ -418,11 +390,10 @@ export default function PackDetailPage() {
                   })}
                 </div>
 
-                {/* Récap prix si discount_percentage */}
                 {pack.discount_percentage && pack.allow_size_choice && (
                   <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Total à l'unité</span>
+                      <span className="text-muted-foreground">Total à l&apos;unité</span>
                       <span className="line-through text-muted-foreground/60">{formatPrice(getTotalProductsPrice())} €</span>
                     </div>
                     <div className="flex items-center justify-between text-sm mt-1">
@@ -443,7 +414,6 @@ export default function PackDetailPage() {
               </div>
             )}
 
-            {/* Avertissement si codes promo non autorisés */}
             {pack.promo_allowed === false && (
               <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-start gap-3">
                 <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
@@ -453,7 +423,6 @@ export default function PackDetailPage() {
               </div>
             )}
 
-            {/* Actions */}
             <div className="mb-6">
               <div className="flex gap-2 mb-4">
                 <button
@@ -490,36 +459,20 @@ export default function PackDetailPage() {
                 </button>
               </div>
 
-              {canUseApplePay ? (
-                <button
-                  onClick={handleExpressCheckout}
-                  className="flex w-full items-center justify-center gap-2 py-4 bg-black text-white text-sm font-medium tracking-[0.12em] uppercase hover:bg-foreground transition-colors"
-                >
-                  <CreditCard className="w-5 h-5" />
-                  Acheter avec Apple Pay
-                </button>
-              ) : (
-                <button
-                  onClick={handleExpressCheckout}
-                  className="flex w-full items-center justify-center gap-2 py-4 border border-foreground text-sm font-medium tracking-[0.12em] uppercase hover:bg-foreground hover:text-background transition-colors"
-                >
-                  <CreditCard className="w-5 h-5" />
-                  Paiement express au checkout
-                </button>
-              )}
+              <ExpressCheckoutBlock
+                overrideItems={pack ? [{ product: buildPackProduct()! as Product, selectedSize: 'Pack', quantity: 1 }] : []}
+              />
 
               {copied && (
                 <p className="text-sm text-green-600 mt-2">Lien copié !</p>
               )}
             </div>
 
-            {/* Trust badges */}
             <TrustBadges />
           </m.div>
         </div>
       </section>
 
-      {/* Products in Pack */}
       {packProducts.length > 0 && (
         <section className="py-16 lg:py-24 bg-cream">
           <div className="px-6 sm:px-10 lg:px-20">
@@ -534,7 +487,6 @@ export default function PackDetailPage() {
           </div>
         </section>
       )}
-
     </div>
   )
 }

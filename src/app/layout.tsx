@@ -71,8 +71,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    // Ajouter ici les codes de vérification Google Search Console si nécessaire
-    // google: "votre-code-verification",
+    google: process.env.GOOGLE_SITE_VERIFICATION,
   },
 }
 
@@ -122,6 +121,18 @@ export default function RootLayout({
                   target: { '@type': 'EntryPoint', urlTemplate: 'https://brazascent.com/parfums?search={search_term_string}' },
                   'query-input': 'required name=search_term_string',
                 },
+              },
+              {
+                '@context': 'https://schema.org',
+                '@type': 'Organization',
+                name: 'Braza Scent',
+                url: 'https://brazascent.com',
+                logo: 'https://brazascent.com/logo.png',
+                description: "Boutique de décants et échantillons de parfum — 2ml, 5ml, 10ml. Testez les plus grandes maisons de parfumerie sans vous ruiner.",
+                sameAs: [
+                  'https://www.tiktok.com/@braza.scent',
+                  'https://snapchat.com/t/RIDz6Z16',
+                ],
               },
               {
                 '@context': 'https://schema.org',

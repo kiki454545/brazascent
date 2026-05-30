@@ -1,11 +1,6 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Building2, Package } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import { Product } from '@/types'
 import { ProductCard } from '@/components/ProductCard'
 import { Benefits } from '@/components/Benefits'
@@ -18,137 +13,12 @@ interface Brand {
   logo: string | null
 }
 
-export default function BrandPage() {
-  const params = useParams()
-  const slug = params.slug as string
+interface Props {
+  brand: Brand
+  products: Product[]
+}
 
-  const [brand, setBrand] = useState<Brand | null>(null)
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let isMounted = true
-
-    // Forcer loading à true au démarrage
-    setLoading(true)
-    setBrand(null)
-    setProducts([])
-
-    const isAbortError = (error: unknown): boolean => {
-      if (!error) return false
-      const message = (error as { message?: string }).message || String(error)
-      return message.includes('AbortError') || message.includes('aborted') || message.includes('signal')
-    }
-
-    const fetchBrandAndProducts = async () => {
-      try {
-        const { data: brandData, error: brandError } = await supabase
-          .from('brands')
-          .select('*')
-          .eq('slug', slug)
-          .single()
-
-        if (!isMounted) return
-
-        if (brandError || !brandData) {
-          if (!isAbortError(brandError)) {
-            console.error('Error fetching brand:', brandError)
-          }
-          setLoading(false)
-          return
-        }
-
-        setBrand(brandData)
-
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('brand', brandData.name)
-          .eq('is_active', true)
-          .order('display_order', { ascending: true })
-
-        if (!isMounted) return
-
-        if (productsError) {
-          if (!isAbortError(productsError)) {
-            console.error('Error fetching products:', productsError)
-          }
-        } else if (productsData) {
-          const mappedProducts: Product[] = productsData.map((p: any) => {
-            const priceBySize = typeof p.price_by_size === 'string'
-              ? JSON.parse(p.price_by_size)
-              : (p.price_by_size || {})
-
-            const prices = Object.values(priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
-            const displayPrice = prices.length > 0 ? Math.min(...prices) : p.price
-
-            return {
-              id: p.id,
-              name: p.name,
-              slug: p.slug,
-              description: p.description || '',
-              shortDescription: p.short_description || '',
-              price: displayPrice,
-              originalPrice: p.original_price,
-              priceBySize,
-              images: p.images || [],
-              size: p.sizes || [],
-              category: p.category || 'unisexe',
-              collection: p.collection,
-              notes: {
-                top: p.notes_top || [],
-                heart: p.notes_heart || [],
-                base: p.notes_base || []
-              },
-              inStock: (p.stock || 0) > 0,
-              new: p.is_new,
-              bestseller: p.is_bestseller,
-              featured: p.is_bestseller
-            }
-          })
-          setProducts(mappedProducts)
-        }
-      } catch (err) {
-        if (!isMounted) return
-        if (!isAbortError(err)) {
-          console.error('Error:', err)
-        }
-      } finally {
-        if (isMounted) setLoading(false)
-      }
-    }
-
-    if (slug) {
-      fetchBrandAndProducts()
-    }
-
-    return () => {
-      isMounted = false
-    }
-  }, [slug])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-32 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-
-  if (!brand) {
-    return (
-      <div className="min-h-screen pt-32 flex items-center justify-center">
-        <div className="text-center">
-          <Building2 className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
-          <h1 className="text-2xl mb-4">Marque non trouvée</h1>
-          <Link href="/marques" className="text-primary hover:underline">
-            Retour aux marques
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
+export default function MarqueClient({ brand, products }: Props) {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -238,6 +108,56 @@ export default function BrandPage() {
               </p>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* SEO section */}
+      <section className="py-16 lg:py-20 bg-cream">
+        <div className="max-w-4xl mx-auto px-6 sm:px-10 lg:px-20">
+          <h2 className="text-2xl font-light tracking-[0.15em] uppercase mb-6">
+            Découvrir {brand.name} en décants
+          </h2>
+          <div className="text-muted-foreground leading-relaxed space-y-4">
+            <p>
+              Tester un parfum {brand.name} en décant, c&apos;est s&apos;offrir la liberté de vivre la fragrance sur votre peau pendant plusieurs jours — avant tout investissement dans un flacon complet. Nos décants authentiques sont prélevés directement depuis les flacons d&apos;origine, sans dilution ni reformulation.
+            </p>
+            <p>
+              Chaque décant BrazaScent est soigneusement conditionné et expédié sous 24 à 48h. Explorez l&apos;univers {brand.name} en format 2ml, 5ml ou 10ml, selon votre curiosité.
+            </p>
+            <p className="text-xs text-muted-foreground/70 italic">
+              BrazaScent est indépendant et n&apos;est pas affilié à {brand.name}. Les noms de marques sont utilisés uniquement à titre informatif pour identifier les produits.
+            </p>
+          </div>
+          <div className="mt-10 p-6 bg-background border border-border">
+            <p className="text-sm tracking-[0.2em] uppercase text-primary mb-3">Notre blog parfum</p>
+            <p className="text-muted-foreground text-sm mb-5">
+              Conseils sur les décants, guides olfactifs, sélections thématiques — retrouvez nos articles pour approfondir votre découverte de la parfumerie.
+            </p>
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 text-sm tracking-[0.15em] uppercase text-foreground border border-foreground px-5 py-3 hover:bg-foreground hover:text-background transition-colors"
+            >
+              Lire le blog
+            </Link>
+          </div>
+          <div className="mt-12">
+            <h3 className="text-lg font-light tracking-[0.15em] uppercase mb-6">Questions fréquentes</h3>
+            <div className="divide-y divide-border">
+              {[
+                { q: `Les parfums ${brand.name} chez BrazaScent sont-ils authentiques ?`, a: `Oui. Nos décants ${brand.name} sont préparés à partir de flacons originaux achetés auprès de revendeurs officiels. Vous recevez le parfum authentique de la marque, dans sa concentration d'origine, sans aucune modification.` },
+                { q: "C'est quoi un décant de parfum ?", a: "Un décant est un prélèvement du parfum original effectué directement depuis le flacon de la marque. Vous recevez la même fragrance que le flacon plein — sans dilution — dans un format de 2ml, 5ml ou 10ml. Idéal pour tester avant d'acheter." },
+                { q: "Pourquoi choisir un décant plutôt qu'un flacon complet ?", a: "Un flacon plein représente souvent un investissement de 100 à 400€. Un décant vous permet de tester le parfum sur votre peau pendant plusieurs semaines avant de vous décider. La décision d'achat devient une certitude, pas un pari à l'aveugle." },
+              ].map(({ q, a }, i) => (
+                <details key={i} className="group py-5">
+                  <summary className="flex items-center justify-between cursor-pointer font-medium text-foreground [&::-webkit-details-marker]:hidden">
+                    <span>{q}</span>
+                    <span className="text-primary ml-4 flex-shrink-0 text-xl leading-none group-open:rotate-45 transition-transform inline-block">+</span>
+                  </summary>
+                  <p className="mt-3 text-muted-foreground text-sm leading-relaxed">{a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
