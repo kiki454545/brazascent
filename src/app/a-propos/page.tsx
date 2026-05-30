@@ -4,12 +4,12 @@ import Link from 'next/link'
 import { ArrowRight, Sparkles, Leaf, Award, Heart } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'À propos | Braza Scent',
-  description: 'Découvrez l\'histoire de Braza Scent, maison de parfumerie d\'exception. Notre passion pour les fragrances rares, notre sourcing éthique et notre vision de la parfumerie moderne.',
+  title: 'À propos — BrazaScent',
+  description: 'BrazaScent, c\'est l\'idée simple que personne ne devrait dépenser 200€ pour découvrir un parfum. Décants authentiques, maisons de niche, livraison en France.',
   alternates: { canonical: 'https://brazascent.com/a-propos' },
   openGraph: {
-    title: 'Notre histoire | Braza Scent',
-    description: 'Maison de parfumerie d\'exception — découvrez notre histoire, nos valeurs et notre vision.',
+    title: 'À propos — BrazaScent',
+    description: 'Décants authentiques de parfums de niche et de luxe. Testez avant d\'investir.',
     url: 'https://brazascent.com/a-propos',
     type: 'website',
     locale: 'fr_FR',
@@ -20,46 +20,46 @@ export const metadata: Metadata = {
 const values = [
   {
     icon: Sparkles,
-    title: 'Excellence',
-    desc: 'Chaque fragrance est sélectionnée selon des critères stricts de qualité. Nous ne référençons que des parfums qui nous ont convaincus lors de tests rigoureux.',
+    title: 'Authenticité',
+    desc: 'Chaque décant est prélevé directement depuis le flacon d\'origine — même concentration, même qualité. Pas de reformulation, pas de dilution. Ce que vous recevez, c\'est le parfum tel qu\'il a été créé.',
   },
   {
     icon: Leaf,
-    title: 'Sourcing éthique',
-    desc: 'Nos matières premières sont tracées, nos fournisseurs respectueux de l\'environnement. La parfumerie d\'exception ne peut pas se faire au détriment de la planète.',
+    title: 'Transparence',
+    desc: 'Nous indiquons la maison, la référence, les notes. Nous ne vendons pas de "parfums inspirés de". Nous ne fabriquons pas de copies. Tout est clair, vérifiable, honnête.',
   },
   {
     icon: Award,
-    title: 'Expertise',
-    desc: 'Notre équipe de passionnés vous guide dans votre découverte olfactive. Quiz, conseils personnalisés, notes détaillées — nous mettons notre savoir à votre service.',
+    title: 'Exigence',
+    desc: 'Nous ne référençons pas tout ce qui existe. Chaque fragrance proposée a été choisie — pour sa qualité, son intérêt, sa capacité à surprendre. Une sélection courte vaut mieux qu\'un catalogue sans fin.',
   },
   {
     icon: Heart,
     title: 'Passion',
-    desc: 'Braza Scent est né d\'un amour sincère pour les parfums. Cette passion guide chacune de nos décisions, du choix des maisons jusqu\'à l\'emballage de vos commandes.',
+    desc: 'BrazaScent est tenu par des passionnés de parfumerie qui connaissent les maisons, les parfumeurs, les pyramides olfactives. Pas une interface algorithmique — des humains qui aiment les beaux parfums.',
   },
 ]
 
 const timeline = [
   {
-    year: '2020',
-    title: 'La genèse',
-    desc: 'Née d\'une collection personnelle devenue trop grande pour une seule personne, l\'idée de partager ces pépites olfactives avec le plus grand nombre s\'impose.',
+    year: '01',
+    title: 'Le problème',
+    desc: 'Un parfum de niche coûte entre 150 et 400€ le flacon. La plupart des gens l\'achètent après deux secondes sur le poignet d\'un vendeur, ou pire — sans même l\'avoir senti. C\'est absurde.',
   },
   {
-    year: '2021',
-    title: 'Les premières sélections',
-    desc: 'Après des mois de recherche et de tests, les premières maisons partenaires sont choisies. La qualité prime sur la quantité — chaque référence est justifiée.',
+    year: '02',
+    title: 'La solution',
+    desc: 'Un décant, c\'est un prélèvement du flacon original dans un format de 2ml, 5ml ou 10ml. Vous portez le parfum vrai pendant plusieurs jours, sur votre peau, dans votre vie. Puis vous décidez.',
   },
   {
-    year: '2022',
-    title: 'L\'ouverture',
-    desc: 'Braza Scent ouvre ses portes en ligne. L\'accueil de la communauté dépasse toutes les espérances. La boutique grandit organiquement, portée par le bouche-à-oreille.',
+    year: '03',
+    title: 'La sélection',
+    desc: 'Nous avons constitué une sélection de maisons de niche et de parfumerie de luxe : Dior, Louis Vuitton, MFK, Guerlain, Xerjoff, Kilian, Ex Nihilo et d\'autres. Des références choisies pour leur qualité, pas pour leur popularité.',
   },
   {
-    year: '2024',
-    title: 'L\'expansion',
-    desc: 'De nouvelles maisons rejoignent la sélection, les formats découverte (2 ml, 5 ml, 10 ml) sont lancés pour permettre à tous d\'explorer sans engagement.',
+    year: '04',
+    title: 'Aujourd\'hui',
+    desc: 'Des clients de toute la France reçoivent leurs décants en 24 à 48h. Certains trouvent leur parfum signature. D\'autres explorent une nouvelle maison chaque mois. Tous décident en connaissance de cause.',
   },
 ]
 
@@ -80,7 +80,7 @@ export default function AProposPage() {
             Braza Scent
           </h1>
           <p className="text-white/70 text-lg max-w-xl mx-auto">
-            Maison de parfumerie d&apos;exception, née d&apos;une passion pour les fragrances rares
+            Décants authentiques de parfums de niche et de luxe — pour tester avant d&apos;investir
           </p>
         </div>
       </section>
@@ -88,9 +88,9 @@ export default function AProposPage() {
       {/* Intro */}
       <section className="max-w-3xl mx-auto px-6 py-20 text-center">
         <p className="text-xl font-light leading-relaxed text-muted-foreground">
-          Chez Braza Scent, nous croyons que le parfum est la forme d&apos;art la plus intime qui soit.
-          Il ne se voit pas, il se ressent. Il ne s&apos;explique pas, il se raconte.
-          Notre mission : vous aider à trouver la fragrance qui deviendra votre signature.
+          Un flacon complet coûte souvent entre 150 et 400€. La plupart des gens l&apos;achètent
+          sans l&apos;avoir jamais porté plus de cinq minutes. BrazaScent est né de ce constat :
+          il existe une façon plus intelligente de découvrir les parfums.
         </p>
       </section>
 
@@ -100,31 +100,34 @@ export default function AProposPage() {
           <div className="relative aspect-[4/3] bg-cream overflow-hidden">
             <Image
               src="https://images.unsplash.com/photo-1588776814546-daab30f310ce?w=1000&q=80"
-              alt="Atelier Braza Scent"
+              alt="Décants BrazaScent"
               fill
               className="object-cover"
             />
           </div>
           <div>
-            <div className="text-primary text-xs tracking-[0.3em] uppercase mb-4">Notre vision</div>
+            <div className="text-primary text-xs tracking-[0.3em] uppercase mb-4">Ce que nous faisons</div>
             <h2 className="text-3xl font-light tracking-[0.1em] uppercase mb-6">
-              La parfumerie accessible à tous
+              Décanter pour vraiment choisir
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Les grandes maisons de parfumerie créent des chefs-d&apos;œuvre olfactifs, mais leur prix
-              élevé rend souvent l&apos;exploration risquée. Un flacon entier pour découvrir une fragrance ?
-              Braza Scent a inventé un autre chemin.
+              Un décant est un prélèvement effectué directement depuis le flacon d&apos;origine.
+              Pas une copie, pas une imitation — le parfum authentique de la maison, dans sa
+              concentration exacte, conditionné en 2ml, 5ml ou 10ml.
+            </p>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              Cinq millilitres, c&apos;est environ cent projections. De quoi porter le parfum
+              une semaine entière dans des contextes différents — au travail, le soir, par temps
+              chaud, par temps froid. De quoi savoir si cette fragrance vous appartient vraiment.
             </p>
             <p className="text-muted-foreground leading-relaxed mb-6">
-              Nos formats en 2 ml, 5 ml et 10 ml vous permettent de tester, d&apos;adopter ou de passer
-              à la suivante — sans culpabilité. La découverte olfactive devient ainsi une aventure
-              joyeuse et accessible.
+              Nous préparons chaque commande à la main et expédions en France en 24 à 48h ouvrées.
             </p>
             <Link
-              href="/quiz"
+              href="/parfums"
               className="inline-flex items-center gap-2 text-sm tracking-[0.15em] uppercase text-primary hover:underline"
             >
-              Trouver mon parfum avec le quiz
+              Voir la sélection
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -135,8 +138,8 @@ export default function AProposPage() {
       <section className="py-20 bg-cream mt-16">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-14">
-            <div className="text-primary text-xs tracking-[0.3em] uppercase mb-3">Chronologie</div>
-            <h2 className="text-3xl font-light tracking-[0.1em] uppercase">Notre parcours</h2>
+            <div className="text-primary text-xs tracking-[0.3em] uppercase mb-3">Comment ça fonctionne</div>
+            <h2 className="text-3xl font-light tracking-[0.1em] uppercase">De l&apos;idée au décant</h2>
           </div>
           <div className="relative">
             <div className="absolute left-1/2 -translate-x-px top-0 bottom-0 w-px bg-border hidden sm:block" />
@@ -162,7 +165,7 @@ export default function AProposPage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <div className="text-primary text-xs tracking-[0.3em] uppercase mb-3">Ce qui nous guide</div>
-            <h2 className="text-3xl font-light tracking-[0.1em] uppercase">Nos valeurs</h2>
+            <h2 className="text-3xl font-light tracking-[0.1em] uppercase">Nos engagements</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((v) => (
@@ -182,24 +185,24 @@ export default function AProposPage() {
       <section className="py-20 bg-foreground text-background text-center px-6">
         <div className="text-primary text-xs tracking-[0.3em] uppercase mb-4">Prêt à explorer ?</div>
         <h2 className="text-3xl font-light tracking-[0.1em] uppercase mb-4">
-          Commencez votre voyage olfactif
+          Trouvez votre parfum signature
         </h2>
         <p className="text-background/70 mb-8 max-w-md mx-auto">
-          Des centaines de fragrances vous attendent. Utilisez notre quiz pour trouver celle qui vous correspond.
+          Commencez par un décant. Portez-le quelques jours. Décidez en connaissance de cause.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="/quiz"
+            href="/parfums"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-white text-sm tracking-[0.15em] uppercase hover:bg-primary/90 transition-colors"
           >
             <Sparkles className="w-4 h-4" />
-            Faire le quiz
+            Explorer les parfums
           </Link>
           <Link
-            href="/parfums"
+            href="/packs"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-background/30 text-background text-sm tracking-[0.15em] uppercase hover:border-background transition-colors"
           >
-            Voir les parfums
+            Voir les packs
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
