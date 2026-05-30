@@ -116,8 +116,9 @@ export async function POST(request: NextRequest) {
 
   // Prompts focalisés par type
   const PROMPTS: Record<string, string> = {
-    longevity: `Lis le nombre de votes pour chaque niveau de TENUE/LONGÉVITÉ dans cette image. Réponds UNIQUEMENT avec ce JSON : {"médiocre":0,"faible":0,"modérée":0,"longue tenue":0,"très longue tenue":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400, "1.3k"→1300). Clés anglaises acceptées : poor/weak/moderate/long lasting/eternal.`,
-    sillage:   `Lis le nombre de votes pour chaque niveau de SILLAGE dans cette image. Réponds UNIQUEMENT avec ce JSON : {"discret":0,"modéré":0,"puissant":0,"énorme":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises acceptées : intimate/moderate/strong/enormous.`,
+    longevity:    `Lis le nombre de votes pour chaque niveau de TENUE/LONGÉVITÉ dans cette image. Réponds UNIQUEMENT avec ce JSON : {"médiocre":0,"faible":0,"modérée":0,"longue tenue":0,"très longue tenue":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400, "1.3k"→1300). Clés anglaises acceptées : poor/weak/moderate/long lasting/eternal.`,
+    sillage:      `Lis le nombre de votes pour chaque niveau de SILLAGE dans cette image. Réponds UNIQUEMENT avec ce JSON : {"discret":0,"modéré":0,"puissant":0,"énorme":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises acceptées : intimate/moderate/strong/enormous.`,
+    performance:  `Lis les données de TENUE et SILLAGE dans cette image. Réponds UNIQUEMENT avec ce JSON : {"longevity":{"médiocre":0,"faible":0,"modérée":0,"longue tenue":0,"très longue tenue":0},"sillage":{"discret":0,"modéré":0,"puissant":0,"énorme":0}}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Si une section n'est pas visible → {}.`,
     seasons:   `Lis le nombre de votes sous chaque SAISON dans cette image. Réponds UNIQUEMENT avec ce JSON : {"hiver":0,"printemps":0,"été":0,"automne":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises : winter/spring/summer/fall.`,
     timeOfDay: `Lis le nombre de votes pour JOUR et NUIT dans cette image. Réponds UNIQUEMENT avec ce JSON : {"jour":0,"nuit":0}. Remplace les 0 par les vrais nombres ("2.4k"→2400). Clés anglaises : day/night.`,
     genre:     `Lis le nombre de votes pour chaque catégorie de GENRE dans cette image. Réponds UNIQUEMENT avec ce JSON : {"très féminin":0,"féminin":0,"unisexe":0,"masculin":0,"très masculin":0}. Remplace les 0 par les vrais nombres. Clés anglaises : very feminine/female/unisex/male/very masculine.`,
@@ -180,6 +181,12 @@ export async function POST(request: NextRequest) {
   if (type === 'sillage' || type === 'all') {
     result.sillage = normalizeSillage(type === 'sillage' ? parsed : parsed.sillage)
     dbUpdate.performance_sillage = result.sillage
+  }
+  if (type === 'performance') {
+    result.longevity = normalizeLongevity(parsed.longevity)
+    result.sillage   = normalizeSillage(parsed.sillage)
+    dbUpdate.performance_longevity = result.longevity
+    dbUpdate.performance_sillage   = result.sillage
   }
   if (type === 'seasons' || type === 'all') {
     result.seasons = normalizeSeasons(type === 'seasons' ? parsed : parsed.seasons)

@@ -17,6 +17,156 @@ import {
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
+// ─── Composant upload Fragrantica par catégorie ───────────────────────────────
+// Ligne combinée Tenue + Sillage en un seul upload
+function FragranticaPerformanceRow({ productId }: { productId: string }) {
+  const [image, setImage] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [longevity, setLongevity] = useState<string | null>(null)
+  const [sillage, setSillage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const analyze = async () => {
+    if (!image) return
+    setLoading(true); setError(null); setLongevity(null); setSillage(null)
+    try {
+      const fd = new FormData()
+      fd.append('image', image)
+      fd.append('productId', productId)
+      fd.append('type', 'performance')
+      const res = await fetch('/api/admin/analyze-fragrantica', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.error) { setError(data.error); return }
+      setLongevity(data.longevity ?? null)
+      setSillage(data.sillage ?? null)
+    } catch (e) { setError(String(e)) }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div className="flex items-center gap-3 p-3 bg-admin-bg rounded-lg border border-admin-border">
+      <span className="text-xs font-medium text-admin-text w-28 shrink-0">⌛≈ Tenue + Sillage</span>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={e => {
+          const f = e.target.files?.[0]; if (!f) return
+          setImage(f); setLongevity(null); setSillage(null); setError(null)
+          const r = new FileReader(); r.onload = ev => setPreview(ev.target?.result as string); r.readAsDataURL(f)
+        }}
+      />
+      {preview ? (
+        <div className="relative shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="" className="h-10 w-16 object-cover rounded border border-admin-border" />
+          <button type="button" onClick={() => { setImage(null); setPreview(null); setLongevity(null); setSillage(null) }}
+            className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white">
+            <X className="w-2.5 h-2.5" />
+          </button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => inputRef.current?.click()}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-admin-border rounded hover:bg-admin-surface-alt transition-colors shrink-0">
+          <Upload className="w-3 h-3" /> Screenshot
+        </button>
+      )}
+      {image && (
+        <button type="button" onClick={analyze} disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#C9A962]/10 border border-[#C9A962]/40 text-[#C9A962] rounded hover:bg-[#C9A962]/20 transition-colors disabled:opacity-50 shrink-0">
+          {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          {loading ? '...' : 'Analyser'}
+        </button>
+      )}
+      <div className="flex-1 min-w-0 flex gap-3">
+        {(longevity || sillage) && (
+          <>
+            {longevity && <p className="text-xs text-emerald-500 font-medium">✓ Tenue : {longevity}</p>}
+            {sillage   && <p className="text-xs text-emerald-500 font-medium">✓ Sillage : {sillage}</p>}
+          </>
+        )}
+        {error && <p className="text-xs text-orange-400 truncate">⚠ {error.slice(0, 60)}</p>}
+        {!longevity && !sillage && !error && (
+          <p className="text-xs text-admin-light">1 screenshot pour les 2 — section "Profil olfactif" Fragrantica</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function FragranticaRow({ catType, label, hint, productId }: {
+  catType: string; label: string; hint: string; productId: string
+}) {
+  const [image, setImage] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const analyze = async () => {
+    if (!image) return
+    setLoading(true); setError(null); setResult(null)
+    try {
+      const fd = new FormData()
+      fd.append('image', image)
+      fd.append('productId', productId)
+      fd.append('type', catType)
+      const res = await fetch('/api/admin/analyze-fragrantica', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (data.error) { setError(data.error); return }
+      if (catType === 'genre') setResult(data.genre ?? '—')
+      else if (catType === 'seasons') {
+        const s = data.seasons as Record<string, number>
+        setResult(s ? Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}%`).join(' · ') : '—')
+      } else if (catType === 'timeOfDay') {
+        const t = data.time_of_day as Record<string, number>
+        setResult(t ? Object.entries(t).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} ${v}%`).join(' · ') : '—')
+      }
+    } catch (e) { setError(String(e)) }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div className="flex items-center gap-3 p-3 bg-admin-bg rounded-lg border border-admin-border">
+      <span className="text-xs font-medium text-admin-text w-20 shrink-0">{label}</span>
+      <input ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={e => {
+          const f = e.target.files?.[0]; if (!f) return
+          setImage(f); setResult(null); setError(null)
+          const r = new FileReader(); r.onload = ev => setPreview(ev.target?.result as string); r.readAsDataURL(f)
+        }}
+      />
+      {preview ? (
+        <div className="relative shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="" className="h-10 w-16 object-cover rounded border border-admin-border" />
+          <button type="button" onClick={() => { setImage(null); setPreview(null); setResult(null) }}
+            className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white">
+            <X className="w-2.5 h-2.5" />
+          </button>
+        </div>
+      ) : (
+        <button type="button" onClick={() => inputRef.current?.click()}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-admin-border rounded hover:bg-admin-surface-alt transition-colors shrink-0">
+          <Upload className="w-3 h-3" /> Screenshot
+        </button>
+      )}
+      {image && (
+        <button type="button" onClick={analyze} disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#C9A962]/10 border border-[#C9A962]/40 text-[#C9A962] rounded hover:bg-[#C9A962]/20 transition-colors disabled:opacity-50 shrink-0">
+          {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+          {loading ? '...' : 'Analyser'}
+        </button>
+      )}
+      <div className="flex-1 min-w-0">
+        {result && <p className="text-xs text-emerald-500 font-medium truncate">✓ {result}</p>}
+        {error && <p className="text-xs text-orange-400 truncate">⚠ {error.slice(0, 60)}</p>}
+        {!result && !error && <p className="text-xs text-admin-light truncate">{hint}</p>}
+      </div>
+    </div>
+  )
+}
+
 // Helper pour ignorer les AbortError
 const isAbortError = (error: unknown): boolean => {
   if (!error) return false
@@ -65,6 +215,8 @@ interface ProductForm {
   is_active: boolean
   is_promo: boolean
   unlimited_stock: boolean
+  ml_stock: number
+  fragrantica_url: string
 }
 
 export default function EditProductPage() {
@@ -82,6 +234,18 @@ export default function EditProductPage() {
   const [uploadingPyramid, setUploadingPyramid] = useState(false)
   const [uploadingNote, setUploadingNote] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [fragranticaLoading, setFragranticaLoading] = useState(false)
+  const [fragranticaResult, setFragranticaResult] = useState<{
+    longevity: string | null
+    sillage: string | null
+    seasons: Record<string, number> | string[]
+    time_of_day: Record<string, number> | string[]
+    genre: string | null
+    raw_claude?: string | null
+  } | null>(null)
+  const [fragranticaImage, setFragranticaImage] = useState<File | null>(null)
+  const [fragranticaPreview, setFragranticaPreview] = useState<string | null>(null)
+  const fragranticaInputRef = useRef<HTMLInputElement>(null)
   const [activeTab, setActiveTab] = useState<'info' | 'media' | 'inventory'>('info')
   const [brands, setBrands] = useState<{ id: string; name: string }[]>([])
 
@@ -110,11 +274,14 @@ export default function EditProductPage() {
     is_bestseller: false,
     is_active: true,
     is_promo: false,
-    unlimited_stock: false
+    unlimited_stock: false,
+    ml_stock: 0,
+    fragrantica_url: '',
   })
 
   const [newNote, setNewNote] = useState({ top: '', heart: '', base: '' })
   const [newSize, setNewSize] = useState('')
+  const [mlDisponible, setMlDisponible] = useState<number>(0)
   const [accordsText, setAccordsText] = useState('')
   const [savingAccords, setSavingAccords] = useState(false)
   const [accordsSaved, setAccordsSaved] = useState(false)
@@ -182,7 +349,9 @@ export default function EditProductPage() {
           is_bestseller: data.is_bestseller ?? false,
           is_active: data.is_active ?? true,
           is_promo: data.is_promo ?? false,
-          unlimited_stock: data.unlimited_stock ?? false
+          unlimited_stock: data.unlimited_stock ?? false,
+          ml_stock: data.ml_stock || 0,
+          fragrantica_url: data.fragrantica_url || '',
         })
         setOriginalStock(data.stock || 0)
       }
@@ -242,7 +411,9 @@ export default function EditProductPage() {
         is_bestseller: form.is_bestseller,
         is_active: form.is_active,
         is_promo: form.is_promo,
-        unlimited_stock: form.unlimited_stock
+        unlimited_stock: form.unlimited_stock,
+        ml_stock: form.ml_stock,
+        fragrantica_url: form.fragrantica_url || null,
       }
 
       console.log('Updating product with data:', updateData)
@@ -603,6 +774,37 @@ const saveAccords = async () => {
     })
   }
 
+  const parseMlFromSize = (size: string): number => {
+    const match = size.replace(',', '.').match(/([\d.]+)\s*ml/i)
+    return match ? parseFloat(match[1]) : 0
+  }
+
+  const [mlSaving, setMlSaving] = useState(false)
+
+  const applyMlStock = async () => {
+    if (!mlDisponible || mlDisponible <= 0) return
+    const newMlStock = (form.ml_stock || 0) + mlDisponible
+    const newStockBySize: Record<string, number> = {}
+    for (const size of form.sizes) {
+      const ml = parseMlFromSize(size)
+      newStockBySize[size] = ml > 0 ? Math.floor(newMlStock / ml) : (form.stock_by_size[size] ?? 0)
+    }
+    const totalStock = Object.values(newStockBySize).reduce((a, b) => a + b, 0)
+    setMlSaving(true)
+    await supabase.from('products').update({ ml_stock: newMlStock, stock_by_size: newStockBySize, stock: totalStock }).eq('id', productId)
+    setMlSaving(false)
+    setForm(prev => ({ ...prev, ml_stock: newMlStock, stock_by_size: newStockBySize, stock: totalStock }))
+    setMlDisponible(0)
+  }
+
+  const resetMlStock = async () => {
+    setMlSaving(true)
+    await supabase.from('products').update({ ml_stock: 0 }).eq('id', productId)
+    setMlSaving(false)
+    setForm(prev => ({ ...prev, ml_stock: 0 }))
+    setMlDisponible(0)
+  }
+
   const updatePriceForSize = (size: string, price: number) => {
     setForm({
       ...form,
@@ -791,6 +993,34 @@ const saveAccords = async () => {
                   placeholder="Description détaillée du parfum..."
                 />
               </div>
+            </div>
+
+            {/* Fragrantica screenshot */}
+            <div className="bg-admin-surface rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-medium mb-4">Fragrantica — Votes</h2>
+              {(() => {
+                const CATEGORIES = [
+                  { type: 'seasons',   label: '🌍 Saisons',  hint: 'Section "Quand le porter" — saisons avec les nombres de votes' },
+                  { type: 'timeOfDay', label: '☀️ Journée',  hint: 'Section "Quand le porter" — jour/nuit avec les nombres de votes' },
+                  { type: 'genre',     label: '⚥ Genre',     hint: 'Section Genre avec les votes par catégorie' },
+                ] as const
+
+                return (
+                  <div className="space-y-3">
+                    <FragranticaPerformanceRow productId={productId} />
+                    {CATEGORIES.map(({ type: catType, label, hint }) => (
+                      <FragranticaRow
+                        key={catType}
+                        catType={catType}
+                        label={label}
+                        hint={hint}
+                        productId={productId}
+                      />
+                    ))}
+                  </div>
+                )
+              })()}
+
             </div>
 
             <div className="bg-admin-surface rounded-xl shadow-sm p-6">
@@ -1128,6 +1358,83 @@ const saveAccords = async () => {
                 <div className="text-center py-8 text-admin-muted">
                   <p>Aucune taille définie.</p>
                   <p className="text-sm">Ajoutez des tailles dans l&apos;onglet &quot;Informations&quot;.</p>
+                </div>
+              )}
+
+              {!form.unlimited_stock && form.sizes.length > 0 && (
+                <div className="mt-5 pt-5 border-t border-admin-border">
+                  <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <div>
+                      <p className="text-sm font-medium text-admin-text">Stock en ml</p>
+                      <p className="text-xs text-admin-muted">Le volume restant est calculé automatiquement à chaque commande.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-light text-[#C9A962] tabular-nums">
+                        {form.ml_stock > 0 ? `${form.ml_stock} ml` : '— ml'}
+                      </span>
+                      {form.ml_stock > 0 && (
+                        <button
+                          type="button"
+                          onClick={resetMlStock}
+                          disabled={mlSaving}
+                          className="text-xs px-2.5 py-1 rounded border border-red-300 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-end gap-3 flex-wrap">
+                    <div>
+                      <label className="block text-xs font-medium text-admin-muted mb-1">
+                        Ajouter des ml
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={mlDisponible || ''}
+                          placeholder="ex: 100"
+                          onChange={e => setMlDisponible(parseFloat(e.target.value) || 0)}
+                          className="w-36 px-3 py-2 pr-9 bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-muted text-sm">ml</span>
+                      </div>
+                    </div>
+                    {mlDisponible > 0 && (
+                      <div className="flex items-end gap-2 flex-wrap">
+                        <div className="flex gap-2 flex-wrap text-xs text-admin-muted pb-2">
+                          {(() => {
+                            const total = (form.ml_stock || 0) + mlDisponible
+                            return form.sizes.map(size => {
+                              const ml = parseMlFromSize(size)
+                              const qty = ml > 0 ? Math.floor(total / ml) : null
+                              return qty !== null ? (
+                                <span key={size} className="px-2 py-1 bg-admin-surface-alt rounded border border-admin-border">
+                                  <span className="text-[#C9A962] font-medium">{size}</span>
+                                  {' → '}
+                                  <span className="text-admin-text font-medium">{qty} unités</span>
+                                </span>
+                              ) : null
+                            })
+                          })()}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={applyMlStock}
+                          disabled={mlSaving}
+                          className="flex items-center gap-1.5 px-4 py-2 bg-[#C9A962] text-white rounded-lg hover:bg-[#b8943f] transition-colors text-sm font-medium disabled:opacity-50"
+                        >
+                          {mlSaving ? (
+                            <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Sauvegarde…</>
+                          ) : (
+                            <>+ Ajouter</>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
