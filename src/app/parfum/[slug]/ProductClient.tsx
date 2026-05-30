@@ -703,8 +703,8 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
 
             {/* Tenue, Sillage, Saisons, Journée */}
             {(performance.longevity || performance.sillage || Object.keys(performance.seasons).length > 0 || Object.keys(performance.timeOfDay).length > 0 || performance.genre) && (() => {
-              const LONGEVITY_LEVEL: Record<string, number> = { médiocre: 1, faible: 2, modérée: 3, 'longue tenue': 4, 'très longue tenue': 5 }
-              const LONGEVITY_HOURS: Record<string, string> = { médiocre: '< 2h', faible: '~3h', modérée: '~5h', 'longue tenue': '~8h', 'très longue tenue': '+12h' }
+              const LONGEVITY_LEVEL: Record<string, number> = { médiocre: 1, faible: 2, modérée: 3, bonne: 4, 'longue tenue': 4, 'très longue tenue': 5 }
+              const LONGEVITY_HOURS: Record<string, string> = { médiocre: '< 2h', faible: '~3h', modérée: '~5h', bonne: '~8h', 'longue tenue': '~8h', 'très longue tenue': '+12h' }
               const SILLAGE_LEVEL: Record<string, number> = { discret: 1, modéré: 2, puissant: 3, énorme: 4 }
               const SILLAGE_LABEL: Record<string, string> = { discret: 'Discret', modéré: 'Modéré', puissant: 'Puissant', énorme: 'Énorme' }
               const lonLvl = performance.longevity ? (LONGEVITY_LEVEL[performance.longevity] ?? 0) : 0
@@ -834,7 +834,8 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
 
             {/* Badges d'usage */}
             {(() => {
-              const LON_H: Record<string, number> = { médiocre: 1, faible: 3, modérée: 5, bonne: 8, 'longue tenue': 8, 'très longue tenue': 12 }
+              // Mêmes valeurs que l'affichage : < 2h, ~3h, ~5h, ~8h, +12h
+              const LON_H: Record<string, number> = { médiocre: 2, faible: 3, modérée: 5, bonne: 8, 'longue tenue': 8, 'très longue tenue': 12 }
               const h = performance.longevity ? (LON_H[performance.longevity] ?? 0) : 0
 
               // Pourcentages normalisés jour/nuit
