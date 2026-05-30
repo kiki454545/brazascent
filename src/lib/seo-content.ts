@@ -397,8 +397,6 @@ export function generateBrandSeoText(input: BrandSeoInput): BrandSeoContent {
   const { brandName, description, products } = input
 
   const count = products.length
-  const dominant = dominantNoteFamily(products)
-  const cats = dominantCategories(products)
   const topNotesArr = topNotes(products, 4)
   const productLinks = products.slice(0, 6).map(p => ({ name: p.name, slug: p.slug }))
 
@@ -422,30 +420,11 @@ export function generateBrandSeoText(input: BrandSeoInput): BrandSeoContent {
   }
 
   // ── Style olfactif ───────────────────────────────────────────────────────
-  const catLabel = formatCategories(cats)
-  const notesLabel = topNotesArr.length > 0
-    ? `autour de ${formatNotes(topNotesArr)}`
-    : 'aux accords travaillés et distinctifs'
-
-  const familyLabels: Record<NoteFamily, string> = {
-    floral: 'florale',
-    woody: 'boisée',
-    oriental: 'orientale et ambrée',
-    spicy: 'épicée et chaude',
-    citrus: 'fraîche et hespéridée',
-    fruity: 'fruitée et accessible',
-    gourmand: 'gourmande et enveloppante',
-    aquatic: 'marine et aérienne',
-    aromatic: 'aromatique et verte',
-    leather: 'cuirée et affirmée',
-    generic: 'singulière et travaillée',
-  }
-
-  const styleOlfactif = `L'univers ${brandName} se caractérise par une signature olfactive ${familyLabels[dominant]}, construite ${notesLabel}. ${
-    count > 1
-      ? `La collection de ${catLabel} proposée sur BrazaScent illustre l'amplitude créative de la maison.`
-      : `Cette fragrance de ${catLabel} illustre le positionnement créatif de la maison.`
-  } En décant, vous pouvez observer comment ces notes évoluent sur votre peau au fil de la journée — de l'accord d'ouverture au fond qui signe réellement une fragrance.`
+  const styleOlfactif = count <= 1
+    ? `L'univers parfumé de ${brandName} se révèle pleinement sur la peau, dans la durée. Chaque fragrance de la maison est une proposition singulière — une facette spécifique de son identité créative. Certaines compositions s'ouvrent sur la légèreté, d'autres sur la profondeur ou la chaleur. Ce décant vous permet de vivre cette expérience olfactive sur plusieurs jours, sans vous engager d'emblée dans l'achat du flacon complet.`
+    : count <= 4
+    ? `L'univers parfumé de ${brandName} se distingue par une approche créative cohérente, où chaque fragrance explore une facette différente de la maison. Certaines compositions peuvent être lumineuses et fraîches, d'autres plus boisées, ambrées, florales ou intenses. Tester ces ${count} fragrances en décant vous permet de les comparer dans la durée et d'identifier celle qui correspond le mieux à votre sensibilité olfactive.`
+    : `L'univers parfumé de ${brandName} se distingue par une approche créative cohérente, où chaque fragrance explore une facette différente de la maison. Certaines compositions peuvent être lumineuses et fraîches, d'autres plus profondes, boisées ou florales. Avec ${count} fragrances disponibles en décant sur BrazaScent, vous pouvez comparer plusieurs interprétations de la marque et trouver celle qui résonne avec votre sensibilité — sans réduire son identité à quelques notes olfactives.`
 
   // ── Pourquoi décant ──────────────────────────────────────────────────────
   const pourquoiDecant = `Tester ${brandName} en décant, c'est aborder la parfumerie avec méthode. Un format 5ml représente plus de 100 projections — soit plusieurs semaines d'utilisation quotidienne. Sur la durée, vous observerez comment les notes de tête s'effacent pour laisser place au cœur, puis au fond de composition : c'est là que réside la vraie identité d'un parfum ${brandName}. Si l'accord final correspond à votre olfaction, le flacon complet devient alors un achat raisonné, pas un pari.`
