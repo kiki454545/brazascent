@@ -363,6 +363,9 @@ export default function EditProductPage() {
   const [savingAccords, setSavingAccords] = useState(false)
   const [accordsSaved, setAccordsSaved] = useState(false)
   const [globalAccordColors, setGlobalAccordColors] = useState<Record<string, string>>({})
+  const [genrePerf, setGenrePerf] = useState<string>('')
+  const [genreSaving, setGenreSaving] = useState(false)
+  const [genreSaved, setGenreSaved] = useState(false)
 
   useEffect(() => {
     fetchProduct()
@@ -431,6 +434,7 @@ export default function EditProductPage() {
           fragrantica_url: data.fragrantica_url || '',
         })
         setOriginalStock(data.stock || 0)
+        setGenrePerf(data.performance_genre || '')
       }
     } catch (err) {
       if (!isAbortError(err)) {
@@ -1076,23 +1080,37 @@ const saveAccords = async () => {
             <div className="bg-admin-surface rounded-xl shadow-sm p-6">
               <h2 className="text-lg font-medium mb-4">Fragrantica — Votes</h2>
               {(() => {
-                const CATEGORIES = [
-                  { type: 'genre', label: '⚥ Genre', hint: 'Section Genre avec les votes par catégorie' },
-                ] as const
-
                 return (
                   <div className="space-y-3">
                     <FragranticaPerformanceRow productId={productId} />
                     <FragranticaContextRow productId={productId} />
-                    {CATEGORIES.map(({ type: catType, label, hint }) => (
-                      <FragranticaRow
-                        key={catType}
-                        catType={catType}
-                        label={label}
-                        hint={hint}
-                        productId={productId}
-                      />
-                    ))}
+                    {/* Genre — select direct */}
+                    <div className="flex items-center gap-3 p-3 bg-admin-bg rounded-lg border border-admin-border">
+                      <span className="text-xs font-medium text-admin-text w-28 shrink-0">⚥ Genre</span>
+                      <select
+                        value={genrePerf}
+                        onChange={async (e) => {
+                          const val = e.target.value
+                          setGenrePerf(val)
+                          setGenreSaving(true)
+                          await supabase.from('products').update({
+                            performance_genre: val || null,
+                            performance_updated_at: new Date().toISOString(),
+                          }).eq('id', productId)
+                          setGenreSaving(false)
+                          setGenreSaved(true)
+                          setTimeout(() => setGenreSaved(false), 2000)
+                        }}
+                        className="px-3 py-1.5 text-xs bg-admin-input border border-admin-border text-admin-text rounded-lg focus:outline-none focus:border-[#C9A962]"
+                      >
+                        <option value="">— Non défini</option>
+                        <option value="Homme">♂ Homme</option>
+                        <option value="Femme">♀ Femme</option>
+                        <option value="Unisexe">⚥ Unisexe</option>
+                      </select>
+                      {genreSaving && <span className="text-xs text-admin-muted">Sauvegarde…</span>}
+                      {genreSaved  && <span className="text-xs text-emerald-500">✓ Sauvegardé</span>}
+                    </div>
                   </div>
                 )
               })()}
