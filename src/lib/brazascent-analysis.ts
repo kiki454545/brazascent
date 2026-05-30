@@ -11,57 +11,88 @@ export interface AnalysisInput {
   category?: string | null
 }
 
-// ─── Mapping accords → adjectif ──────────────────────────────────────────────
+// ─── Mapping accords → adjectif (facettes …) ────────────────────────────────
 
 const ACCORD_ADJ: Record<string, string> = {
-  'boise': 'boisées', 'woody': 'boisées', 'wood': 'boisées', 'cedar': 'cèdre', 'cedre': 'cèdre',
+  // Boisé
+  'boise': 'boisées', 'woody': 'boisées', 'wood': 'boisées',
+  'cedar': 'cèdre', 'cedre': 'cèdre',
+  'santal': 'santal', 'sandalwood': 'santal',
+  'vetiver': 'vétiver',
+  'patchouli': 'patchouli',
+  // Musqué / Poudré
   'musque': 'musquées', 'musc': 'musquées', 'musk': 'musquées', 'musky': 'musquées',
-  'vanille': 'vanillées', 'vanilla': 'vanillées',
-  'ambre': 'ambrées', 'amber': 'ambrées', 'ambery': 'ambrées',
-  'epice': 'épicées', 'spicy': 'épicées', 'spice': 'épicées',
-  'floral': 'florales', 'fleuri': 'florales', 'rose': 'florales',
-  'frais': 'fraîches', 'fresh': 'fraîches',
-  'oriental': 'orientales',
-  'agrume': 'citronnées', 'citrus': 'citronnées',
-  'aquatique': 'aquatiques', 'marin': 'aquatiques', 'marine': 'aquatiques', 'aquatic': 'aquatiques',
   'poudre': 'poudrées', 'powdery': 'poudrées',
-  'vert': 'végétales', 'vegetal': 'végétales', 'green': 'végétales',
+  // Vanillé / Gourmand
+  'vanille': 'vanillées', 'vanilla': 'vanillées',
   'gourmand': 'gourmandes',
-  'chypre': 'chyprées',
+  'sucre': 'sucrées', 'sweet': 'sucrées',
+  // Ambré / Oriental / Résine
+  'ambre': 'ambrées', 'amber': 'ambrées', 'ambery': 'ambrées',
+  'oriental': 'orientales',
+  'baume': 'baumées', 'balmy': 'baumées', 'balsamique': 'balsamiques', 'balsamic': 'balsamiques',
+  'resine': 'résineuses', 'resinous': 'résineuses',
+  // Épicé
+  'epice': 'épicées', 'spicy': 'épicées', 'spice': 'épicées',
+  'aromatique': 'aromatiques', 'aromatic': 'aromatiques',
+  'tabac': 'tabacées', 'tobacco': 'tabacées',
+  // Floral
+  'floral': 'florales', 'fleuri': 'florales',
+  'rose': 'florales', 'jasmin': 'florales', 'iris': 'irisées',
+  // Frais / Agrume
+  'frais': 'fraîches', 'fresh': 'fraîches',
+  'agrume': 'citronnées', 'citrus': 'citronnées', 'hesperide': 'hespéridées',
+  'aquatique': 'aquatiques', 'marin': 'aquatiques', 'marine': 'aquatiques', 'aquatic': 'aquatiques',
+  // Vert
+  'vert': 'végétales', 'vegetal': 'végétales', 'green': 'végétales',
+  // Fruité
+  'fruite': 'fruitées', 'fruity': 'fruitées',
+  // Cuir / Fumé
   'cuir': 'cuirées', 'leather': 'cuirées',
   'fume': 'fumées', 'smoky': 'fumées', 'smoke': 'fumées',
-  'sucre': 'sucrées', 'sweet': 'sucrées',
-  'terreux': 'terreuses', 'earthy': 'terreuses',
-  'oud': 'oudées',
-  'patchouli': 'patchouli',
-  'vetiver': 'vétiver',
-  'santal': 'santal', 'sandalwood': 'santal',
+  // Chypré / Fougère
+  'chypre': 'chyprées',
   'fougere': 'fougères',
-  'baume': 'baumées', 'balmy': 'baumées',
+  // Oud
+  'oud': 'oudées',
+  // Terreux / Aldéhyde
+  'terreux': 'terreuses', 'earthy': 'terreuses',
+  'aldehy': 'aldéhydées',
 }
 
+// Caractère global du parfum (dérivé du premier accord)
 const ACCORD_CHAR: Record<string, string> = {
-  'boise': 'chaleureux', 'woody': 'chaleureux', 'cedar': 'sec et élancé', 'cedre': 'sec et élancé',
+  'boise': 'chaleureux', 'woody': 'chaleureux',
+  'cedar': 'sec et élancé', 'cedre': 'sec et élancé',
+  'santal': 'soyeux et crémeux', 'sandalwood': 'soyeux et crémeux',
+  'vetiver': 'terreux et sophistiqué',
+  'patchouli': 'terreux et hypnotique',
   'musque': 'enveloppant', 'musc': 'enveloppant',
+  'poudre': 'doux et raffiné',
   'vanille': 'doux et suave',
+  'gourmand': 'doux et enveloppant',
+  'sucre': 'suave et gourmand',
   'ambre': 'chaleureux et profond', 'amber': 'chaleureux et profond',
-  'epice': 'intense et vibrant', 'spicy': 'intense et vibrant',
-  'floral': 'délicat et élégant',
-  'frais': 'vif et aérien',
   'oriental': 'profond et sensuel',
+  'baume': 'chaud et résineux', 'balsamique': 'chaud et résineux',
+  'resine': 'chaud et résineux',
+  'epice': 'intense et vibrant', 'spicy': 'intense et vibrant',
+  'aromatique': 'aromatique et affirmé',
+  'tabac': 'sombre et capiteux',
+  'floral': 'délicat et élégant', 'rose': 'floral et délicat',
+  'iris': 'poudrée et raffiné',
+  'frais': 'vif et aérien',
   'agrume': 'vif et énergisant', 'citrus': 'vif et énergisant',
   'aquatique': 'aérien et marin', 'marin': 'aérien et marin',
-  'poudre': 'doux et raffiné',
   'vert': 'frais et végétal',
-  'gourmand': 'doux et enveloppant',
-  'chypre': 'élégant et sophistiqué',
+  'fruite': 'fruité et lumineux',
   'cuir': 'affirmé et caractériel', 'leather': 'affirmé et caractériel',
   'fume': 'sombre et saisissant',
-  'oud': 'précieux et profond',
-  'patchouli': 'terreux et hypnotique',
+  'chypre': 'élégant et sophistiqué',
+  'oud': 'précieux et enveloppant',
 }
 
-// ─── Longevity / Sillage ──────────────────────────────────────────────────────
+// ─── Longevity / Sillage ────────────────────────────────────────────────────
 
 const LONGEVITY: Record<string, { adj: string }> = {
   'médiocre':          { adj: 'légère' },
@@ -73,25 +104,28 @@ const LONGEVITY: Record<string, { adj: string }> = {
 }
 
 const SILLAGE: Record<string, { adj: string; desc: string }> = {
-  'discret':  { adj: 'intime',    desc: 'restant proche de la peau' },
-  'modéré':   { adj: 'présent',   desc: 'sans jamais s\'imposer' },
-  'puissant': { adj: 'affirmé',   desc: 'qui marque les esprits' },
-  'énorme':   { adj: 'puissant',  desc: 'audacieux, impossible à ignorer' },
+  'discret':  { adj: 'intime',   desc: 'restant proche de la peau' },
+  'modéré':   { adj: 'présent',  desc: 'sans jamais s\'imposer' },
+  'puissant': { adj: 'affirmé',  desc: 'qui marque les esprits' },
+  'énorme':   { adj: 'puissant', desc: 'impossible à ignorer' },
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function norm(str: string): string {
   return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
 }
 
+// Hash déterministe du nom pour varier les tournures sans aléatoire
+function nameHash(name: string): number {
+  return Math.abs(name.split('').reduce((acc, c) => (acc * 31 + c.charCodeAt(0)) | 0, 0))
+}
+
 function accordToAdj(name: string): string | null {
   const n = norm(name)
-  // Exact match first
   for (const [k, v] of Object.entries(ACCORD_ADJ)) {
     if (n === k) return v
   }
-  // Partial : l'accord contient la clé (ex: "épicé chaud" contient "epice")
   for (const [k, v] of Object.entries(ACCORD_ADJ)) {
     if (k.length >= 4 && n.includes(k)) return v
   }
@@ -123,10 +157,22 @@ function formatNotes(notes: string[]): string {
   return `Les notes ${rest.map(notePrep).join(', ')} et ${notePrep(last)}`
 }
 
-function pickNotes(allNotes: string[]): string[] {
-  const generic = new Set(['musc', 'musk', 'ambre', 'amber', 'bois', 'wood', 'muscs blancs', 'white musk'])
-  const interesting = allNotes.filter(n => !generic.has(n.toLowerCase()))
-  const fallback = allNotes.filter(n => generic.has(n.toLowerCase()))
+function pickNotes(allNotes: string[], topAccordNorms: string[]): string[] {
+  const generic = new Set(['musc', 'musk', 'ambre', 'amber', 'bois', 'wood', 'muscs blancs', 'white musk', 'base'])
+  const overlapsFeaturedAccord = (note: string) =>
+    topAccordNorms.some(an => { const n = norm(note); return n.includes(an) || an.includes(n) })
+
+  // Notes intéressantes + pas déjà dans les accords cités
+  const interesting = allNotes.filter(note => {
+    const n = norm(note)
+    if (generic.has(n)) return false
+    return !overlapsFeaturedAccord(note)
+  })
+  // Génériques acceptables si besoin, mais seulement s'ils ne doublonnent pas non plus
+  const fallback = allNotes.filter(note => {
+    const n = norm(note)
+    return generic.has(n) && !overlapsFeaturedAccord(note)
+  })
   return [...interesting, ...fallback].filter(Boolean).slice(0, 3)
 }
 
@@ -153,7 +199,7 @@ function getTimeCtx(timeOfDay: Record<string, number>): string | null {
   return null
 }
 
-// ─── Générateur principal ─────────────────────────────────────────────────────
+// ─── Générateur principal ────────────────────────────────────────────────────
 
 export function generateBrazaScentAnalysis(input: AnalysisInput): string | null {
   const {
@@ -169,6 +215,8 @@ export function generateBrazaScentAnalysis(input: AnalysisInput): string | null 
     category,
   } = input
 
+  const h = nameHash(name) // pour varier les formulations de façon déterministe
+
   const allNotes = [
     ...(notes.heart ?? []),
     ...(notes.base ?? []),
@@ -179,45 +227,56 @@ export function generateBrazaScentAnalysis(input: AnalysisInput): string | null 
     .sort((a, b) => (b.intensite ?? 0) - (a.intensite ?? 0))
     .slice(0, 4)
 
-  const hasAccords = sortedAccords.length >= 1
-  const hasNotes = allNotes.length >= 2
-  const hasPerf = !!(longevity || sillage)
-  const hasContext = Object.keys(seasons).length > 0 || Object.keys(timeOfDay).length > 0
-
-  if (!hasAccords && !hasNotes && !shortDescription) return null
+  if (!sortedAccords.length && !allNotes.length && !shortDescription) return null
 
   const parts: string[] = []
 
-  // ── Phrase 1 : ouverture (accords ou description) ─────────────────────────
+  // ── Phrase 1 : ouverture ─────────────────────────────────────────────────
   const accordAdjs = sortedAccords
     .map(a => accordToAdj(a.nom))
     .filter((v): v is string => v !== null)
     .filter((v, i, arr) => arr.indexOf(v) === i)
     .slice(0, 3)
 
+  const topAccordNorms = sortedAccords.slice(0, 3).map(a => norm(a.nom))
+
   if (accordAdjs.length >= 2) {
     const last = accordAdjs[accordAdjs.length - 1]
     const rest = accordAdjs.slice(0, -1)
     const accordStr = rest.join(', ') + ' et ' + last
     const charAdj = accordToChar(sortedAccords[0]?.nom ?? '')
-    if (charAdj) {
-      parts.push(`${name} déploie un caractère ${charAdj}, porté par des facettes ${accordStr}.`)
-    } else {
-      parts.push(`${name} se distingue par des facettes ${accordStr} qui lui confèrent un caractère singulier et mémorable.`)
-    }
+
+    // 3 tournures d'ouverture en rotation déterministe
+    const openings = [
+      charAdj
+        ? `${name} déploie un caractère ${charAdj}, porté par des facettes ${accordStr}.`
+        : `${name} se distingue par des facettes ${accordStr} qui lui confèrent une signature mémorable.`,
+      charAdj
+        ? `${name} s'affirme par un caractère ${charAdj}, tissé autour de facettes ${accordStr}.`
+        : `${name} construit son identité autour de facettes ${accordStr}.`,
+      charAdj
+        ? `Avec son caractère ${charAdj}, ${name} déploie des facettes ${accordStr} cohérentes et affirmées.`
+        : `${name} articule sa personnalité autour de facettes ${accordStr} distinctives.`,
+    ]
+    parts.push(openings[h % openings.length])
+
   } else if (accordAdjs.length === 1) {
     parts.push(`${name} s'articule autour d'une signature ${accordAdjs[0]}, affirmant une personnalité distincte.`)
   } else if (shortDescription) {
-    const desc = shortDescription.trim().replace(/\.$/, '')
-    parts.push(`${desc}.`)
+    parts.push(`${shortDescription.trim().replace(/\.$/, '')}.`)
   }
 
-  // ── Phrase 2 : performance (tenue + sillage) ──────────────────────────────
+  // ── Phrase 2 : performance ───────────────────────────────────────────────
   if (longevity && sillage) {
     const lonAdj = LONGEVITY[longevity]?.adj
     const silData = SILLAGE[sillage]
     if (lonAdj && silData) {
-      parts.push(`Sa tenue ${lonAdj} et son sillage ${silData.adj} (${silData.desc}) en font une fragrance pensée pour laisser une impression durable.`)
+      const perfTemplates = [
+        `Sa tenue ${lonAdj} et son sillage ${silData.adj} (${silData.desc}) en font une fragrance pensée pour laisser une impression durable.`,
+        `Avec une tenue ${lonAdj} et un sillage ${silData.adj}, ${silData.desc}, cette fragrance s'installe avec conviction.`,
+        `Sa tenue ${lonAdj} conjuguée à un sillage ${silData.adj} en fait une fragrance que l'on remarque et dont on se souvient.`,
+      ]
+      parts.push(perfTemplates[(h + 1) % perfTemplates.length])
     }
   } else if (longevity) {
     const lonAdj = LONGEVITY[longevity]?.adj
@@ -231,37 +290,51 @@ export function generateBrazaScentAnalysis(input: AnalysisInput): string | null 
     }
   }
 
-  // ── Phrase 3 : notes ──────────────────────────────────────────────────────
-  const selectedNotes = pickNotes(allNotes)
+  // ── Phrase 3 : notes ─────────────────────────────────────────────────────
+  const selectedNotes = pickNotes(allNotes, topAccordNorms)
   if (selectedNotes.length >= 2) {
     const notesStr = formatNotes(selectedNotes)
-    parts.push(`${notesStr} enrichissent la composition, apportant profondeur et complexité à chaque projection.`)
+    const noteTemplates = [
+      `${notesStr} enrichissent la composition, apportant profondeur et complexité à chaque projection.`,
+      `${notesStr} traversent la composition avec élégance, révélant sa richesse au fil du temps.`,
+      `${notesStr} viennent compléter le tableau olfactif, ajoutant nuance et caractère.`,
+    ]
+    parts.push(noteTemplates[(h + 2) % noteTemplates.length])
   }
 
-  // ── Phrase 4 : contexte d'usage ───────────────────────────────────────────
+  // ── Phrase 4 : contexte ──────────────────────────────────────────────────
   const timeCtx = getTimeCtx(timeOfDay)
   const seasonCtx = getSeasonCtx(seasons)
 
   if (timeCtx && seasonCtx) {
-    parts.push(`Cette fragrance s'exprime idéalement ${timeCtx}, ${seasonCtx}, où ses matières premières révèlent toute leur richesse.`)
+    const ctxTemplates = [
+      `Cette fragrance s'exprime idéalement ${timeCtx}, ${seasonCtx}, où ses matières premières révèlent toute leur richesse.`,
+      `Elle déploie son plein potentiel ${timeCtx}, ${seasonCtx}, au contact d'une peau réchauffée.`,
+      `${timeCtx.charAt(0).toUpperCase() + timeCtx.slice(1)} et ${seasonCtx}, cette fragrance trouve son contexte d'expression idéal.`,
+    ]
+    parts.push(ctxTemplates[(h + 3) % ctxTemplates.length])
   } else if (timeCtx) {
     parts.push(`Elle s'épanouit particulièrement ${timeCtx}, révélant au fil du temps une évolution olfactive subtile.`)
   } else if (seasonCtx) {
     parts.push(`Son caractère prend toute son ampleur ${seasonCtx}, où la matière olfactive se déploie pleinement.`)
   }
 
-  // ── Phrase 5 : closing SEO ────────────────────────────────────────────────
+  // ── Phrase 5 : closing SEO ───────────────────────────────────────────────
   if (brand) {
     const concLabel =
       category === 'Extrait de Parfum' ? 'extrait de parfum' :
       category === 'Eau de Toilette'   ? 'eau de toilette'   :
       'parfum'
-    // "ce" → "cet" devant voyelle, "cette" pour EDT (féminin)
     const article =
       category === 'Eau de Toilette'   ? 'cette' :
       category === 'Extrait de Parfum' ? 'cet'   :
       'ce'
-    parts.push(`Tester ${article} ${concLabel} ${brand} en décant, c'est s'offrir la pleine expérience de la fragrance, sans l'engagement financier d'un flacon complet.`)
+    const closings = [
+      `Tester ${article} ${concLabel} ${brand} en décant, c'est s'offrir la pleine expérience de la fragrance, sans l'engagement financier d'un flacon complet.`,
+      `Découvrir ${article} ${concLabel} ${brand} via un décant permet d'en saisir toutes les nuances avant de s'engager sur un flacon.`,
+      `Un décant de ${article} ${concLabel} ${brand}, c'est la certitude d'un choix éclairé avant l'investissement d'un flacon complet.`,
+    ]
+    parts.push(closings[(h + 4) % closings.length])
   }
 
   if (parts.length === 0) return null
