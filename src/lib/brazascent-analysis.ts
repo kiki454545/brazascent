@@ -217,7 +217,7 @@ export function generateBrazaScentAnalysis(input: AnalysisInput): string | null 
     const lonAdj = LONGEVITY[longevity]?.adj
     const silData = SILLAGE[sillage]
     if (lonAdj && silData) {
-      parts.push(`Sa tenue ${lonAdj} et son sillage ${silData.adj} — ${silData.desc} — en font une fragrance pensée pour laisser une impression durable.`)
+      parts.push(`Sa tenue ${lonAdj} et son sillage ${silData.adj} (${silData.desc}) en font une fragrance pensée pour laisser une impression durable.`)
     }
   } else if (longevity) {
     const lonAdj = LONGEVITY[longevity]?.adj
@@ -227,7 +227,7 @@ export function generateBrazaScentAnalysis(input: AnalysisInput): string | null 
   } else if (sillage) {
     const silData = SILLAGE[sillage]
     if (silData) {
-      parts.push(`Son sillage ${silData.adj} — ${silData.desc} — lui assure une présence distincte et cohérente.`)
+      parts.push(`Son sillage ${silData.adj} (${silData.desc}) lui assure une présence distincte et cohérente.`)
     }
   }
 
@@ -261,7 +261,7 @@ export function generateBrazaScentAnalysis(input: AnalysisInput): string | null 
       category === 'Eau de Toilette'   ? 'cette' :
       category === 'Extrait de Parfum' ? 'cet'   :
       'ce'
-    parts.push(`Tester ${article} ${concLabel} ${brand} en décant, c'est s'offrir la pleine expérience de la fragrance — sans l'engagement financier d'un flacon complet.`)
+    parts.push(`Tester ${article} ${concLabel} ${brand} en décant, c'est s'offrir la pleine expérience de la fragrance, sans l'engagement financier d'un flacon complet.`)
   }
 
   if (parts.length === 0) return null

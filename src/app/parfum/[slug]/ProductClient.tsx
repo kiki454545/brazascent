@@ -924,7 +924,7 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
                 Pourquoi découvrir {product.name} en décant ?
               </h2>
               <p className="text-muted-foreground text-sm leading-relaxed mb-3">
-                Un flacon complet représente un investissement significatif. Notre décant authentique — prélevé directement depuis le flacon d'origine de la marque — vous permet de vivre cette fragrance sur votre peau, dans votre quotidien, avant tout engagement. La même concentration, la même formule, le même parfum.
+                Un flacon complet représente un investissement significatif. Notre décant authentique est prélevé directement depuis le flacon d'origine de la marque : vous recevez le même parfum, dans la même concentration, sans aucune modification. Une façon de vivre cette fragrance sur votre peau, dans votre quotidien, avant tout engagement.
               </p>
               {product.brand && (
                 <p className="text-muted-foreground text-sm leading-relaxed mb-3">
@@ -949,10 +949,10 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
               <h2 className="text-lg tracking-[0.15em] uppercase mb-5">Questions fréquentes</h2>
               <div className="divide-y divide-border">
                 {[
-                  { q: "C'est quoi un décant de parfum ?", a: "Un décant est un prélèvement effectué directement depuis le flacon d'origine de la marque. Vous recevez le parfum authentique — sans dilution, sans reformulation — dans un vaporisateur soigneusement conditionné. La même fragrance qu'en boutique, en format découverte." },
+                  { q: "C'est quoi un décant de parfum ?", a: "Un décant est un prélèvement effectué directement depuis le flacon d'origine de la marque. Vous recevez le parfum authentique, sans dilution ni reformulation, dans un vaporisateur soigneusement conditionné. La même fragrance qu'en boutique, en format découverte." },
                   { q: "Le parfum est-il dilué ou modifié ?", a: "Non. Nos décants sont du parfum pur, dans la concentration exacte du flacon d'origine. Aucun ajout de solvant, d'alcool supplémentaire ou de modificateur. Ce que vous recevez est identique à ce que vous trouveriez dans une boutique officielle." },
                   { q: "Quelle est la durée d'un décant 5ml ?", a: "Un 5ml représente environ 100 à 110 projections, soit 2 à 3 semaines d'utilisation quotidienne (2 à 3 sprays par jour). Suffisant pour découvrir toutes les phases d'évolution d'une fragrance : note de tête, cœur, fond." },
-                  { q: "Puis-je retourner un décant ?", a: "Pour des raisons d'hygiène, les décants ne sont pas retournables une fois expédiés. C'est précisément pourquoi nous proposons des formats aussi petits que 2ml — pour minimiser votre investissement lors de la découverte." },
+                  { q: "Puis-je retourner un décant ?", a: "Pour des raisons d'hygiène, les décants ne sont pas retournables une fois expédiés. C'est précisément pourquoi nous proposons des formats aussi petits que 2ml, pour minimiser votre investissement lors de la découverte." },
                 ].map(({ q, a }, i) => (
                   <details key={i} className="group py-4">
                     <summary className="flex items-center justify-between cursor-pointer font-medium text-foreground text-sm [&::-webkit-details-marker]:hidden">
