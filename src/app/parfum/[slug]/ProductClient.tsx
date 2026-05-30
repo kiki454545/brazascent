@@ -704,7 +704,7 @@ export default function ProductPage({ analysisText }: ProductClientProps) {
             {/* Tenue, Sillage, Saisons, Journée */}
             {(performance.longevity || performance.sillage || Object.keys(performance.seasons).length > 0 || Object.keys(performance.timeOfDay).length > 0 || performance.genre) && (() => {
               const LONGEVITY_LEVEL: Record<string, number> = { médiocre: 1, faible: 2, modérée: 3, bonne: 4, 'longue tenue': 4, 'très longue tenue': 5 }
-              const LONGEVITY_HOURS: Record<string, string> = { médiocre: '< 2h', faible: '~3h', modérée: '~5h', bonne: '~8h', 'longue tenue': '~8h', 'très longue tenue': '+12h' }
+              const LONGEVITY_HOURS: Record<string, string> = { médiocre: '< 2 h', faible: '3 h', modérée: '5 h', bonne: '8 h', 'longue tenue': '8 h', 'très longue tenue': '+12 h' }
               const SILLAGE_LEVEL: Record<string, number> = { discret: 1, modéré: 2, puissant: 3, énorme: 4 }
               const SILLAGE_LABEL: Record<string, string> = { discret: 'Discret', modéré: 'Modéré', puissant: 'Puissant', énorme: 'Énorme' }
               const lonLvl = performance.longevity ? (LONGEVITY_LEVEL[performance.longevity] ?? 0) : 0
