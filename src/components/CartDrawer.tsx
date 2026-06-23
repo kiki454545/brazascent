@@ -79,7 +79,7 @@ export function CartDrawer() {
               <h2 className="font-sans text-lg tracking-[0.2em] uppercase">
                 Votre panier ({items.length})
               </h2>
-              <button onClick={closeCart} className="p-2 hover:text-primary transition-colors">
+              <button onClick={closeCart} aria-label="Fermer le panier" className="p-3 hover:text-primary transition-colors">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -156,12 +156,12 @@ export function CartDrawer() {
                             </div>
                             <button
                               onClick={() => removeItem(item.product.id, item.selectedSize)}
-                              className={`p-1 transition-colors ${
+                              aria-label={`Supprimer ${item.product.name} du panier`}
+                              className={`p-2 transition-colors ${
                                 itemOutOfStock
                                   ? 'text-red-500 hover:text-red-700'
                                   : 'text-muted-foreground/60 hover:text-foreground'
                               }`}
-                              title={itemOutOfStock ? 'Retirer du panier' : 'Supprimer'}
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -170,33 +170,43 @@ export function CartDrawer() {
                           {!itemOutOfStock && (
                             <div className="mt-3 flex items-center justify-between">
                               {/* Quantity */}
-                              <div className="flex items-center border border-border">
-                                <button
-                                  onClick={() =>
-                                    updateQuantity(
-                                      item.product.id,
-                                      item.selectedSize,
-                                      item.quantity - 1
-                                    )
-                                  }
-                                  className="p-2 hover:bg-muted transition-colors"
-                                >
-                                  <Minus className="w-3 h-3" />
-                                </button>
-                                <span className="w-8 text-center text-sm">{item.quantity}</span>
-                                <button
-                                  onClick={() =>
-                                    updateQuantity(
-                                      item.product.id,
-                                      item.selectedSize,
-                                      item.quantity + 1
-                                    )
-                                  }
-                                  className="p-2 hover:bg-muted transition-colors"
-                                >
-                                  <Plus className="w-3 h-3" />
-                                </button>
-                              </div>
+                              {(() => {
+                                const maxStock = item.product.unlimitedStock
+                                  ? Infinity
+                                  : (item.product.stockBySize?.[item.selectedSize] ?? item.product.stock ?? Infinity)
+                                return (
+                                <div className="flex items-center border border-border">
+                                  <button
+                                    onClick={() =>
+                                      updateQuantity(
+                                        item.product.id,
+                                        item.selectedSize,
+                                        item.quantity - 1
+                                      )
+                                    }
+                                    aria-label={`Diminuer la quantité de ${item.product.name}`}
+                                    className="p-2 hover:bg-muted transition-colors"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="w-8 text-center text-sm" aria-live="polite" aria-label={`Quantité : ${item.quantity}`}>{item.quantity}</span>
+                                  <button
+                                    onClick={() =>
+                                      updateQuantity(
+                                        item.product.id,
+                                        item.selectedSize,
+                                        item.quantity + 1
+                                      )
+                                    }
+                                    disabled={item.quantity >= maxStock}
+                                    aria-label={`Augmenter la quantité de ${item.product.name}`}
+                                    className="p-2 hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+                                )
+                              })()}
 
                               {/* Price */}
                               <p className="font-medium">

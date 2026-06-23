@@ -31,7 +31,7 @@ export function RecentlyViewed({ excludeId }: RecentlyViewedProps) {
             Récemment consultés
           </h2>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 scrollbar-hide">
           {visible.map((item) => (
             <Link
               key={item.id}

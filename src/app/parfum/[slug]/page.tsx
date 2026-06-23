@@ -54,7 +54,7 @@ function buildMetaDescription(product: Record<string, any>): string {
   const name   = (product.name  as string) || ''
   const brand  = (product.brand as string | null) || ''
   const cat    = (product.category as string | null) || 'Parfum'
-  const sizes  = ((product.sizes as string[] | null) ?? ['2ml', '5ml', '10ml']).slice(0, 3)
+  const sizes  = (product.sizes as string[] | null) ?? ['2ml', '5ml', '10ml']
 
   // Notes : cœur + fond (plus distinctives) puis tête
   const notes: string[] = [

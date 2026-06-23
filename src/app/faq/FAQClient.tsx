@@ -34,6 +34,8 @@ export default function FAQClient() {
                   <div key={itemId} className="border border-border rounded-lg overflow-hidden">
                     <button
                       onClick={() => toggleItem(itemId)}
+                      aria-expanded={isOpen}
+                      aria-controls={`faq-answer-${itemId}`}
                       className="w-full flex items-center justify-between p-5 text-left hover:bg-muted transition-colors"
                     >
                       <span className="font-medium text-foreground pr-4">{item.question}</span>

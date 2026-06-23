@@ -18,7 +18,10 @@ import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { useSettingsStore } from '@/store/settings'
 import { useRecentlyViewedStore } from '@/store/recentlyViewed'
-import { ExpressCheckoutBlock } from '@/components/ExpressCheckoutBlock'
+const ExpressCheckoutBlock = dynamic(
+  () => import('@/components/ExpressCheckoutBlock').then(m => ({ default: m.ExpressCheckoutBlock })),
+  { ssr: false }
+)
 import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
 import { formatPrice } from '@/lib/format'
@@ -83,6 +86,8 @@ function mapSupabaseToProduct(data: Record<string, any>): { product: Product; st
     pyramidImage: data.pyramid_image || undefined,
     accords: data.accords || [],
     stock: data.stock ?? 1,
+    stockBySize: data.stock_by_size || {},
+    unlimitedStock: data.unlimited_stock ?? false,
     inStock: (data.unlimited_stock ?? false) || (data.stock || 0) > 0,
     new: data.is_new,
     bestseller: data.is_bestseller,
@@ -416,12 +421,20 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
   }
 
   const currentPrice = getSizePrice(selectedSize)
-  const sprayEstimates: Record<string, string> = {
-    '2ml': '≈ 40 sprays',
-    '5ml': '≈ 90 sprays',
-    '10ml': '≈ 180 sprays',
+
+  // Prix de référence pour le calcul du prix barré : le plus petit prix parmi les tailles
+  // (original_price correspond toujours au prix avant promo de la taille la moins chère)
+  const minSizePrice = (() => {
+    const prices = Object.values(priceBySize).filter((p): p is number => typeof p === 'number' && p > 0)
+    return prices.length > 0 ? Math.min(...prices) : product.price
+  })()
+  const SPRAYS_PER_ML = 22
+  const getSprayEstimate = (size: string): string | null => {
+    const ml = parseFloat(size.replace(',', '.').replace(/[^0-9.]/g, ''))
+    if (!ml || isNaN(ml)) return null
+    return `≈ ${Math.round(ml * SPRAYS_PER_ML)} sprays`
   }
-  const preferredSizeOrder = ['2ml', '5ml', '10ml']
+  const preferredSizeOrder = ['2ml', '5ml', '10ml', '30ml']
   const orderedSizes = [...product.size].sort((a, b) => {
     const aIndex = preferredSizeOrder.indexOf(a.toLowerCase())
     const bIndex = preferredSizeOrder.indexOf(b.toLowerCase())
@@ -431,7 +444,7 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
     if (bIndex === -1) return -1
     return aIndex - bIndex
   })
-  const selectedSprays = sprayEstimates[selectedSize.toLowerCase()]
+  const selectedSprays = getSprayEstimate(selectedSize)
 
   // Upsell : suggère la taille supérieure si le client a choisi la moins chère
   const upsellSuggestion = (() => {
@@ -583,9 +596,9 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
             {/* Price */}
             <div className="flex items-center gap-4 mb-8">
               <span className="text-3xl font-light">{formatPrice(currentPrice)} €</span>
-              {product.originalPrice && (
-                <span className="text-lg text-muted-foreground/60 line-through">
-                  {getSizePrice(selectedSize) * (product.originalPrice / product.price)} €
+              {product.originalPrice && minSizePrice > 0 && (
+                <span className="text-lg text-muted-foreground/75 line-through">
+                  {formatPrice(getSizePrice(selectedSize) * (product.originalPrice / minSizePrice))} €
                 </span>
               )}
             </div>
@@ -593,10 +606,75 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
             {/* Size selector */}
             <div className="mb-8">
               <p className="text-sm tracking-[0.15em] uppercase mb-3">Contenance</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+              {/* Mobile: compact tabs (< lg) */}
+              <div className="flex flex-wrap gap-2 lg:hidden">
                 {orderedSizes.map((size) => {
                   const sizeStock = stockBySize[size] ?? 0
-                  const sprays = sprayEstimates[size.toLowerCase()]
+                  const isSizeOutOfStock = isGloballyOutOfStock || (!unlimitedStock && sizeStock === 0)
+                  const sprays = getSprayEstimate(size)
+                  return (
+                    <button
+                      key={size}
+                      onClick={() => !isSizeOutOfStock && setSelectedSize(size)}
+                      disabled={isSizeOutOfStock}
+                      className={`flex flex-col items-start min-w-[72px] px-3 py-2.5 border transition-all duration-200 ${
+                        isSizeOutOfStock
+                          ? 'border-border opacity-40 cursor-not-allowed'
+                          : selectedSize === size
+                          ? 'border-primary bg-primary/[0.06]'
+                          : 'border-border hover:border-primary/60'
+                      }`}
+                    >
+                      <span className={`text-sm font-medium tracking-[0.08em] uppercase ${
+                        selectedSize === size && !isSizeOutOfStock ? 'text-primary' : 'text-foreground'
+                      }`}>
+                        {size}
+                      </span>
+                      <span className={`text-xs mt-0.5 ${
+                        isSizeOutOfStock
+                          ? 'text-muted-foreground/30'
+                          : selectedSize === size
+                          ? 'text-primary/80'
+                          : 'text-muted-foreground'
+                      }`}>
+                        {isSizeOutOfStock ? 'Rupture' : `${formatPrice(getSizePrice(size))} €`}
+                      </span>
+                      {sprays && !isSizeOutOfStock && (
+                        <span className="text-[10px] text-muted-foreground/70 mt-0.5 leading-tight">
+                          {sprays}
+                        </span>
+                      )}
+                      <span className={`mt-1 text-[10px] uppercase tracking-[0.1em] ${
+                        isSizeOutOfStock
+                          ? 'text-red-400'
+                          : sizeStock <= 5 && !unlimitedStock
+                          ? 'text-orange-500'
+                          : 'text-muted-foreground/60'
+                      }`}>
+                        {isSizeOutOfStock
+                          ? 'Rupture'
+                          : unlimitedStock
+                          ? 'En stock'
+                          : sizeStock <= 5
+                          ? `+que ${sizeStock}`
+                          : `${sizeStock} en stock`}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+              {selectedSprays && (
+                <p className="text-xs text-muted-foreground mt-2 lg:hidden">
+                  Estimation : {selectedSize} {selectedSprays}.
+                </p>
+              )}
+
+              {/* Desktop: full cards (lg+) */}
+              <div className={`hidden lg:grid gap-3 ${orderedSizes.length >= 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                {orderedSizes.map((size) => {
+                  const sizeStock = stockBySize[size] ?? 0
+                  const sprays = getSprayEstimate(size)
                   // Une taille est en rupture si le stock global est à 0 (peu importe unlimited_stock) OU si le stock de cette taille est à 0
                   const isSizeOutOfStock = isGloballyOutOfStock || (!unlimitedStock && sizeStock === 0)
                   return (
@@ -642,7 +720,7 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
                 })}
               </div>
               {selectedSprays && (
-                <p className="text-xs text-muted-foreground mt-3">
+                <p className="hidden lg:block text-xs text-muted-foreground mt-3">
                   Estimation basée sur une vaporisation standard : {selectedSize} {selectedSprays}.
                 </p>
               )}
@@ -662,21 +740,31 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
             {/* Quantity */}
             <div className="mb-8">
               <p className="text-sm tracking-[0.15em] uppercase mb-3">Quantité</p>
-              <div className="flex items-center border border-border w-fit">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-3 hover:bg-cream transition-colors"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="w-12 text-center">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="p-3 hover:bg-cream transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
+              {(() => {
+                const maxQty = unlimitedStock
+                  ? 99
+                  : Math.max(1, stockBySize[selectedSize] ?? product.stock ?? 1)
+                return (
+                  <div className="flex items-center border border-border w-fit">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      aria-label="Diminuer la quantité"
+                      className="p-3 hover:bg-cream transition-colors"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-12 text-center" aria-live="polite" aria-label={`Quantité : ${quantity}`}>{quantity}</span>
+                    <button
+                      onClick={() => setQuantity(Math.min(maxQty, quantity + 1))}
+                      disabled={quantity >= maxQty}
+                      aria-label="Augmenter la quantité"
+                      className="p-3 hover:bg-cream transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Alerte retour en stock */}
@@ -702,12 +790,13 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
               )}
               <button
                 onClick={() => toggleItem(product.id)}
+                aria-label={inWishlist ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                aria-pressed={inWishlist}
                 className={`p-4 border transition-colors ${
                   inWishlist
                     ? 'border-primary bg-primary text-white'
                     : 'border-border hover:border-foreground'
                 }`}
-                title="Ajouter aux favoris"
               >
                 <Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
               </button>
@@ -784,8 +873,7 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
               const hasSeasonsData = Object.keys(performance.seasons).length > 0
               const hasTimeData    = Object.keys(performance.timeOfDay).length > 0
               // Seuil d'activation : saison active si son % >= 40% du max
-              const maxSeason = Math.max(...Object.values(performance.seasons), 1)
-              const maxTime   = Math.max(...Object.values(performance.timeOfDay), 1)
+
               return (
                 <div className="mt-10 space-y-3">
                   <div className="flex items-center gap-3 mb-5">
@@ -851,7 +939,7 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
                         <div className="rounded-2xl bg-cream p-5">
                           <p className="text-xs text-muted-foreground mb-4">journée</p>
                           <div className="space-y-3">
-                            {ALL_TIMES.map(({ key, label, icon, color }) => {
+                            {ALL_TIMES.map(({ key, label, icon }) => {
                               const pct = performance.timeOfDay[key] ?? 0
                               return (
                                 <div key={key} className="flex items-center gap-3">

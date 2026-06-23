@@ -126,7 +126,7 @@ export function generateProductDescription(input: ProductDescInput): string | nu
 
   const seed = h(name)
   const family = detectFamily(accordNoms)
-  const formatsStr = (sizes ?? ['2ml', '5ml', '10ml']).slice(0, 3).join(', ')
+  const formatsStr = (sizes ?? ['2ml', '5ml', '10ml']).join(', ')
 
   // ── Genre label ────────────────────────────────────────────────────────────
   let genreLabel = ''

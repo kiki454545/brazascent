@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { m } from 'framer-motion'
@@ -12,7 +13,10 @@ import { supabase } from '@/lib/supabase'
 import { CartItem } from '@/types'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
 import { UpsellBlock } from '@/components/UpsellBlock'
-import { ExpressCheckoutBlock } from '@/components/ExpressCheckoutBlock'
+const ExpressCheckoutBlock = dynamic(
+  () => import('@/components/ExpressCheckoutBlock').then(m => ({ default: m.ExpressCheckoutBlock })),
+  { ssr: false }
+)
 import { formatPrice } from '@/lib/format'
 
 // Obtenir le prix d'un article selon sa taille
@@ -223,12 +227,12 @@ export default function PanierPage() {
                         </div>
                         <button
                           onClick={() => removeItem(item.product.id, item.selectedSize)}
+                          aria-label={`Supprimer ${item.product.name} du panier`}
                           className={`p-2 transition-colors ${
                             itemOutOfStock
                               ? 'text-red-500 hover:text-red-700'
                               : 'text-muted-foreground/60 hover:text-foreground'
                           }`}
-                          title={itemOutOfStock ? 'Retirer du panier' : 'Supprimer'}
                         >
                           <X className="w-5 h-5" />
                         </button>
@@ -242,15 +246,17 @@ export default function PanierPage() {
                               onClick={() =>
                                 updateQuantity(item.product.id, item.selectedSize, item.quantity - 1)
                               }
+                              aria-label={`Diminuer la quantité de ${item.product.name}`}
                               className="p-2 hover:bg-muted transition-colors"
                             >
                               <Minus className="w-4 h-4" />
                             </button>
-                            <span className="w-10 text-center">{item.quantity}</span>
+                            <span className="w-10 text-center" aria-live="polite" aria-label={`Quantité : ${item.quantity}`}>{item.quantity}</span>
                             <button
                               onClick={() =>
                                 updateQuantity(item.product.id, item.selectedSize, item.quantity + 1)
                               }
+                              aria-label={`Augmenter la quantité de ${item.product.name}`}
                               className="p-2 hover:bg-muted transition-colors"
                             >
                               <Plus className="w-4 h-4" />
@@ -321,7 +327,7 @@ export default function PanierPage() {
                           : `−${pendingPromoCode.discount_value} €`}
                       </p>
                     </div>
-                    <button onClick={handleRemovePromo} className="p-1 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full transition-colors">
+                    <button onClick={handleRemovePromo} aria-label="Supprimer le code promo" className="p-2 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full transition-colors">
                       <X className="w-4 h-4 text-green-600 dark:text-green-400" />
                     </button>
                   </div>

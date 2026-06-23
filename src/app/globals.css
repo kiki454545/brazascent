@@ -23,6 +23,7 @@
   /* Brand — or chaud (entre or jaune et cuivré) */
   --primary: #BF9952;
   --primary-foreground: #0A0A0A;    /* texte foncé sur l'or */
+  --primary-text: #896C22;          /* or accessible WCAG AA (4.96:1 sur blanc, 4.55:1 sur cream) — à utiliser pour text-primary sur fond clair */
   --gold: #BF9952;
   --gold-light: #E0C898;
   --gold-dark: #8F7038;
@@ -49,6 +50,7 @@
   /* Brand — or chaud (un peu plus clair pour le contraste sur noir) */
   --primary: #D4AF6B;
   --primary-foreground: #0A0A0A;    /* texte foncé sur l'or, même en dark */
+  --primary-text: #D4AF6B;          /* dark: même valeur, déjà 10.14:1 sur fond noir */
   --gold: #D4AF6B;
   --gold-light: #E0C898;
   --gold-dark: #8F7038;
@@ -69,6 +71,7 @@
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-text: var(--primary-text);
   --color-cream: var(--cream);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);

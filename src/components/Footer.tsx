@@ -14,6 +14,7 @@ const footerLinks = {
     { name: 'Packs', href: '/packs' },
     { name: 'Notes olfactives', href: '/notes' },
     { name: 'Quiz olfactif', href: '/quiz' },
+    { name: 'Décantage parfum', href: '/decantage-parfum' },
     { name: 'Blog', href: '/blog' },
     { name: 'À propos', href: '/a-propos' },
   ],
@@ -116,7 +117,7 @@ export function Footer() {
 
           {/* Boutique */}
           <div className="lg:col-span-2">
-            <h4 className="text-sm tracking-[0.2em] uppercase mb-6">Boutique</h4>
+            <p className="text-sm tracking-[0.2em] uppercase mb-6">Boutique</p>
             <ul className="space-y-3">
               {footerLinks.boutique.map((link) => (
                 <li key={link.name}>
@@ -133,7 +134,7 @@ export function Footer() {
 
           {/* Services */}
           <div className="lg:col-span-2">
-            <h4 className="text-sm tracking-[0.2em] uppercase mb-6">Services</h4>
+            <p className="text-sm tracking-[0.2em] uppercase mb-6">Services</p>
             <ul className="space-y-3">
               {footerLinks.services.map((link) => (
                 <li key={link.name}>
@@ -150,7 +151,7 @@ export function Footer() {
 
           {/* Nos Réseaux */}
           <div className="lg:col-span-2">
-            <h4 className="text-sm tracking-[0.2em] uppercase mb-6">Nos Réseaux</h4>
+            <p className="text-sm tracking-[0.2em] uppercase mb-6">Nos Réseaux</p>
             <ul className="space-y-4">
               <li>
                 <a
@@ -196,7 +197,7 @@ export function Footer() {
 
           {/* Newsletter — col droite */}
           <div className="lg:col-span-3">
-            <h4 className="text-sm tracking-[0.2em] uppercase mb-4">Newsletter</h4>
+            <p className="text-sm tracking-[0.2em] uppercase mb-4">Newsletter</p>
             <p className="text-white/60 text-sm mb-5 leading-relaxed">
               Recevez nos nouveautés et offres exclusives.
             </p>

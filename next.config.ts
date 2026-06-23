@@ -9,6 +9,30 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', 'recharts'],
   },
+  async headers() {
+    return [
+      {
+        // JS/CSS immutables (hash dans le nom) — 1 an
+        source: '/_next/static/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        // Images publiques — 1 jour avec revalidation en arrière-plan 7 jours
+        source: '/images/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }],
+      },
+      {
+        // Vidéos publiques — 1 jour
+        source: '/videos/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }],
+      },
+      {
+        // Favicon et autres assets racine
+        source: '/:file(favicon.*|logo.*|robots.txt|sitemap.xml)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }],
+      },
+    ]
+  },
   async rewrites() {
     return [
       {

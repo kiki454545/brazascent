@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 
 function adminClient() {
   return createClient(
@@ -10,24 +8,23 @@ function adminClient() {
   )
 }
 
-async function requireAdmin(): Promise<boolean> {
+async function requireAdmin(request: NextRequest): Promise<boolean> {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
-    )
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return false
-    const { data: profile } = await supabase
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+    if (!token) return false
+
+    const { data: { user }, error } = await adminClient().auth.getUser(token)
+    if (error || !user) return false
+
+    const { data: profile } = await adminClient()
       .from('user_profiles').select('is_admin').eq('id', user.id).single()
     return profile?.is_admin === true
   } catch { return false }
 }
 
-export async function GET() {
-  if (!(await requireAdmin())) {
+export async function GET(request: NextRequest) {
+  if (!(await requireAdmin(request))) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
   const supabase = adminClient()
@@ -42,7 +39,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: NextRequest) {
-  if (!(await requireAdmin())) {
+  if (!(await requireAdmin(request))) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 

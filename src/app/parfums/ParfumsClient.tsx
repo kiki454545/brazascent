@@ -71,7 +71,7 @@ const sortOptions = [
 ]
 
 const ITEMS_PER_PAGE = 20
-const formats = ['2ml', '5ml', '10ml']
+const formats = ['2ml', '5ml', '10ml', '30ml']
 
 export default function ParfumsPage({ initialProducts, initialBrands, familleFilter, familleLabel }: ParfumsClientProps) {
   const searchParams = useSearchParams()
@@ -257,7 +257,7 @@ export default function ParfumsPage({ initialProducts, initialBrands, familleFil
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 p-1">
+                <button onClick={() => setSearchQuery('')} aria-label="Effacer la recherche" className="absolute right-2 top-1/2 -translate-y-1/2 p-2">
                   <X className="w-3 h-3" />
                 </button>
               )}

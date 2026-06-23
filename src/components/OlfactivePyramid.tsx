@@ -1,6 +1,8 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
+import { noteToSlug } from '@/lib/notes'
 
 interface Props {
   notes: { top: string[]; heart: string[]; base: string[] }
@@ -42,6 +44,19 @@ function NoteCircle({ note, noteImages }: { note: string; noteImages?: Record<st
   )
 }
 
+function LinkedNote({ note, noteImages }: { note: string; noteImages?: Record<string, string> }) {
+  if (!note) return null
+  return (
+    <Link
+      href={`/notes/${noteToSlug(note)}`}
+      aria-label={`Voir les parfums avec la note ${note}`}
+      className="hover:opacity-75 transition-opacity"
+    >
+      <NoteCircle note={note} noteImages={noteImages} />
+    </Link>
+  )
+}
+
 export default function OlfactivePyramid({ notes, noteImages }: Props) {
   const tiersWithNotes = TIERS.filter(t => notes[t.key].length > 0)
 
@@ -61,7 +76,7 @@ export default function OlfactivePyramid({ notes, noteImages }: Props) {
         <div className="border border-border p-5">
           <div className="flex flex-wrap gap-4">
             {allNotes.map(note => (
-              <NoteCircle key={note} note={note} noteImages={noteImages} />
+              <LinkedNote key={note} note={note} noteImages={noteImages} />
             ))}
           </div>
         </div>
@@ -108,7 +123,7 @@ export default function OlfactivePyramid({ notes, noteImages }: Props) {
                   {tierNotes.length > 0 ? (
                     <div className="flex flex-wrap gap-3">
                       {tierNotes.map(note => (
-                        <NoteCircle key={note} note={note} noteImages={noteImages} />
+                        <LinkedNote key={note} note={note} noteImages={noteImages} />
                       ))}
                     </div>
                   ) : (

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { m, AnimatePresence } from 'framer-motion'
 import { ArrowRight, ArrowLeft, RotateCcw, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import posthog from 'posthog-js'
+import { captureEvent, captureException } from '@/lib/analytics'
 
 // Mots-clés par famille olfactive (recherchés dans notes et accords)
 const FAMILY_KEYWORDS: Record<string, string[]> = {
@@ -182,7 +182,7 @@ export default function QuizPage() {
           finalResults = fallback || []
           setResults(finalResults)
         }
-        posthog.capture('quiz_completed', {
+        captureEvent('quiz_completed', {
           occasion: newAnswers.occasion,
           famille: newAnswers.famille,
           intensite: newAnswers.intensite,

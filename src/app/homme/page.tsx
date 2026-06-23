@@ -14,13 +14,13 @@ export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Parfums Homme - Décants & échantillons',
-  description: 'Découvrez notre sélection de parfums homme en décants 2ml, 5ml et 10ml. Boisés, frais, orientaux : testez les grandes maisons avant d\'investir. Livraison rapide en France.',
+  description: 'Découvrez notre sélection de parfums homme en décants 2ml, 5ml, 10ml et 30ml. Boisés, frais, orientaux : testez les grandes maisons avant d\'investir. Livraison rapide en France.',
   alternates: {
     canonical: `${SITE_URL}/homme`,
   },
   openGraph: {
     title: 'Parfums Homme - Décants & échantillons | Braza Scent',
-    description: 'Découvrez notre sélection de parfums homme en décants 2ml, 5ml et 10ml. Boisés, frais, orientaux : testez les grandes maisons avant d\'investir.',
+    description: 'Découvrez notre sélection de parfums homme en décants 2ml, 5ml, 10ml et 30ml. Boisés, frais, orientaux : testez les grandes maisons avant d\'investir.',
     url: `${SITE_URL}/homme`,
     type: 'website',
     locale: 'fr_FR',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Parfums Homme - Décants & échantillons | Braza Scent',
-    description: 'Découvrez notre sélection de parfums homme en décants 2ml, 5ml et 10ml.',
+    description: 'Découvrez notre sélection de parfums homme en décants 2ml, 5ml, 10ml et 30ml.',
     images: [`${SITE_URL}/images/parfums-hero.jpg`],
   },
 }
@@ -84,7 +84,7 @@ export default async function HommePage() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: "C'est quoi un décant de parfum homme ?", acceptedAnswer: { '@type': 'Answer', text: "Un décant est un prélèvement du parfum original effectué directement depuis le flacon de la marque. Vous recevez la même fragrance que le flacon plein — sans dilution — dans un format de 2ml, 5ml ou 10ml. Idéal pour tester avant d'acheter." } },
+      { '@type': 'Question', name: "C'est quoi un décant de parfum homme ?", acceptedAnswer: { '@type': 'Answer', text: "Un décant est un prélèvement du parfum original effectué directement depuis le flacon de la marque. Vous recevez la même fragrance que le flacon plein — sans dilution — dans un format de 2ml, 5ml, 10ml ou 30ml. Idéal pour tester avant d'acheter." } },
       { '@type': 'Question', name: "Combien dure un décant 5ml au quotidien ?", acceptedAnswer: { '@type': 'Answer', text: "Un 5ml représente environ 100 à 110 projections, soit 2 à 3 semaines d'usage quotidien (2 à 3 sprays par jour). C'est suffisant pour découvrir toutes les phases d'évolution d'une fragrance sur votre peau." } },
       { '@type': 'Question', name: "Pourquoi choisir un décant plutôt qu'un flacon ?", acceptedAnswer: { '@type': 'Answer', text: "Un flacon de parfum représente souvent 100 à 350€. Un décant vous permet de le tester sur votre peau pendant plusieurs semaines. La décision d'achat d'un flacon devient alors une certitude, pas un pari." } },
       { '@type': 'Question', name: "Les parfums sont-ils les mêmes qu'en boutique ?", acceptedAnswer: { '@type': 'Answer', text: "Oui. Nos décants sont préparés à partir de flacons originaux des marques. Vous recevez exactement le même parfum qu'en boutique, dans la même concentration, sans aucune modification." } },
@@ -95,7 +95,7 @@ export default async function HommePage() {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Parfums Homme — Décants & Échantillons | Braza Scent',
-    description: 'Découvrez notre sélection de parfums homme en décants 2ml, 5ml et 10ml. Boisés, frais, orientaux : testez les grandes maisons avant d\'investir.',
+    description: 'Découvrez notre sélection de parfums homme en décants 2ml, 5ml, 10ml et 30ml. Boisés, frais, orientaux : testez les grandes maisons avant d\'investir.',
     url: `${SITE_URL}/homme`,
   }
 
@@ -115,7 +115,7 @@ export default async function HommePage() {
             <h3 className="text-lg font-light tracking-[0.15em] uppercase mb-6">Questions fréquentes</h3>
             <div className="divide-y divide-border">
               {[
-                { q: "C'est quoi un décant de parfum homme ?", a: "Un décant est un prélèvement du parfum original effectué directement depuis le flacon de la marque. Vous recevez la même fragrance que le flacon plein — sans dilution — dans un format de 2ml, 5ml ou 10ml. Idéal pour tester avant d'acheter." },
+                { q: "C'est quoi un décant de parfum homme ?", a: "Un décant est un prélèvement du parfum original effectué directement depuis le flacon de la marque. Vous recevez la même fragrance que le flacon plein — sans dilution — dans un format de 2ml, 5ml, 10ml ou 30ml. Idéal pour tester avant d'acheter." },
                 { q: "Combien dure un décant 5ml au quotidien ?", a: "Un 5ml représente environ 100 à 110 projections, soit 2 à 3 semaines d'usage quotidien (2 à 3 sprays par jour). C'est suffisant pour découvrir toutes les phases d'évolution d'une fragrance sur votre peau." },
                 { q: "Pourquoi choisir un décant plutôt qu'un flacon ?", a: "Un flacon de parfum représente souvent 100 à 350€. Un décant vous permet de le tester sur votre peau pendant plusieurs semaines. La décision d'achat d'un flacon devient alors une certitude, pas un pari." },
                 { q: "Les parfums sont-ils les mêmes qu'en boutique ?", a: "Oui. Nos décants sont préparés à partir de flacons originaux des marques. Vous recevez exactement le même parfum qu'en boutique, dans la même concentration, sans aucune modification." },

@@ -140,44 +140,125 @@ export async function sendAdminOrderNotification({
   orderNumber,
   customerName,
   customerEmail,
+  customerPhone,
+  shippingAddress,
+  items,
+  subtotal,
+  shippingCost,
+  shippingMethod,
+  promoCode,
+  promoDiscount,
   total,
-  itemCount,
 }: {
   orderNumber: string
   customerName: string
   customerEmail: string
+  customerPhone?: string
+  shippingAddress?: { address?: string; city?: string; postalCode?: string; country?: string }
+  items: Array<{ product_name: string; size: string; quantity: number; price: number }>
+  subtotal: number
+  shippingCost: number
+  shippingMethod?: string
+  promoCode?: string | null
+  promoDiscount?: number | null
   total: number
-  itemCount: number
 }) {
   const resend = getResend()
   if (!resend) return
 
   const adminEmail = process.env.ADMIN_EMAIL || 'brazascent@gmail.com'
 
+  const itemsRows = items.map(item => `
+    <tr>
+      <td style="padding: 10px 0; border-bottom: 1px solid #f0ece6; color: #19110B; font-size: 14px;">
+        <strong>${escapeHtml(item.product_name)}</strong>
+        <span style="color: #888; font-size: 12px; margin-left: 8px;">${escapeHtml(item.size)} × ${item.quantity}</span>
+      </td>
+      <td style="padding: 10px 0; border-bottom: 1px solid #f0ece6; text-align: right; color: #19110B; font-size: 14px; white-space: nowrap;">
+        ${(item.price).toFixed(2)} €
+      </td>
+    </tr>
+  `).join('')
+
+  const addressLine = shippingAddress
+    ? [shippingAddress.address, shippingAddress.postalCode && shippingAddress.city
+        ? `${shippingAddress.postalCode} ${shippingAddress.city}`
+        : shippingAddress.city, shippingAddress.country].filter(Boolean).join(', ')
+    : null
+
   const html = wrapEmail(`
     <tr>
-      <td style="padding: 40px; text-align: center;">
-        <h2 style="margin: 0 0 10px; color: #19110B; font-size: 24px; font-weight: 400;">
-          Nouvelle commande reçue !
-        </h2>
-        <p style="margin: 0; color: #666; font-size: 16px;">
-          Commande n° <strong style="color: #19110B;">${orderNumber}</strong>
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 0 40px 30px;">
-        <div style="background-color: #f9f6f1; padding: 20px; border-left: 3px solid #C9A962;">
-          <p style="margin: 0 0 8px; color: #19110B;"><strong>Client :</strong> ${customerName}</p>
-          <p style="margin: 0 0 8px; color: #19110B;"><strong>Email :</strong> ${customerEmail}</p>
-          <p style="margin: 0 0 8px; color: #19110B;"><strong>Articles :</strong> ${itemCount}</p>
-          <p style="margin: 0; color: #19110B; font-size: 18px;"><strong>Total :</strong> ${total.toFixed(2)} €</p>
+      <td style="padding: 32px 40px 16px; text-align: center; border-bottom: 1px solid #f0ece6;">
+        <div style="display: inline-block; background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 50px; padding: 6px 18px; margin-bottom: 16px;">
+          <span style="color: #16a34a; font-size: 13px; font-weight: 600;">● Nouvelle commande</span>
         </div>
+        <h2 style="margin: 0 0 6px; color: #19110B; font-size: 22px; font-weight: 500;">
+          Commande #${escapeHtml(orderNumber)}
+        </h2>
+        <p style="margin: 0; color: #888; font-size: 13px;">${new Date().toLocaleString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
       </td>
     </tr>
+
+    <tr>
+      <td style="padding: 24px 40px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="width: 50%; vertical-align: top; padding-right: 12px;">
+              <p style="margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #888;">Client</p>
+              <div style="background-color: #f9f6f1; padding: 14px 16px; border-left: 3px solid #C9A962;">
+                <p style="margin: 0 0 4px; color: #19110B; font-weight: 600; font-size: 15px;">${escapeHtml(customerName)}</p>
+                <p style="margin: 0 0 4px; color: #444; font-size: 13px;">${escapeHtml(customerEmail)}</p>
+                ${customerPhone ? `<p style="margin: 0; color: #444; font-size: 13px;">${escapeHtml(customerPhone)}</p>` : ''}
+              </div>
+            </td>
+            <td style="width: 50%; vertical-align: top; padding-left: 12px;">
+              <p style="margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #888;">Livraison</p>
+              <div style="background-color: #f9f6f1; padding: 14px 16px; border-left: 3px solid #C9A962;">
+                ${addressLine ? `<p style="margin: 0 0 4px; color: #19110B; font-size: 13px; line-height: 1.5;">${escapeHtml(addressLine)}</p>` : '<p style="margin: 0; color: #888; font-size: 13px;">—</p>'}
+                ${shippingMethod ? `<p style="margin: 4px 0 0; color: #888; font-size: 12px;">${escapeHtml(shippingMethod)}</p>` : ''}
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding: 24px 40px 0;">
+        <p style="margin: 0 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #888;">Articles commandés</p>
+        <table style="width: 100%; border-collapse: collapse;">
+          ${itemsRows}
+        </table>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding: 16px 40px 32px;">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+          <tr>
+            <td style="padding: 4px 0; color: #666; font-size: 13px;">Sous-total</td>
+            <td style="padding: 4px 0; text-align: right; color: #19110B; font-size: 13px;">${subtotal.toFixed(2)} €</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0; color: #666; font-size: 13px;">${shippingMethod ? escapeHtml(shippingMethod) : 'Livraison'}</td>
+            <td style="padding: 4px 0; text-align: right; color: #19110B; font-size: 13px;">${shippingCost === 0 ? 'Gratuit' : `${shippingCost.toFixed(2)} €`}</td>
+          </tr>
+          ${promoCode ? `
+          <tr>
+            <td style="padding: 4px 0; color: #16a34a; font-size: 13px;">Code promo <span style="font-family: monospace; background: #f0fdf4; padding: 1px 6px; border-radius: 3px;">${escapeHtml(promoCode)}</span></td>
+            <td style="padding: 4px 0; text-align: right; color: #16a34a; font-size: 13px;">-${(promoDiscount || 0).toFixed(2)} €</td>
+          </tr>` : ''}
+          <tr>
+            <td style="padding: 10px 0 0; color: #19110B; font-size: 16px; font-weight: 700; border-top: 2px solid #19110B;">Total</td>
+            <td style="padding: 10px 0 0; text-align: right; color: #19110B; font-size: 16px; font-weight: 700; border-top: 2px solid #19110B;">${total.toFixed(2)} €</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
     <tr>
       <td style="padding: 0 40px 40px; text-align: center;">
-        <a href="https://brazascent.com/admin/commandes" style="display: inline-block; padding: 14px 32px; background-color: #19110B; color: #C9A962; text-decoration: none; font-size: 14px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;">
+        <a href="https://brazascent.com/admin/commandes" style="display: inline-block; padding: 14px 32px; background-color: #19110B; color: #C9A962; text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;">
           Gérer la commande
         </a>
       </td>

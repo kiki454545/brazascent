@@ -415,8 +415,15 @@ export async function POST(request: NextRequest) {
             orderNumber: order.order_number,
             customerName,
             customerEmail: session.customer_email,
+            customerPhone: shippingData?.phone,
+            shippingAddress: shippingData,
+            items: orderItemsForEmail,
+            subtotal,
+            shippingCost,
+            shippingMethod: shippingMethodTitle,
+            promoCode,
+            promoDiscount,
             total,
-            itemCount: orderItemsForEmail.length,
           }),
         ])
 
@@ -633,8 +640,15 @@ export async function POST(request: NextRequest) {
             orderNumber: order.order_number,
             customerName,
             customerEmail,
+            customerPhone: shippingData?.phone,
+            shippingAddress: shippingData,
+            items: orderItemsForEmail,
+            subtotal,
+            shippingCost,
+            shippingMethod: shippingMethodTitle,
+            promoCode,
+            promoDiscount,
             total,
-            itemCount: orderItemsForEmail.length,
           }),
         ])
 

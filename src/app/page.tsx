@@ -7,11 +7,11 @@ const SITE_URL = 'https://brazascent.com'
 
 export const metadata: Metadata = {
   title: "Braza Scent | Boutique d'Échantillons de Parfum & Décants",
-  description: "Découvrez et testez les plus grands parfums en décants 2ml, 5ml et 10ml. Dior, Chanel, MFK, Creed, Maison Margiela… Livraison rapide en France.",
+  description: "Découvrez et testez les plus grands parfums en décants 2ml, 5ml, 10ml et 30ml. Dior, Chanel, MFK, Creed, Maison Margiela… Livraison rapide en France.",
   alternates: { canonical: SITE_URL },
   openGraph: {
     title: "Braza Scent | Boutique d'Échantillons de Parfum & Décants",
-    description: "Découvrez et testez les plus grands parfums en décants 2ml, 5ml et 10ml. Livraison rapide en France.",
+    description: "Découvrez et testez les plus grands parfums en décants 2ml, 5ml, 10ml et 30ml. Livraison rapide en France.",
     url: SITE_URL,
     type: 'website',
     locale: 'fr_FR',
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "Braza Scent | Boutique d'Échantillons de Parfum & Décants",
-    description: "Testez les plus grands parfums en décants 2ml, 5ml, 10ml. Livraison rapide en France.",
+    description: "Testez les plus grands parfums en décants 2ml, 5ml, 10ml et 30ml. Livraison rapide en France.",
     images: [`${SITE_URL}/images/hero-bg.jpg`],
   },
 }
@@ -75,7 +75,7 @@ export interface HomePack {
 }
 
 export default async function HomePage() {
-  const [bestsellersRes, newProductsRes, promosRes, packsRes, ordersRes] = await Promise.all([
+  const [bestsellersRes, newProductsRes, promosRes, packsRes, ordersRes, videosRes] = await Promise.all([
     supabase
       .from('products')
       .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order')
@@ -105,6 +105,11 @@ export default async function HomePage() {
       .from('orders')
       .select('id', { count: 'exact', head: true })
       .eq('payment_status', 'paid'),
+    supabase
+      .from('home_videos')
+      .select('url, order_index')
+      .eq('active', true)
+      .order('order_index'),
   ])
 
   const featuredProducts = (bestsellersRes.data || []).map(mapProduct)
@@ -112,6 +117,17 @@ export default async function HomePage() {
   const promoProducts = (promosRes.data || []).map(mapProduct)
   const packs = (packsRes.data || []) as HomePack[]
   const orderCount = 100 + (ordersRes.count || 0)
+  const initialVideos = (videosRes.data && videosRes.data.length > 0)
+    ? videosRes.data.map((v: { url: string }) => v.url)
+    : []
+
+  // Preload de l'image LCP réelle : le premier produit du slider hero (Supabase CDN).
+  // Le custom loader désactive le preload automatique de Next.js → on le génère manuellement.
+  const lcpImageSrc = featuredProducts[0]?.images?.[0]
+  const lcpPreloadUrl = lcpImageSrc?.includes('/storage/v1/object/public/')
+    ? lcpImageSrc.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
+      + '?width=828&quality=75&resize=contain'
+    : null
 
   const homeFaqJsonLd = {
     '@context': 'https://schema.org',
@@ -134,7 +150,7 @@ export default async function HomePage() {
     name: 'Braza Scent',
     url: SITE_URL,
     logo: `${SITE_URL}/images/logo.png`,
-    description: "Boutique en ligne de décants et échantillons de parfum. Testez les plus grands parfums en 2ml, 5ml et 10ml.",
+    description: "Boutique en ligne de décants et échantillons de parfum. Testez les plus grands parfums en 2ml, 5ml, 10ml et 30ml.",
     sameAs: ['https://www.instagram.com/brazascent/'],
   }
 
@@ -152,13 +168,22 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Préchargement du hero — deux liens séparés avec media query car Next.js/React
+          ignore le href quand imageSrcSet est présent, cassant la précharge. */}
+      <link rel="preload" as="image" href="/images/hero-bg-sm.webp" fetchPriority="high" media="(max-width: 828px)" />
+      <link rel="preload" as="image" href="/images/hero-bg.webp" fetchPriority="high" media="(min-width: 829px)" />
+      {/* Preload du vrai LCP mobile : premier produit bestseller dans le slider hero.
+          Sur mobile, cette image Supabase est le plus grand élément visible. */}
+      {lcpPreloadUrl && (
+        <link rel="preload" as="image" href={lcpPreloadUrl} fetchPriority="high" media="(max-width: 1024px)" />
+      )}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqJsonLd) }}
       />
-      <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} promoProducts={promoProducts} packs={packs} orderCount={orderCount} />
+      <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} promoProducts={promoProducts} packs={packs} orderCount={orderCount} initialVideos={initialVideos} />
     </>
   )
 }

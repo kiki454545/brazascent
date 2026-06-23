@@ -1,27 +1,23 @@
 'use client'
 
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { loadStripe, Stripe } from '@stripe/stripe-js'
-import {
-  Elements,
-  ExpressCheckoutElement,
-  useStripe,
-  useElements,
-} from '@stripe/react-stripe-js'
+import type { Stripe } from '@stripe/stripe-js'
 import type {
   StripeExpressCheckoutElementConfirmEvent,
   StripeExpressCheckoutElementShippingAddressChangeEvent,
   StripeExpressCheckoutElementReadyEvent,
 } from '@stripe/stripe-js'
+import { useCartStore, CartPromoCode } from '@/store/cart'
+import { useAuthStore } from '@/store/auth'
+import { CartItem } from '@/types'
+
+type StripeReactLib = typeof import('@stripe/react-stripe-js')
 
 type ShippingRateChangeEvent = {
   shippingRate: { id: string; displayName: string; amount: number }
   resolve: () => void
   reject: () => void
 }
-import { useCartStore, CartPromoCode } from '@/store/cart'
-import { useAuthStore } from '@/store/auth'
-import { CartItem } from '@/types'
 
 interface HomeMethod {
   price: number
@@ -34,9 +30,11 @@ interface InnerProps {
   userId: string | undefined
   shippingCost: number
   displayAmountCents: number
+  stripeLib: StripeReactLib
 }
 
-function ExpressCheckoutInner({ cartItems, promoCode, userId, shippingCost, displayAmountCents }: InnerProps) {
+function ExpressCheckoutInner({ cartItems, promoCode, userId, shippingCost, displayAmountCents, stripeLib }: InnerProps) {
+  const { useStripe, useElements, ExpressCheckoutElement } = stripeLib
   const stripe = useStripe()
   const elements = useElements()
   const [hasWallets, setHasWallets] = useState(false)
@@ -228,6 +226,7 @@ export function ExpressCheckoutBlock({ hasOutOfStockItems, overrideItems }: Expr
   const { items: cartItems, getTotal, pendingPromoCode } = useCartStore()
   const { user } = useAuthStore()
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
+  const [stripeLib, setStripeLib] = useState<StripeReactLib | null>(null)
   const [homeMethod, setHomeMethod] = useState<HomeMethod | null>(null)
   const fetchedRef = useRef(false)
 
@@ -238,14 +237,19 @@ export function ExpressCheckoutBlock({ hasOutOfStockItems, overrideItems }: Expr
     fetchedRef.current = true
 
     Promise.all([
+      import('@stripe/stripe-js'),
+      import('@stripe/react-stripe-js'),
       fetch('/api/stripe-config').then(r => r.json()),
       fetch('/api/shipping-methods').then(r => r.json()),
-    ]).then(([stripeData, shippingData]) => {
-      if (stripeData.publishableKey) setStripePromise(loadStripe(stripeData.publishableKey))
+    ]).then(([stripeJs, reactStripe, stripeData, shippingData]) => {
+      setStripeLib(reactStripe as StripeReactLib)
+
+      if (stripeData.publishableKey) {
+        setStripePromise(stripeJs.loadStripe(stripeData.publishableKey))
+      }
 
       const methods: Array<{ title: string; price: number; free_threshold: number | null }> =
         shippingData.methods ?? []
-      // Prendre la méthode "domicile" (pas point relais, pas express)
       const home =
         methods.find(m => m.title.toLowerCase().includes('domicile')) ??
         methods.find(m => {
@@ -256,7 +260,7 @@ export function ExpressCheckoutBlock({ hasOutOfStockItems, overrideItems }: Expr
     }).catch(() => {})
   }, [activeItems.length])
 
-  if (activeItems.length === 0 || hasOutOfStockItems || !stripePromise || !homeMethod) return null
+  if (activeItems.length === 0 || hasOutOfStockItems || !stripePromise || !homeMethod || !stripeLib) return null
 
   const subtotal = overrideItems
     ? overrideItems.reduce((sum, item) => {
@@ -291,6 +295,8 @@ export function ExpressCheckoutBlock({ hasOutOfStockItems, overrideItems }: Expr
     },
   }
 
+  const { Elements } = stripeLib
+
   return (
     <Elements stripe={stripePromise} options={stripeOptions}>
       <ExpressCheckoutInner
@@ -299,6 +305,7 @@ export function ExpressCheckoutBlock({ hasOutOfStockItems, overrideItems }: Expr
         userId={user?.id}
         shippingCost={shippingCost}
         displayAmountCents={displayAmountCents}
+        stripeLib={stripeLib}
       />
     </Elements>
   )

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { supabase, isAbortError } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
-import posthog from 'posthog-js'
+import { captureEvent, identifyUser, resetAnalytics } from '@/lib/analytics'
 
 interface UserProfile {
   id: string
@@ -114,12 +114,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         set({ user: data.user })
         await get().fetchProfile()
 
-        posthog.identify(data.user.id, {
+        identifyUser(data.user.id, {
           email,
           first_name: firstName ?? null,
           last_name: lastName ?? null,
         })
-        posthog.capture('user_signed_up', { email })
+        captureEvent('user_signed_up', { email })
       }
 
       set({ isLoading: false })
@@ -173,8 +173,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         const accessToken = data.session?.access_token
         await get().fetchProfile(accessToken)
 
-        posthog.identify(data.user.id, { email: data.user.email })
-        posthog.capture('user_signed_in', { email: data.user.email })
+        identifyUser(data.user.id, { email: data.user.email })
+        captureEvent('user_signed_in', { email: data.user.email })
       }
 
       set({ isLoading: false })
@@ -196,7 +196,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch (error) {
       console.error('Sign out error:', error)
     }
-    posthog.reset()
+    resetAnalytics()
     set({ user: null, profile: null, isLoading: false })
   },
 

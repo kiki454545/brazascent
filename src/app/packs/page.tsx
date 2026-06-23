@@ -4,6 +4,15 @@ import { Gift } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 import PackAddButton from './PackAddButton'
 
+export const metadata = {
+  title: 'Coffrets & Packs de Parfums | BrazaScent',
+  description: 'Découvrez nos coffrets de décants de parfums soigneusement sélectionnés. Packs découverte, packs thématiques — livraison rapide depuis BrazaScent.',
+  openGraph: {
+    title: 'Coffrets & Packs de Parfums | BrazaScent',
+    description: 'Découvrez nos coffrets de décants de parfums soigneusement sélectionnés.',
+  },
+}
+
 export const revalidate = 3600
 
 const supabase = createClient(
@@ -125,7 +134,7 @@ export default async function PacksPage() {
                       <span className="text-xl font-medium">{pack.price} €</span>
                       {pack.original_price && (
                         <>
-                          <span className="text-muted-foreground/60 line-through">{pack.original_price} €</span>
+                          <span className="text-muted-foreground/75 line-through">{pack.original_price} €</span>
                           <span className="text-xs text-primary font-medium">
                             -{Math.round((1 - pack.price / pack.original_price) * 100)}%
                           </span>

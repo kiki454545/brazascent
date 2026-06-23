@@ -298,9 +298,7 @@ export function Header() {
             {/* Right side - Icons */}
             <div className="flex items-center gap-4 lg:gap-6">
               <ThemeToggle
-                className={`hidden sm:block ${
-                  isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'
-                }`}
+                className={isDarkHeader ? 'text-foreground hover:text-primary' : 'text-white hover:text-primary'}
               />
 
               <Link
@@ -384,7 +382,8 @@ export function Header() {
                 <span className="text-sm tracking-[0.2em] uppercase">Menu</span>
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-2 hover:text-primary transition-colors"
+                  aria-label="Fermer le menu"
+                  className="p-3 hover:text-primary transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -511,6 +510,12 @@ export function Header() {
                   <p className="text-sm text-muted-foreground">{settings.storeEmail}</p>
                 </div>
 
+                {/* Mode sombre */}
+                <div className="px-6 py-4 border-t flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Mode sombre</span>
+                  <ThemeToggle className="text-foreground hover:text-primary" />
+                </div>
+
                 {/* Réseaux sociaux */}
                 <div className="px-6 pb-8 border-t pt-6">
                   <p className="text-xs tracking-[0.2em] uppercase text-muted-foreground mb-4">
@@ -575,7 +580,8 @@ export function Header() {
                   setIsSearchOpen(false)
                   setSearchQuery('')
                 }}
-                className="p-2 hover:text-primary transition-colors"
+                aria-label="Fermer la recherche"
+                className="p-3 hover:text-primary transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -599,7 +605,8 @@ export function Header() {
                   />
                   <button
                     type="submit"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 p-2 hover:text-primary transition-colors"
+                    aria-label={isSearching ? 'Recherche en cours…' : 'Lancer la recherche'}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 p-3 hover:text-primary transition-colors"
                   >
                     {isSearching ? (
                       <Loader2 className="w-6 h-6 animate-spin text-primary" />

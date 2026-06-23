@@ -10,7 +10,7 @@ import { useCartStore } from '@/store/cart'
 import { useAuthStore } from '@/store/auth'
 import { supabase } from '@/lib/supabase'
 import { CartItem } from '@/types'
-import posthog from 'posthog-js'
+import { captureEvent, captureException } from '@/lib/analytics'
 import { PaymentLogos } from '@/components/PaymentLogos'
 import { formatPrice } from '@/lib/format'
 
@@ -94,6 +94,7 @@ export default function CheckoutPage() {
     country: 'France',
   })
 
+  const [phonePrefix, setPhonePrefix] = useState('+33')
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
   const [shippingMethodId, setShippingMethodId] = useState<string | null>(null)
   const [relayPoint, setRelayPoint] = useState({ name: '', address: '', postalCode: '', city: '', country: 'France' })
@@ -243,7 +244,7 @@ export default function CheckoutPage() {
       setPromoDiscount(data.discountAmount)
       setPendingPromo(data.promoCode)
       setPromoCode('')
-      posthog.capture('promo_code_applied', {
+      captureEvent('promo_code_applied', {
         code: data.promoCode.code,
         discount_type: data.promoCode.discount_type,
         discount_value: data.promoCode.discount_value,
@@ -400,7 +401,7 @@ export default function CheckoutPage() {
 
       // Rediriger vers Stripe Checkout
       if (data.url) {
-        posthog.capture('checkout_started', {
+        captureEvent('checkout_started', {
           item_count: items.length,
           subtotal,
           shipping_cost: shippingCost,
@@ -420,7 +421,7 @@ export default function CheckoutPage() {
       }
     } catch (err) {
       console.error('Payment error:', err)
-      posthog.captureException(err)
+      captureException(err)
       setError(err instanceof Error ? err.message : 'Une erreur est survenue lors du paiement')
     } finally {
       setIsLoading(false)
@@ -454,6 +455,7 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* Main content */}
           <div className="lg:col-span-2">
+            <h1 className="sr-only">Finaliser ma commande</h1>
             {/* Steps */}
             <div className="flex items-center gap-4 mb-8">
               {steps.map((step, index) => (
@@ -625,25 +627,6 @@ export default function CheckoutPage() {
                           <option value="Pays-Bas">🇳🇱 Pays-Bas</option>
                           <option value="Allemagne">🇩🇪 Allemagne</option>
                           <option value="Pologne">🇵🇱 Pologne</option>
-                          <option value="République Tchèque">🇨🇿 République Tchèque</option>
-                          <option value="Slovaquie">🇸🇰 Slovaquie</option>
-                          <option value="Hongrie">🇭🇺 Hongrie</option>
-                          <option value="Roumanie">🇷🇴 Roumanie</option>
-                          <option value="Bulgarie">🇧🇬 Bulgarie</option>
-                          <option value="Croatie">🇭🇷 Croatie</option>
-                          <option value="Slovénie">🇸🇮 Slovénie</option>
-                          <option value="Autriche">🇦🇹 Autriche</option>
-                          <option value="Suède">🇸🇪 Suède</option>
-                          <option value="Finlande">🇫🇮 Finlande</option>
-                          <option value="Danemark">🇩🇰 Danemark</option>
-                          <option value="Estonie">🇪🇪 Estonie</option>
-                          <option value="Lettonie">🇱🇻 Lettonie</option>
-                          <option value="Lituanie">🇱🇹 Lituanie</option>
-                          <option value="Irlande">🇮🇪 Irlande</option>
-                          <option value="Grèce">🇬🇷 Grèce</option>
-                          <option value="Italie">🇮🇹 Italie</option>
-                          <option value="Malte">🇲🇹 Malte</option>
-                          <option value="Chypre">🇨🇾 Chypre</option>
                         </select>
                         {relayPoint.country !== 'France' && (
                           <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
@@ -842,25 +825,6 @@ export default function CheckoutPage() {
                             <option value="Pays-Bas">🇳🇱 Pays-Bas</option>
                             <option value="Allemagne">🇩🇪 Allemagne</option>
                             <option value="Pologne">🇵🇱 Pologne</option>
-                            <option value="République Tchèque">🇨🇿 République Tchèque</option>
-                            <option value="Slovaquie">🇸🇰 Slovaquie</option>
-                            <option value="Hongrie">🇭🇺 Hongrie</option>
-                            <option value="Roumanie">🇷🇴 Roumanie</option>
-                            <option value="Bulgarie">🇧🇬 Bulgarie</option>
-                            <option value="Croatie">🇭🇷 Croatie</option>
-                            <option value="Slovénie">🇸🇮 Slovénie</option>
-                            <option value="Autriche">🇦🇹 Autriche</option>
-                            <option value="Suède">🇸🇪 Suède</option>
-                            <option value="Finlande">🇫🇮 Finlande</option>
-                            <option value="Danemark">🇩🇰 Danemark</option>
-                            <option value="Estonie">🇪🇪 Estonie</option>
-                            <option value="Lettonie">🇱🇻 Lettonie</option>
-                            <option value="Lituanie">🇱🇹 Lituanie</option>
-                            <option value="Irlande">🇮🇪 Irlande</option>
-                            <option value="Grèce">🇬🇷 Grèce</option>
-                            <option value="Italie">🇮🇹 Italie</option>
-                            <option value="Malte">🇲🇹 Malte</option>
-                            <option value="Chypre">🇨🇾 Chypre</option>
                           </select>
                         </div>
                       </div>
@@ -902,10 +866,43 @@ export default function CheckoutPage() {
                     <label className="block text-sm text-muted-foreground mb-2">
                       Téléphone * <span className="text-muted-foreground/60">(requis pour la livraison)</span>
                     </label>
-                    <input type="tel" value={shippingAddress.phone}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
-                      required placeholder="+33 6 00 00 00 00"
-                      className="w-full px-4 py-3 border border-border focus:border-primary focus:outline-none text-base" />
+                    <div className="flex">
+                      <select
+                        value={phonePrefix}
+                        onChange={(e) => {
+                          const newPrefix = e.target.value
+                          const local = shippingAddress.phone.startsWith(phonePrefix)
+                            ? shippingAddress.phone.slice(phonePrefix.length).trimStart()
+                            : shippingAddress.phone
+                          setPhonePrefix(newPrefix)
+                          setShippingAddress({ ...shippingAddress, phone: newPrefix + ' ' + local })
+                        }}
+                        className="flex-shrink-0 px-3 py-3 border border-r-0 border-border focus:border-primary focus:outline-none bg-muted text-sm"
+                      >
+                        <option value="+33">🇫🇷 +33</option>
+                        <option value="+590">🇬🇵 +590</option>
+                        <option value="+596">🇲🇶 +596</option>
+                        <option value="+262">🇷🇪 +262</option>
+                        <option value="+594">🇬🇫 +594</option>
+                        <option value="+32">🇧🇪 +32</option>
+                        <option value="+34">🇪🇸 +34</option>
+                        <option value="+351">🇵🇹 +351</option>
+                        <option value="+352">🇱🇺 +352</option>
+                        <option value="+31">🇳🇱 +31</option>
+                        <option value="+49">🇩🇪 +49</option>
+                        <option value="+48">🇵🇱 +48</option>
+                      </select>
+                      <input
+                        type="tel"
+                        value={shippingAddress.phone.startsWith(phonePrefix)
+                          ? shippingAddress.phone.slice(phonePrefix.length).trimStart()
+                          : shippingAddress.phone}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, phone: phonePrefix + ' ' + e.target.value })}
+                        required
+                        placeholder="6 00 00 00 00"
+                        className="flex-1 px-4 py-3 border border-border focus:border-primary focus:outline-none text-base"
+                      />
+                    </div>
                     <p className="text-xs text-muted-foreground mt-1">Le transporteur peut vous contacter pour la livraison</p>
                   </div>
 

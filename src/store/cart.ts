@@ -3,7 +3,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { CartItem, Product } from '@/types'
-import posthog from 'posthog-js'
+import { captureEvent } from '@/lib/analytics'
 
 export interface CartPromoCode {
   id: string
@@ -39,25 +39,32 @@ export const useCartStore = create<CartStore>()(
 
       addItem: (product, size, quantity = 1) => {
         set((state) => {
+          const maxStock = product.unlimitedStock
+            ? Infinity
+            : (product.stockBySize?.[size] ?? product.stock ?? Infinity)
+
           const existingItem = state.items.find(
             (item) => item.product.id === product.id && item.selectedSize === size
           )
+          const existingQty = existingItem?.quantity ?? 0
+          const allowed = Math.min(quantity, Math.max(0, maxStock - existingQty))
+          if (allowed <= 0) return state
 
           if (existingItem) {
             return {
               items: state.items.map((item) =>
                 item.product.id === product.id && item.selectedSize === size
-                  ? { ...item, quantity: item.quantity + quantity }
+                  ? { ...item, quantity: item.quantity + allowed }
                   : item
               ),
             }
           }
 
           return {
-            items: [...state.items, { product, quantity, selectedSize: size }],
+            items: [...state.items, { product, quantity: allowed, selectedSize: size }],
           }
         })
-        posthog.capture('add_to_cart', {
+        captureEvent('add_to_cart', {
           product_id: product.id,
           product_name: product.name,
           product_brand: product.brand,
@@ -79,7 +86,7 @@ export const useCartStore = create<CartStore>()(
           ),
         }))
         if (removedItem) {
-          posthog.capture('remove_from_cart', {
+          captureEvent('remove_from_cart', {
             product_id: productId,
             product_name: removedItem.product.name,
             size,
@@ -94,13 +101,24 @@ export const useCartStore = create<CartStore>()(
           return
         }
 
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.product.id === productId && item.selectedSize === size
-              ? { ...item, quantity }
-              : item
-          ),
-        }))
+        set((state) => {
+          const item = state.items.find(
+            (i) => i.product.id === productId && i.selectedSize === size
+          )
+          const maxStock = item
+            ? item.product.unlimitedStock
+              ? Infinity
+              : (item.product.stockBySize?.[size] ?? item.product.stock ?? Infinity)
+            : Infinity
+          const capped = Math.min(quantity, maxStock)
+          return {
+            items: state.items.map((i) =>
+              i.product.id === productId && i.selectedSize === size
+                ? { ...i, quantity: capped }
+                : i
+            ),
+          }
+        })
       },
 
       clearCart: () => set({ items: [], pendingPromoCode: null }),

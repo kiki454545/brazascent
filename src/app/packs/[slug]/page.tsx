@@ -91,9 +91,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const title = pack.name.toLowerCase().startsWith('pack') ? pack.name : `Pack ${pack.name}`
-  const description = pack.description
-    ? pack.description.substring(0, 160).trim() + (pack.description.length > 160 ? '...' : '')
-    : `Découvrez le pack ${pack.name} sur Braza Scent. Une sélection de parfums à prix avantageux. Livraison rapide en France.`
+  const description = pack.short_description ||
+    pack.description?.slice(0, 155) ||
+    `Découvrez ${pack.name} — coffret de décants de parfums sur BrazaScent.`
 
   const image = pack.image || `${SITE_URL}/images/packs-hero.jpg`
   const canonicalUrl = `${SITE_URL}/packs/${slug}`

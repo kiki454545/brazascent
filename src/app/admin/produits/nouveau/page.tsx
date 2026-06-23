@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { generateProductImageFilename } from '@/lib/image-seo'
 
 // Helper pour ignorer les AbortError
 const isAbortError = (error: unknown): boolean => {
@@ -228,9 +229,11 @@ export default function NewProductPage() {
           throw new Error('La taille maximale est de 5MB par image')
         }
 
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-        const filePath = `products/${fileName}`
+        const idx = form.images.length + uploadedUrls.length
+        const seoFilename = (form.name && form.brand)
+          ? generateProductImageFilename(form.name, form.brand, file.name, idx)
+          : `decant-parfum-brazascent-${Date.now()}.${file.name.split('.').pop()}`
+        const filePath = `products/${seoFilename}`
 
         const { error: uploadError } = await supabase.storage
           .from('products')

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '@/lib/supabase'
 import { m } from 'framer-motion'
 import Image from 'next/image'
 import {
@@ -97,6 +98,7 @@ export default function AdminPaniersPage() {
   const [hasEmailFilter, setHasEmailFilter] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const fetchCarts = useCallback(async () => {
     try {
@@ -119,13 +121,26 @@ export default function AdminPaniersPage() {
 
   const handleAction = async (cartId: string, action: 'ignore' | 'recover') => {
     setActionLoading(cartId + action)
+    setActionError(null)
     try {
-      await fetch('/api/admin/carts', {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      const res = await fetch('/api/admin/carts', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ id: cartId, action }),
       })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setActionError(data.error || `Erreur ${res.status}`)
+        return
+      }
       await fetchCarts()
+    } catch {
+      setActionError('Erreur réseau — réessayez')
     } finally {
       setActionLoading(null)
     }
@@ -319,6 +334,9 @@ export default function AdminPaniersPage() {
                       </div>
 
                       {/* Actions */}
+                      {actionError && actionLoading === null && (
+                        <p className="text-xs text-red-500 mb-2">{actionError}</p>
+                      )}
                       <div className="flex flex-wrap gap-2">
                         {cart.user_profile && (
                           <button

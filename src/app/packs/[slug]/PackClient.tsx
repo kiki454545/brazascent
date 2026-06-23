@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -10,7 +11,10 @@ import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { useSettingsStore } from '@/store/settings'
-import { ExpressCheckoutBlock } from '@/components/ExpressCheckoutBlock'
+const ExpressCheckoutBlock = dynamic(
+  () => import('@/components/ExpressCheckoutBlock').then(m => ({ default: m.ExpressCheckoutBlock })),
+  { ssr: false }
+)
 import { ProductCard } from '@/components/ProductCard'
 import TrustBadges from '@/components/TrustBadges'
 import { Product } from '@/types'
@@ -323,7 +327,7 @@ export default function PackDetailPage({ initialPack, initialProducts }: Props) 
               <span className="text-3xl font-light">{formatPrice(getFinalPackPrice())} €</span>
               {pack.original_price && !pack.discount_percentage && (
                 <>
-                  <span className="text-lg text-muted-foreground/60 line-through">{pack.original_price} €</span>
+                  <span className="text-lg text-muted-foreground/75 line-through">{pack.original_price} €</span>
                   <span className="text-sm text-primary font-medium">
                     Économisez {formatPrice(pack.original_price - pack.price)} €
                   </span>
@@ -394,7 +398,7 @@ export default function PackDetailPage({ initialPack, initialProducts }: Props) 
                   <div className="mt-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Total à l&apos;unité</span>
-                      <span className="line-through text-muted-foreground/60">{formatPrice(getTotalProductsPrice())} €</span>
+                      <span className="line-through text-muted-foreground/75">{formatPrice(getTotalProductsPrice())} €</span>
                     </div>
                     <div className="flex items-center justify-between text-sm mt-1">
                       <span className="text-primary font-medium">Réduction pack -{pack.discount_percentage}%</span>
@@ -433,12 +437,13 @@ export default function PackDetailPage({ initialPack, initialProducts }: Props) 
                 </button>
                 <button
                   onClick={() => pack && toggleItem(pack.id)}
+                  aria-label={pack && isInWishlist(pack.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  aria-pressed={pack ? isInWishlist(pack.id) : false}
                   className={`p-4 border transition-colors ${
                     pack && isInWishlist(pack.id)
                       ? 'border-primary bg-primary text-white'
                       : 'border-border hover:border-foreground'
                   }`}
-                  title="Ajouter aux favoris"
                 >
                   <Heart className={`w-5 h-5 ${pack && isInWishlist(pack.id) ? 'fill-current' : ''}`} />
                 </button>

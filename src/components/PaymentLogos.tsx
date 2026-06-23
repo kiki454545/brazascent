@@ -84,6 +84,13 @@ export function PaymentLogos({ className = '' }: PaymentLogosProps) {
         </span>
       </div>
 
+      {/* Klarna */}
+      <div style={{ ...base, backgroundColor: '#FFB3C7', borderColor: '#FFB3C7', minWidth: 56 }}>
+        <span style={{ fontFamily: 'Arial, sans-serif', fontWeight: 800, color: '#17120E', fontSize: 12, letterSpacing: 0.2 }}>
+          Klarna
+        </span>
+      </div>
+
     </div>
   )
 }

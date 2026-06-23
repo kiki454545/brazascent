@@ -24,15 +24,14 @@ function getSupabaseAdmin() {
 }
 
 // SÉCURITÉ: Schémas de validation Zod
+// Format plat envoyé par TrackingProvider : { product_id, name, size, quantity, price, image }
 const cartItemSchema = z.object({
-  product: z.object({
-    id: z.string(),
-    name: z.string().max(255),
-    price: z.number().min(0).max(99999),
-    images: z.array(z.string()).optional(),
-  }),
+  product_id: z.string().max(64).optional(),
+  name: z.string().max(255).optional(),
   size: z.string().max(50).optional(),
   quantity: z.number().int().min(1).max(100),
+  price: z.number().min(0).max(99999).optional(),
+  image: z.string().max(500).optional(),
 })
 
 const trackingDataSchema = z.object({

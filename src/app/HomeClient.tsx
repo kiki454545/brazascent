@@ -4,18 +4,12 @@ import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } f
 import Image from 'next/image'
 import Link from 'next/link'
 import { m, AnimatePresence } from 'framer-motion'
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ShieldCheck, Zap, Layers, Gift, Truck } from 'lucide-react'
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, ShieldCheck, Zap, Layers, Gift, Truck, Lock } from 'lucide-react'
 import { ProductCard } from '@/components/ProductCard'
 import { Product } from '@/types'
 import { HomePack } from './page'
 import { formatPrice } from '@/lib/format'
 import { useSettingsStore } from '@/store/settings'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export interface DraggableCarouselHandle {
   scrollByAmount: (amount: number) => void
@@ -163,7 +157,7 @@ const DraggableCarousel = forwardRef<DraggableCarouselHandle, { products: Produc
   return (
     <div
       ref={containerRef}
-      className="flex gap-6 sm:gap-8 lg:gap-10 pl-6 sm:pl-10 lg:pl-20 pr-6 sm:pr-10 lg:pr-20 overflow-x-auto scrollbar-hide cursor-grab select-none"
+      className="flex gap-6 sm:gap-8 lg:gap-10 pl-6 sm:pl-10 lg:pl-20 pr-6 sm:pr-10 lg:pr-20 overflow-x-auto overflow-y-hidden scrollbar-hide cursor-grab select-none"
       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -228,15 +222,17 @@ function HeroBestsellersSlider({ products }: { products: Product[] }) {
                 alt={item.name}
                 fill
                 priority={current === 0}
+                fetchPriority={current === 0 ? 'high' : 'auto'}
+                decoding={current === 0 ? 'sync' : 'async'}
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 className="object-cover"
               />
             </m.div>
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 text-white">
-              <p className="text-[10px] tracking-[0.3em] uppercase text-primary mb-3">Bestseller</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-primary-text mb-3">Bestseller</p>
               <p className="text-xs uppercase tracking-wider text-white/70 mb-1">{item.brand}</p>
-              <h3 className="text-2xl sm:text-3xl font-normal mb-2">{item.name}</h3>
+              <p className="text-2xl sm:text-3xl font-normal mb-2">{item.name}</p>
               <p className="text-sm text-white/90">À partir de {formatPrice(getPrice(item))} €</p>
             </div>
           </Link>
@@ -248,8 +244,11 @@ function HeroBestsellersSlider({ products }: { products: Product[] }) {
             key={i}
             onClick={() => setCurrent(i)}
             aria-label={`Voir produit ${i + 1}`}
-            className={`h-0.5 transition-all ${i === current ? 'w-10 bg-primary' : 'w-6 bg-white/40 hover:bg-white/70'}`}
-          />
+            aria-pressed={i === current}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center group"
+          >
+            <span className={`block h-0.5 transition-all ${i === current ? 'w-10 bg-primary' : 'w-6 bg-white/40 group-hover:bg-white/70'}`} />
+          </button>
         ))}
       </div>
     </div>
@@ -341,28 +340,37 @@ interface HomeClientProps {
   promoProducts: Product[]
   packs: HomePack[]
   orderCount: number
+  initialVideos: string[]
 }
 
-export default function HomeClient({ featuredProducts, newProducts, promoProducts, packs, orderCount }: HomeClientProps) {
+export default function HomeClient({ featuredProducts, newProducts, promoProducts, packs, orderCount, initialVideos }: HomeClientProps) {
   const { settings } = useSettingsStore()
   const freeShippingThreshold = settings.freeShippingThreshold || 120
   const bestsellersCarouselRef = useRef<DraggableCarouselHandle>(null)
   const newProductsCarouselRef = useRef<DraggableCarouselHandle>(null)
   const promosCarouselRef = useRef<DraggableCarouselHandle>(null)
   const scrollStep = 320
-  const [videos, setVideos] = useState<string[]>(['/videos/decantage.mp4'])
+  const [videos] = useState<string[]>(initialVideos)
   const [videoIndex, setVideoIndex] = useState(0)
   const [videoVisible, setVideoVisible] = useState(true)
+  const [videoInViewport, setVideoInViewport] = useState(false)
+  const videoContainerRef = useRef<HTMLDivElement>(null)
 
+  // Ne charger la vidéo que lorsque la section entre dans le viewport
   useEffect(() => {
-    supabase
-      .from('home_videos')
-      .select('url, order_index')
-      .eq('active', true)
-      .order('order_index')
-      .then(({ data }) => {
-        if (data && data.length > 0) setVideos(data.map(v => v.url))
-      })
+    const el = videoContainerRef.current
+    if (!el || !('IntersectionObserver' in window)) return
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVideoInViewport(true)
+          obs.disconnect()
+        }
+      },
+      { rootMargin: '100px' }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
   }, [])
 
   useEffect(() => {
@@ -382,7 +390,17 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
       {/* Hero Section — split 3/5 text · 2/5 slider */}
       <section className="relative lg:min-h-screen overflow-hidden text-white">
         <div className="absolute inset-0 z-0">
-          <Image src="/images/hero-bg.webp" alt="" fill priority sizes="100vw" className="object-cover" />
+          <Image
+            src="/images/hero-bg.webp"
+            alt=""
+            fill
+            priority
+            fetchPriority="high"
+            sizes="100vw"
+            placeholder="blur"
+            blurDataURL="data:image/webp;base64,UklGRjgAAABXRUJQVlA4ICwAAABwAQCdASoKAAYABUB8JS7AIwARYAD+7t3XgfKRGzg824W/L40uP8mJk7DAAA=="
+            className="object-cover"
+          />
           <div className="absolute inset-0 bg-black/70" />
         </div>
 
@@ -414,7 +432,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                   <Link
                     key={label}
                     href={href}
-                    className="px-4 py-1.5 border border-white/25 text-white/80 text-xs tracking-[0.15em] uppercase hover:border-primary hover:text-primary transition-colors"
+                    className="px-4 py-2.5 border border-white/25 text-white/80 text-xs tracking-[0.15em] uppercase hover:border-primary hover:text-primary transition-colors"
                   >
                     {label}
                   </Link>
@@ -425,9 +443,10 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                 {([
                   { Icon: ShieldCheck, label: '100% authentique' },
                   { Icon: Zap,         label: 'Expédition 24/48h' },
-                  { Icon: Layers,      label: 'Formats disponibles', sub: '2 / 5 / 10 ml' },
+                  { Icon: Layers,      label: 'Formats disponibles', sub: '2 / 5 / 10 / 30 ml' },
                   { Icon: Gift,        label: 'Échantillon offert' },
                   { Icon: Truck,       label: 'Livraison offerte', sub: `Dès ${freeShippingThreshold} €` },
+                  { Icon: Lock,        label: 'Paiement sécurisé', sub: 'SSL · 3D Secure' },
                 ] as { Icon: React.ElementType; label: string; sub?: string }[]).map(({ Icon, label, sub }) => (
                   <div key={label} className="flex items-start gap-2">
                     <Icon className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" strokeWidth={1.5} />
@@ -457,29 +476,38 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
       <section className="py-20 lg:py-28 bg-background">
         <div className="px-6 lg:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16 items-center">
-            <div className="animate-fade-in-left relative aspect-[9/16] w-[360px] max-w-full mx-auto lg:col-span-2 overflow-hidden bg-black">
-              <video
-                key={videos[videoIndex]}
-                src={videos[videoIndex]}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-600"
-                style={{ opacity: videoVisible ? 1 : 0 }}
-              />
+            <div ref={videoContainerRef} className="animate-fade-in-left relative aspect-[9/16] w-[360px] max-w-full mx-auto lg:col-span-2 overflow-hidden bg-black">
+              {videos.length > 0 ? (
+                <video
+                  key={videoInViewport ? videos[videoIndex] : 'poster-only'}
+                  src={videoInViewport ? videos[videoIndex] : undefined}
+                  autoPlay={videoInViewport}
+                  muted
+                  loop
+                  playsInline
+                  preload="none"
+                  poster="/videos/decantage-poster.webp"
+                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-600"
+                  style={{ opacity: videoVisible ? 1 : 0 }}
+                />
+              ) : (
+                <img
+                  src="/videos/decantage-poster.webp"
+                  alt="Décantage de parfum"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              )}
             </div>
             <div className="lg:col-span-3">
-              <span className="text-xs tracking-[0.35em] uppercase text-primary mb-4 block">Notre approche</span>
+              <span className="text-xs tracking-[0.35em] uppercase text-primary-text mb-4 block">Notre approche</span>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-normal leading-[1.1] mb-6">
-                L&apos;exigence du <span className="italic text-primary">détail</span>,<br />au service du parfum.
+                L&apos;exigence du <span className="italic text-primary-text">détail</span>,<br />au service du parfum.
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-12 max-w-lg">
                 Chaque décant est préparé à la main, à partir de flacons authentiques. Une démarche artisanale pour faire découvrir les plus belles fragrances.
               </p>
               <div className="flex items-center gap-3 mb-10">
-                <div className="flex text-primary text-lg leading-none">{'★★★★★'}</div>
+                <div className="flex text-primary-text text-lg leading-none">{'★★★★★'}</div>
                 <p className="text-sm text-muted-foreground">
                   Déjà <span className="text-foreground font-medium">{orderCount}</span> commandes expédiées
                 </p>
@@ -492,7 +520,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                   { num: '03', title: 'Soin', desc: 'Matériel stérile, dosage précis, packaging sécurisé. Chaque commande est préparée comme une pièce unique.' },
                 ].map((item) => (
                   <div key={item.num} className="grid grid-cols-[auto_1fr] gap-6 pb-8 border-b border-border last:border-b-0 last:pb-0">
-                    <span className="font-serif text-2xl text-primary leading-none">{item.num}</span>
+                    <span className="font-serif text-2xl text-primary-text leading-none">{item.num}</span>
                     <div>
                       <h3 className="text-lg tracking-[0.15em] uppercase mb-2">{item.title}</h3>
                       <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
@@ -510,7 +538,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
         <div className="px-6 sm:px-10 lg:px-20">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
             <div>
-              <span className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">Les plus populaires</span>
+              <span className="text-sm tracking-[0.3em] uppercase text-primary-text mb-4 block">Les plus populaires</span>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase">Best-sellers</h2>
               <div className="w-24 h-px bg-primary mt-6" />
             </div>
@@ -541,7 +569,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
         <div className="px-6 sm:px-10 lg:px-20">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
             <div>
-              <span className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">Fraîchement arrivés</span>
+              <span className="text-sm tracking-[0.3em] uppercase text-primary-text mb-4 block">Fraîchement arrivés</span>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase">Nouveautés</h2>
               <div className="w-24 h-px bg-primary mt-6" />
             </div>
@@ -573,7 +601,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
           <div className="px-6 sm:px-10 lg:px-20">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
               <div>
-                <span className="text-sm tracking-[0.3em] uppercase text-red-500 mb-4 block">Offres limitées</span>
+                <span className="text-sm tracking-[0.3em] uppercase text-red-400 mb-4 block">Offres limitées</span>
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase">Promos</h2>
                 <div className="w-24 h-px bg-red-500 mt-6" />
               </div>
@@ -602,7 +630,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
           <div className="px-6 sm:px-10 lg:px-20">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
               <div>
-                <span className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">Idées cadeaux</span>
+                <span className="text-sm tracking-[0.3em] uppercase text-primary-text mb-4 block">Idées cadeaux</span>
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase">Coffrets</h2>
                 <div className="w-24 h-px bg-primary mt-6" />
               </div>
@@ -651,7 +679,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
                       <div className="flex items-center gap-3">
                         <span className="font-medium">{formatPrice(pack.price)} €</span>
                         {pack.original_price && (
-                          <span className="text-sm text-background/40 line-through">
+                          <span className="text-sm text-background/50 line-through">
                             {formatPrice(pack.original_price)} €
                           </span>
                         )}
@@ -669,9 +697,9 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
       <section id="comment-ca-marche" className="py-20 lg:py-32 bg-cream">
         <div className="px-6 sm:px-10 lg:px-20">
           <div className="text-center mb-20">
-            <span className="text-xs tracking-[0.35em] uppercase text-primary mb-4 block">Notre processus</span>
+            <span className="text-xs tracking-[0.35em] uppercase text-primary-text mb-4 block">Notre processus</span>
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-normal leading-[1.1] mb-6">
-              Comment ça <span className="italic text-primary">marche ?</span>
+              Comment ça <span className="italic text-primary-text">marche ?</span>
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Chaque commande est préparée à la main, à partir de flacons originaux. L&apos;authenticité du niche, en format découverte.
@@ -680,7 +708,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
 
           <div className="mb-24">
             <div className="flex items-center gap-4 mb-12">
-              <span className="text-[10px] tracking-[0.35em] uppercase text-primary">01 · Process</span>
+              <span className="text-[10px] tracking-[0.35em] uppercase text-primary-text">01 · Process</span>
               <div className="flex-1 h-px bg-border" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 relative">
@@ -693,7 +721,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
               ].map((step) => (
                 <div key={step.num} className="relative text-center">
                   <div className="w-16 h-16 mx-auto mb-6 bg-cream border border-primary rounded-full flex items-center justify-center relative z-10">
-                    <span className="text-primary text-base font-serif">{step.num}</span>
+                    <span className="text-primary-text text-base font-serif">{step.num}</span>
                   </div>
                   <h3 className="text-base tracking-[0.15em] uppercase mb-3">{step.title}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">{step.desc}</p>
@@ -704,20 +732,21 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
 
           <div className="mb-24">
             <div className="flex items-center gap-4 mb-12">
-              <span className="text-[10px] tracking-[0.35em] uppercase text-primary">02 · Formats</span>
+              <span className="text-[10px] tracking-[0.35em] uppercase text-primary-text">02 · Formats</span>
               <div className="flex-1 h-px bg-border" />
             </div>
             <div className="mb-10 max-w-2xl">
               <p className="text-muted-foreground leading-relaxed">Le décantage te permet de tester une fragrance sur plusieurs jours (peau, météo, tenue) avant d&apos;investir dans un flacon complet.</p>
             </div>
-            <div className="grid grid-cols-3 gap-3 sm:gap-6 lg:gap-10">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 lg:gap-10">
               {[
                 { size: '2ml', label: 'Test rapide', sprays: '≈ 45 sprays' },
                 { size: '5ml', label: 'Découverte complète', sprays: '≈ 110 sprays' },
                 { size: '10ml', label: 'Vrai usage', sprays: '≈ 220 sprays' },
+                { size: '30ml', label: 'Format flacon', sprays: '≈ 660 sprays' },
               ].map((format) => (
                 <div key={format.size} className="p-4 sm:p-8 lg:p-10 border border-border bg-background text-center hover:border-primary transition-colors">
-                  <div className="font-serif text-3xl sm:text-5xl lg:text-6xl text-primary mb-2">{format.size}</div>
+                  <div className="font-serif text-3xl sm:text-5xl lg:text-6xl text-primary-text mb-2">{format.size}</div>
                   <div className="text-[10px] sm:text-xs text-muted-foreground tracking-[0.2em] uppercase mb-2">{format.label}</div>
                   <div className="text-xs sm:text-sm font-medium">{format.sprays}</div>
                 </div>
@@ -727,16 +756,16 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
 
           <div>
             <div className="flex items-center gap-4 mb-12">
-              <span className="text-[10px] tracking-[0.35em] uppercase text-primary">03 · Engagement</span>
+              <span className="text-[10px] tracking-[0.35em] uppercase text-primary-text">03 · Engagement</span>
               <div className="flex-1 h-px bg-border" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
               <div className="p-8 lg:p-10 border border-border bg-background">
-                <h3 className="text-base tracking-[0.15em] uppercase mb-4 flex items-center gap-3"><span className="text-primary font-serif">★</span>Authenticité</h3>
+                <h3 className="text-base tracking-[0.15em] uppercase mb-4 flex items-center gap-3"><span className="text-primary-text font-serif">★</span>Authenticité</h3>
                 <p className="text-muted-foreground leading-relaxed">Décantage réalisé à partir de flacons <strong className="text-foreground">authentiques</strong> (niche & collection privée). Aucune copie, aucune reformulation.</p>
               </div>
               <div className="p-8 lg:p-10 border border-border bg-background">
-                <h3 className="text-base tracking-[0.15em] uppercase mb-4 flex items-center gap-3"><span className="text-primary font-serif">★</span>Soin & transparence</h3>
+                <h3 className="text-base tracking-[0.15em] uppercase mb-4 flex items-center gap-3"><span className="text-primary-text font-serif">★</span>Soin & transparence</h3>
                 <p className="text-muted-foreground leading-relaxed">Matériel stérile, manipulation soignée, packaging sécurisé, stock mis à jour selon disponibilité réelle.</p>
               </div>
             </div>
@@ -748,7 +777,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
       <section className="py-20 lg:py-28 bg-background overflow-hidden">
         <div className="px-6 sm:px-10 lg:px-20">
           <div className="text-center mb-12">
-            <span className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">Témoignages</span>
+            <span className="text-sm tracking-[0.3em] uppercase text-primary-text mb-4 block">Témoignages</span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase mb-6">Avis clients</h2>
             <div className="w-24 h-px bg-primary mx-auto" />
           </div>
@@ -757,7 +786,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
           <m.div className="flex gap-6" animate={{ x: ['0%', '-50%'] }} transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}>
             {[...reviews, ...reviews].map((review, index) => (
               <div key={index} className="flex-shrink-0 w-80 p-6 bg-cream border border-border">
-                <div className="text-primary text-lg mb-3">★★★★★</div>
+                <div className="text-primary-text text-lg mb-3">★★★★★</div>
                 <p className="text-muted-foreground mb-4 italic leading-relaxed text-sm">&ldquo;{review.text}&rdquo;</p>
                 <p className="text-sm text-muted-foreground">{review.name}</p>
               </div>
@@ -770,7 +799,7 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
       <section className="py-20 lg:py-32 bg-cream">
         <div className="px-6 sm:px-10 lg:px-20 max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <span className="text-xs tracking-[0.3em] uppercase text-primary mb-4 block">Avant votre première commande</span>
+            <span className="text-xs tracking-[0.3em] uppercase text-primary-text mb-4 block">Avant votre première commande</span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase">Questions essentielles</h2>
             <div className="w-24 h-px bg-primary mx-auto mt-6" />
             <p className="text-muted-foreground mt-6 text-sm tracking-wide">Tout ce que vous devez savoir avant votre première commande.</p>
@@ -820,10 +849,10 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
       <section className="py-20 lg:py-28 bg-cream">
         <div className="px-6 sm:px-10 lg:px-20 text-center">
           <div className="max-w-4xl mx-auto animate-fade-in-up">
-            <span className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">Contact</span>
+            <span className="text-sm tracking-[0.3em] uppercase text-primary-text mb-4 block">Contact</span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-normal leading-[1.1] mb-6">
               Une demande, une recherche,<br className="hidden sm:block" />
-              <span className="italic text-primary">une pièce rare ?</span>
+              <span className="italic text-primary-text">une pièce rare ?</span>
             </h2>
             <div className="w-24 h-px bg-primary mx-auto mb-8" />
             <p className="text-muted-foreground mb-10 max-w-xl mx-auto leading-relaxed">

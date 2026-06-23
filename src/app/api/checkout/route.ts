@@ -209,6 +209,22 @@ async function verifyProductPrices(
       serverPrice = serverProduct.price_by_size[item.selectedSize]
     }
 
+    // SÉCURITÉ: Comparer le prix client au prix serveur — rejeter si écart > 0,01 €
+    const clientPrice =
+      item.product.priceBySize &&
+      item.product.priceBySize[item.selectedSize] &&
+      item.product.priceBySize[item.selectedSize] > 0
+        ? item.product.priceBySize[item.selectedSize]
+        : item.product.price
+
+    if (Math.abs(clientPrice - serverPrice) > 0.01) {
+      return {
+        valid: false,
+        error: `Le prix de "${serverProduct.name}" (${item.selectedSize}) a changé. Veuillez actualiser votre panier et réessayer.`,
+        verifiedItems: [],
+      }
+    }
+
     verifiedItems.push({
       id: item.product.id,
       size: item.selectedSize,
@@ -357,7 +373,8 @@ export async function POST(request: NextRequest) {
     // Créer la session Stripe Checkout
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sessionConfig: any = {
-      payment_method_types: ['card'],
+      payment_method_types: ['card', 'klarna'],
+      billing_address_collection: 'auto',
       line_items: lineItems,
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -370,9 +387,14 @@ export async function POST(request: NextRequest) {
         shippingCost: shippingCost.toString(),
         shipping: JSON.stringify({
           name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+          firstName: shippingAddress.firstName,
+          lastName: shippingAddress.lastName,
           email: shippingAddress.email,
           phone: shippingAddress.phone,
-          address: `${shippingAddress.street}, ${shippingAddress.postalCode} ${shippingAddress.city}, ${shippingAddress.country}`
+          address: shippingAddress.street,
+          city: shippingAddress.city,
+          postalCode: shippingAddress.postalCode,
+          country: shippingAddress.country,
         }),
         items: JSON.stringify(verifiedItems.map(item => ({
           id: item.id,

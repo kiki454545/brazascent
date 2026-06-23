@@ -162,8 +162,8 @@ export default function FavorisPage() {
                     {/* Bouton supprimer des favoris */}
                     <button
                       onClick={() => removeItem(product.id)}
-                      className="absolute top-3 left-3 z-10 p-1.5 bg-background/80 backdrop-blur-sm rounded-full shadow hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
-                      title="Retirer des favoris"
+                      aria-label={`Retirer ${product.name} des favoris`}
+                      className="absolute top-3 left-3 z-10 p-2 bg-background/80 backdrop-blur-sm rounded-full shadow hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-red-500" />
                     </button>

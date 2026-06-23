@@ -5,7 +5,6 @@ import { m, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import {
   Search,
-  Eye,
   Package,
   Truck,
   CheckCircle,
@@ -38,14 +37,18 @@ interface Order {
   shipping_method: string
   payment_method: string
   shipping_address: {
-    firstName: string
-    lastName: string
+    // Nouveau format (commandes récentes)
+    firstName?: string
+    lastName?: string
+    city?: string
+    postalCode?: string
+    country?: string
+    // Ancien format : name = prénom+nom combinés, address = adresse complète combinée
+    name?: string
+    // Commun
     email: string
     phone: string
     address: string
-    city: string
-    postalCode: string
-    country: string
   }
   tracking_number: string | null
   tracking_url: string | null
@@ -74,6 +77,22 @@ const carrierOptions = [
   { value: 'other', label: 'Autre', trackingUrl: '' }
 ]
 
+function clientName(addr: Order['shipping_address'] | undefined): string {
+  if (!addr) return '—'
+  if (addr.firstName || addr.lastName) return `${addr.firstName || ''} ${addr.lastName || ''}`.trim()
+  return addr.name || '—'
+}
+
+function clientAddress(addr: Order['shipping_address'] | undefined): { line1: string; line2: string } {
+  if (!addr) return { line1: '—', line2: '' }
+  if (addr.city) return {
+    line1: addr.address,
+    line2: `${addr.postalCode || ''} ${addr.city}${addr.country ? `, ${addr.country}` : ''}`.trim(),
+  }
+  // Ancien format : adresse complète dans address
+  return { line1: addr.address, line2: '' }
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -84,8 +103,21 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [statusDropdown, setStatusDropdown] = useState<string | null>(null)
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [updateError, setUpdateError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [resendingEmail, setResendingEmail] = useState(false)
+  const [resendSuccess, setResendSuccess] = useState(false)
+  const [orderItems, setOrderItems] = useState<Array<{
+    id: string
+    product_id: string
+    product_name: string
+    product_image: string
+    size: string
+    quantity: number
+    price: number
+  }>>([])
+  const [loadingItems, setLoadingItems] = useState(false)
 
   // Form state for editing
   const [editForm, setEditForm] = useState({
@@ -126,16 +158,7 @@ export default function AdminOrdersPage() {
     }
   }, [])
 
-  // Fermer le dropdown quand on clique ailleurs
-  useEffect(() => {
-    const handleClickOutside = () => {
-      if (statusDropdown) {
-        setStatusDropdown(null)
-      }
-    }
-    document.addEventListener('click', handleClickOutside)
-    return () => document.removeEventListener('click', handleClickOutside)
-  }, [statusDropdown])
+  // Le dropdown est fermé via un backdrop overlay dans le JSX — pas de document listener
 
   useEffect(() => {
     if (selectedOrder) {
@@ -146,19 +169,25 @@ export default function AdminOrdersPage() {
         carrier: selectedOrder.carrier || '',
         admin_notes: selectedOrder.admin_notes || ''
       })
+
+      // Charger les articles depuis order_items
+      setLoadingItems(true)
+      supabase
+        .from('order_items')
+        .select('id, product_id, product_name, product_image, size, quantity, price')
+        .eq('order_id', selectedOrder.id)
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setOrderItems(data)
+          } else {
+            setOrderItems([])
+          }
+          setLoadingItems(false)
+        })
+    } else {
+      setOrderItems([])
     }
   }, [selectedOrder])
-
-  const refetchOrders = async () => {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (!error && data) {
-      setOrders(data)
-    }
-  }
 
   // Séparer les commandes actives et terminées
   const activeOrders = orders.filter(o => !['completed', 'cancelled'].includes(o.status))
@@ -167,6 +196,7 @@ export default function AdminOrdersPage() {
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     setUpdatingStatus(orderId)
     setStatusDropdown(null)
+    setUpdateError(null)
 
     try {
       const updateData: any = { status: newStatus }
@@ -195,11 +225,20 @@ export default function AdminOrdersPage() {
             body: JSON.stringify({ orderId, status: newStatus }),
           }).catch(console.error)
         }
+        if (newStatus === 'shipped') {
+          fetch('/api/email/shipping', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId }),
+          }).catch(console.error)
+        }
       } else {
         console.error('Error updating order:', error)
+        setUpdateError(`Erreur mise à jour : ${error.message}`)
       }
-    } catch (error) {
-      console.error('Error updating order:', error)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erreur inconnue'
+      setUpdateError(msg)
     } finally {
       setUpdatingStatus(null)
     }
@@ -221,6 +260,10 @@ export default function AdminOrdersPage() {
       const isNewShipment = editForm.status === 'shipped' && !selectedOrder.shipped_at
       const isNewProcessing = editForm.status === 'processing' && selectedOrder.status !== 'processing'
       const isNewDelivered = editForm.status === 'completed' && !selectedOrder.delivered_at
+      // Envoyer l'email de suivi si le tracking change (même si déjà expédié)
+      const trackingChanged = editForm.status === 'shipped' &&
+        editForm.tracking_number.trim() !== '' &&
+        editForm.tracking_number.trim() !== (selectedOrder.tracking_number || '')
 
       if (isNewShipment) {
         updateData.shipped_at = new Date().toISOString()
@@ -241,7 +284,7 @@ export default function AdminOrdersPage() {
         ))
         setSelectedOrder(updatedOrder)
 
-        if (isNewShipment) {
+        if (isNewShipment || trackingChanged) {
           fetch('/api/email/shipping', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -260,6 +303,27 @@ export default function AdminOrdersPage() {
       console.error('Error saving order:', error)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleResendShippingEmail = async () => {
+    if (!selectedOrder) return
+    setResendingEmail(true)
+    setResendSuccess(false)
+    try {
+      const res = await fetch('/api/email/shipping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: selectedOrder.id }),
+      })
+      if (res.ok) {
+        setResendSuccess(true)
+        setTimeout(() => setResendSuccess(false), 3000)
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setResendingEmail(false)
     }
   }
 
@@ -327,7 +391,7 @@ export default function AdminOrdersPage() {
         ...rows.map(o => [
           o.order_number,
           new Date(o.created_at).toLocaleDateString('fr-FR'),
-          `${o.shipping_address?.firstName || ''} ${o.shipping_address?.lastName || ''}`.trim(),
+          clientName(o.shipping_address),
           o.shipping_address?.email || '',
           o.shipping_address?.address || '',
           o.shipping_address?.city || '',
@@ -359,7 +423,7 @@ export default function AdminOrdersPage() {
         itemRows.push([
           o.order_number,
           new Date(o.created_at).toLocaleDateString('fr-FR'),
-          `${o.shipping_address?.firstName || ''} ${o.shipping_address?.lastName || ''}`.trim(),
+          clientName(o.shipping_address),
           o.shipping_address?.email || '',
           o.status,
           '', '', '', '',
@@ -370,7 +434,7 @@ export default function AdminOrdersPage() {
           itemRows.push([
             o.order_number,
             new Date(o.created_at).toLocaleDateString('fr-FR'),
-            `${o.shipping_address?.firstName || ''} ${o.shipping_address?.lastName || ''}`.trim(),
+            clientName(o.shipping_address),
             o.shipping_address?.email || '',
             o.status,
             item.product_name || item.name || '',
@@ -392,7 +456,7 @@ export default function AdminOrdersPage() {
     const matchesSearch =
       order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.shipping_address?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      `${order.shipping_address?.firstName} ${order.shipping_address?.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      clientName(order.shipping_address).toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.tracking_number?.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesStatus = !statusFilter || order.status === statusFilter
@@ -413,6 +477,22 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Backdrop pour fermer le dropdown statut */}
+      {statusDropdown && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setStatusDropdown(null)}
+        />
+      )}
+
+      {/* Erreur de mise à jour statut */}
+      {updateError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{updateError}</span>
+          <button onClick={() => setUpdateError(null)} className="ml-4 text-red-500 hover:text-red-700">✕</button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
@@ -602,7 +682,7 @@ export default function AdminOrdersPage() {
       <m.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-admin-surface rounded-xl shadow-sm overflow-hidden"
+        className="bg-admin-surface rounded-xl shadow-sm"
       >
         {filteredOrders.length > 0 ? (
           <div className="divide-y divide-admin-border">
@@ -649,7 +729,7 @@ export default function AdminOrdersPage() {
 
                           {statusDropdown === order.id && (
                             <div
-                              className="absolute bottom-full left-0 mb-1 w-48 bg-admin-surface rounded-lg shadow-lg border border-admin-border z-50"
+                              className="absolute top-full left-0 mt-1 w-48 bg-admin-surface rounded-lg shadow-lg border border-admin-border z-50"
                               onClick={(e) => e.stopPropagation()}
                             >
                               {statusOptions.map((status) => (
@@ -674,7 +754,7 @@ export default function AdminOrdersPage() {
 
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-admin-muted">
                         <span className="font-medium">
-                          {order.shipping_address?.firstName} {order.shipping_address?.lastName}
+                          {clientName(order.shipping_address)}
                         </span>
                         <span>·</span>
                         <span>{order.shipping_address?.email}</span>
@@ -947,9 +1027,7 @@ export default function AdminOrdersPage() {
                       Client
                     </h3>
                     <div className="bg-admin-surface-alt rounded-lg p-4">
-                      <p className="font-medium">
-                        {selectedOrder.shipping_address?.firstName} {selectedOrder.shipping_address?.lastName}
-                      </p>
+                      <p className="font-medium">{clientName(selectedOrder.shipping_address)}</p>
                       <p className="text-admin-muted">{selectedOrder.shipping_address?.email}</p>
                       <p className="text-admin-muted">{selectedOrder.shipping_address?.phone}</p>
                     </div>
@@ -960,9 +1038,13 @@ export default function AdminOrdersPage() {
                       Adresse de livraison
                     </h3>
                     <div className="bg-admin-surface-alt rounded-lg p-4">
-                      <p>{selectedOrder.shipping_address?.address}</p>
-                      <p>{selectedOrder.shipping_address?.postalCode} {selectedOrder.shipping_address?.city}</p>
-                      <p>{selectedOrder.shipping_address?.country}</p>
+                      {(() => {
+                        const { line1, line2 } = clientAddress(selectedOrder.shipping_address)
+                        return <>
+                          <p>{line1}</p>
+                          {line2 && <p>{line2}</p>}
+                        </>
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -972,27 +1054,41 @@ export default function AdminOrdersPage() {
                   <h3 className="text-sm font-medium text-admin-muted uppercase tracking-wider mb-3">
                     Articles commandés
                   </h3>
+                  {loadingItems ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-admin-muted" />
+                    </div>
+                  ) : (
                   <div className="space-y-3">
-                    {selectedOrder.items?.map((item, index) => (
-                      <div key={index} className="flex items-center gap-4 p-3 bg-admin-surface-alt rounded-lg">
-                        <div className="w-16 h-16 bg-admin-surface-alt rounded relative overflow-hidden">
-                          {item.product?.images?.[0] && (
+                    {orderItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-4 p-3 bg-admin-surface-alt rounded-lg">
+                        <div className="w-16 h-16 bg-admin-surface rounded relative overflow-hidden flex-shrink-0">
+                          {item.product_image ? (
                             <Image
-                              src={item.product.images[0]}
-                              alt={item.product?.name || ''}
+                              src={item.product_image}
+                              alt={item.product_name}
                               fill
                               className="object-cover"
                             />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="w-6 h-6 text-admin-light" />
+                            </div>
                           )}
                         </div>
-                        <div className="flex-1">
-                          <p className="font-medium">{item.product?.name}</p>
-                          <p className="text-sm text-admin-muted">{item.size} × {item.quantity}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{item.product_name}</p>
+                          <p className="text-sm text-admin-muted">{item.size} · Qté : {item.quantity}</p>
+                          <p className="text-xs text-admin-muted">Prix unitaire : {(item.price / item.quantity).toFixed(2)} €</p>
                         </div>
-                        <p className="font-medium">{(item.product?.price || 0) * item.quantity} €</p>
+                        <p className="font-medium text-right flex-shrink-0">{item.price.toFixed(2)} €</p>
                       </div>
                     ))}
+                    {orderItems.length === 0 && (
+                      <p className="text-sm text-admin-muted text-center py-4">Aucun article trouvé</p>
+                    )}
                   </div>
+                  )}
                 </div>
 
                 {/* Notes admin */}
@@ -1063,6 +1159,21 @@ export default function AdminOrdersPage() {
                     <ExternalLink className="w-4 h-4" />
                     Bon de livraison
                   </a>
+                  {selectedOrder.status === 'shipped' && (
+                    <button
+                      onClick={handleResendShippingEmail}
+                      disabled={resendingEmail}
+                      className="flex items-center gap-2 px-4 py-2 border border-[#C9A962] text-[#C9A962] rounded-lg hover:bg-[#C9A962]/10 transition-colors text-sm disabled:opacity-50"
+                    >
+                      {resendingEmail ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" />Envoi...</>
+                      ) : resendSuccess ? (
+                        <><Check className="w-4 h-4 text-green-500" />Email envoyé !</>
+                      ) : (
+                        <><Truck className="w-4 h-4" />Renvoyer email suivi</>
+                      )}
+                    </button>
+                  )}
                   <button
                     onClick={saveOrderDetails}
                     disabled={saving}

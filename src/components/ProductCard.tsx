@@ -7,6 +7,7 @@ import { m } from 'framer-motion'
 import { Heart, ShoppingBag } from 'lucide-react'
 import { Product } from '@/types'
 import { formatPrice } from '@/lib/format'
+import { generateProductImageAlt } from '@/lib/image-seo'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 
@@ -86,19 +87,20 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-50px' }}
       transition={{ duration: 0.5, delay: Math.min(index, 3) * 0.08 }}
+      className="relative group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <Link
         href={`/parfum/${product.slug}`}
-        className="group block"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className="block"
       >
         {/* Image container */}
         <div className="relative aspect-[4/5] bg-cream overflow-hidden mb-3">
           {/* Main image */}
           <Image
             src={product.images[0]}
-            alt={product.name}
+            alt={generateProductImageAlt(product.name, product.brand ?? '', 'product-card')}
             fill
             priority={index < 4}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -111,7 +113,7 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
           {product.images[1] && (
             <Image
               src={product.images[1]}
-              alt={product.name}
+              alt={generateProductImageAlt(product.name, product.brand ?? '', 'product-card')}
               fill
               loading="lazy"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -155,27 +157,15 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
             <div className="absolute inset-0 bg-black/20 pointer-events-none" />
           )}
 
-          {/* Wishlist button */}
-          <button
-            onClick={handleToggleWishlist}
-            className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-300 ${
-              inWishlist
-                ? 'bg-primary text-white'
-                : 'bg-background/80 text-foreground opacity-0 group-hover:opacity-100'
-            }`}
-          >
-            <Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
-          </button>
-
-          {/* Quick add - Masqué si rupture de stock */}
+          {/* Quick add - Desktop seulement (pas de hover sur mobile) */}
           {!isOutOfStock && (
             <div
-              className={`absolute bottom-0 left-0 right-0 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 border-t border-white/10 p-4 transition-all duration-300 ${
+              className={`hidden lg:block absolute bottom-0 left-0 right-0 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 border-t border-white/10 p-3 transition-all duration-300 ${
                 isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
               }`}
             >
               {/* Size selector */}
-              <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="flex items-center justify-center gap-1.5 mb-2.5">
                 {(product.size || []).map((size) => (
                   <button
                     key={size}
@@ -184,7 +174,7 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
                       e.stopPropagation()
                       setSelectedSize(size)
                     }}
-                    className={`px-3 py-1 text-xs border transition-colors ${
+                    className={`px-2 py-1 text-xs border transition-colors ${
                       selectedSize === size
                         ? 'border-foreground bg-foreground text-background'
                         : 'border-border hover:border-foreground'
@@ -242,7 +232,7 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
             <div className="flex items-center gap-3 flex-wrap justify-center">
               <span className="text-sm font-medium">{formatPrice(currentPrice)} €</span>
               {product.originalPrice && currentPrice < product.originalPrice && (
-                <span className="text-sm text-muted-foreground/60 line-through">
+                <span className="text-sm text-muted-foreground/75 line-through">
                   {formatPrice(product.originalPrice)} €
                 </span>
               )}
@@ -250,6 +240,20 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
           </div>
         </div>
       </Link>
+
+      {/* Wishlist — en dehors du <Link> pour éviter <button> dans <a> (HTML invalide) */}
+      <button
+        onClick={handleToggleWishlist}
+        aria-label={inWishlist ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+        aria-pressed={inWishlist}
+        className={`absolute top-4 right-4 z-10 p-2 rounded-full transition-all duration-300 ${
+          inWishlist
+            ? 'bg-primary text-white'
+            : 'bg-background/80 text-foreground opacity-0 group-hover:opacity-100'
+        }`}
+      >
+        <Heart className={`w-5 h-5 ${inWishlist ? 'fill-current' : ''}`} />
+      </button>
     </m.div>
   )
 }

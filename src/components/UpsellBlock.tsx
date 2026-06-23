@@ -7,7 +7,8 @@ import { Plus, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/store/cart'
 import { formatPrice } from '@/lib/format'
 import { Product } from '@/types'
-import posthog from 'posthog-js'
+import { captureEvent } from '@/lib/analytics'
+import { generateProductImageAlt } from '@/lib/image-seo'
 
 interface RecoProduct {
   id: string
@@ -86,7 +87,7 @@ export function UpsellBlock({ compact = false, className = '' }: UpsellBlockProp
       setIsFallback(brands.length === 0 && categories.length === 0)
 
       if (results.length > 0) {
-        posthog.capture('upsell_view', { cart_total: cartTotal, reco_count: results.length, compact })
+        captureEvent('upsell_view', { cart_total: cartTotal, reco_count: results.length, compact })
       }
     } catch (err) {
       console.error('UpsellBlock fetch error:', err)
@@ -103,7 +104,7 @@ export function UpsellBlock({ compact = false, className = '' }: UpsellBlockProp
     const firstSize = sizes[0] || '10ml'
     setAddingId(product.id)
     addItem(product as unknown as Product, firstSize, 1)
-    posthog.capture('upsell_add_to_cart', { product_id: product.id, product_name: product.name, size: firstSize })
+    captureEvent('upsell_add_to_cart', { product_id: product.id, product_name: product.name, size: firstSize })
     setTimeout(() => setAddingId(null), 800)
   }
 
@@ -118,7 +119,7 @@ export function UpsellBlock({ compact = false, className = '' }: UpsellBlockProp
         <p className="text-xs text-muted-foreground uppercase tracking-[0.12em] mb-3">Vous aimerez aussi</p>
         <div className="flex items-center gap-3">
           <Link href={`/parfum/${reco.slug}`} className="relative w-14 h-14 bg-cream flex-shrink-0 hover:opacity-80 transition-opacity">
-            <Image src={reco.images[0]} alt={reco.name} fill className="object-cover" />
+            <Image src={reco.images[0]} alt={generateProductImageAlt(reco.name, reco.brand, 'product-card')} fill className="object-cover" />
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{reco.name}</p>
@@ -167,7 +168,7 @@ export function UpsellBlock({ compact = false, className = '' }: UpsellBlockProp
                   <Link href={`/parfum/${product.slug}`} className="block relative aspect-square bg-cream overflow-hidden">
                     <Image
                       src={product.images[0]}
-                      alt={product.name}
+                      alt={generateProductImageAlt(product.name, product.brand, 'product-card')}
                       fill
                       sizes="(max-width: 640px) 50vw, 33vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-300"

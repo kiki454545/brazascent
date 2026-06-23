@@ -14,13 +14,13 @@ export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Parfums Femme - Décants & échantillons',
-  description: 'Découvrez notre sélection de parfums femme en décants 2ml, 5ml et 10ml. Floraux, fruités, orientaux : testez les grandes maisons avant d\'investir. Livraison rapide en France.',
+  description: 'Découvrez notre sélection de parfums femme en décants 2ml, 5ml, 10ml et 30ml. Floraux, fruités, orientaux : testez les grandes maisons avant d\'investir. Livraison rapide en France.',
   alternates: {
     canonical: `${SITE_URL}/femme`,
   },
   openGraph: {
     title: 'Parfums Femme - Décants & échantillons | Braza Scent',
-    description: 'Découvrez notre sélection de parfums femme en décants 2ml, 5ml et 10ml. Floraux, fruités, orientaux : testez les grandes maisons avant d\'investir.',
+    description: 'Découvrez notre sélection de parfums femme en décants 2ml, 5ml, 10ml et 30ml. Floraux, fruités, orientaux : testez les grandes maisons avant d\'investir.',
     url: `${SITE_URL}/femme`,
     type: 'website',
     locale: 'fr_FR',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Parfums Femme - Décants & échantillons | Braza Scent',
-    description: 'Découvrez notre sélection de parfums femme en décants 2ml, 5ml et 10ml.',
+    description: 'Découvrez notre sélection de parfums femme en décants 2ml, 5ml, 10ml et 30ml.',
     images: [`${SITE_URL}/images/parfums-hero.jpg`],
   },
 }
@@ -95,7 +95,7 @@ export default async function FemmePage() {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Parfums Femme — Décants & Échantillons | Braza Scent',
-    description: "Découvrez notre sélection de parfums femme en décants 2ml, 5ml et 10ml. Floraux, fruités, orientaux : testez les grandes maisons avant d'investir.",
+    description: "Découvrez notre sélection de parfums femme en décants 2ml, 5ml, 10ml et 30ml. Floraux, fruités, orientaux : testez les grandes maisons avant d'investir.",
     url: `${SITE_URL}/femme`,
   }
 
@@ -108,7 +108,7 @@ export default async function FemmePage() {
           <h2 className="text-2xl font-light tracking-[0.15em] uppercase mb-6">Explorer la parfumerie féminine en décants</h2>
           <div className="text-muted-foreground leading-relaxed space-y-4">
             <p>De la rose de Grasse au musc blanc, la parfumerie féminine offre un territoire d'exploration infini. Nos échantillons de parfum femme vous permettent de tester chaque fragrance sur votre peau avant de vous décider. Un parfum vit différemment selon la chaleur du corps — c'est toute la promesse du décant.</p>
-            <p>Floraux délicats, orientaux enveloppants, frais et sophistiqués : BrazaScent sélectionne les créations féminines les plus recherchées en parfumerie de niche. Chanel, Dior, Le Labo, Byredo, Diptyque… en formats 2ml, 5ml et 10ml. Chaque décant est authentique, préparé à partir du flacon d'origine, sans dilution.</p>
+            <p>Floraux délicats, orientaux enveloppants, frais et sophistiqués : BrazaScent sélectionne les créations féminines les plus recherchées en parfumerie de niche. Chanel, Dior, Le Labo, Byredo, Diptyque… en formats 2ml, 5ml, 10ml et 30ml. Chaque décant est authentique, préparé à partir du flacon d'origine, sans dilution.</p>
             <p>Livraison soignée sous 24 à 48h. BrazaScent est indépendant et n'est pas affilié aux marques citées.</p>
           </div>
           <div className="mt-12">

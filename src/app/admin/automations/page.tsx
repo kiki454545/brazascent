@@ -2,6 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Mail, Clock, CheckCircle, XCircle, SkipForward, RefreshCw, Send, AlertTriangle } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+
+async function authHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.access_token
+    ? { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' }
+}
 
 interface PostPurchaseEmail {
   id: string
@@ -42,7 +50,7 @@ export default function AdminAutomationsPage() {
 
   const fetchEmails = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/post-purchase-emails')
+      const res = await fetch('/api/admin/post-purchase-emails', { headers: await authHeaders() })
       const data = await res.json()
       setEmails(data.emails || [])
     } catch (err) {
@@ -59,7 +67,7 @@ export default function AdminAutomationsPage() {
     try {
       await fetch('/api/admin/post-purchase-emails', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ id, action: 'retry' }),
       })
       await fetchEmails()
@@ -71,7 +79,7 @@ export default function AdminAutomationsPage() {
   const handleCancel = async (id: string) => {
     await fetch('/api/admin/post-purchase-emails', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),
       body: JSON.stringify({ id, action: 'skip' }),
     })
     await fetchEmails()

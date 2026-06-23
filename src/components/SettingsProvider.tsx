@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { useSettingsStore } from '@/store/settings'
 import { useAuthStore } from '@/store/auth'
@@ -33,48 +33,26 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { fetchSettings, isLoaded, settings } = useSettingsStore()
   const { profile, isInitialized } = useAuthStore()
-  const [mounted, setMounted] = useState(false)
   const fetchedRef = useRef(false)
 
   useEffect(() => {
-    setMounted(true)
-
-    // Éviter les double-appels en React 18 Strict Mode
     if (!fetchedRef.current) {
       fetchedRef.current = true
-      fetchSettings().catch(() => {
-        // Ignorer les erreurs (AbortError, etc.)
-      })
+      if (typeof requestIdleCallback === 'function') {
+        requestIdleCallback(() => { fetchSettings().catch(() => {}) }, { timeout: 2000 })
+      } else {
+        setTimeout(() => { fetchSettings().catch(() => {}) }, 0)
+      }
     }
   }, [fetchSettings])
 
-  // Afficher le spinner seulement pendant un court instant (500ms max)
-  // pour éviter le flash de contenu, puis afficher le site
-  const [forceShow, setForceShow] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setForceShow(true)
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [])
-
-  if (!mounted || (!isLoaded && !forceShow)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-
-  // Mode maintenance activé
-  // Seuls les admins connectés peuvent accéder au site
-  // La page /compte reste accessible pour permettre aux admins de se connecter
+  // Mode maintenance — uniquement après que les settings soient chargés côté client.
+  // On ne bloque JAMAIS le rendu SSR ni l'hydratation avec un spinner :
+  // cela tuerait le LCP en affichant un spinner dans tout le HTML prérendu.
   const isAdmin = isInitialized && profile?.is_admin
   const isAccountPage = pathname === '/compte'
 
-  if (settings.maintenanceMode && !isAdmin && !isAccountPage) {
+  if (isLoaded && settings.maintenanceMode && !isAdmin && !isAccountPage) {
     return <MaintenancePage />
   }
 

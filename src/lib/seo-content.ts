@@ -412,11 +412,11 @@ export function generateBrandSeoText(input: BrandSeoInput): BrandSeoContent {
       : effectiveDescription
     intro = `${short} Sur BrazaScent, ${count > 1 ? `${count} fragrances ${brandName}` : `une fragrance ${brandName}`} ${count > 1 ? 'sont disponibles' : 'est disponible'} en décant, permettant de les explorer dans leur formule authentique avant tout investissement dans le flacon complet.`
   } else if (count === 1) {
-    intro = `La maison ${brandName} est représentée sur BrazaScent par une fragrance disponible en décant. Tester ce parfum sur votre peau — dans un format 2ml, 5ml ou 10ml — reste la seule façon de savoir avec certitude s'il correspond à votre olfaction avant d'acheter le flacon original.`
+    intro = `La maison ${brandName} est représentée sur BrazaScent par une fragrance disponible en décant. Tester ce parfum sur votre peau — dans un format 2ml, 5ml, 10ml ou 30ml — reste la seule façon de savoir avec certitude s'il correspond à votre olfaction avant d'acheter le flacon original.`
   } else if (count <= 4) {
     intro = `La maison ${brandName} propose sur BrazaScent ${count} fragrances en décant, soigneusement sélectionnées parmi ses références les plus représentatives. Chaque décant est prélevé directement depuis le flacon d'origine — même concentration, même qualité, sans la contrainte financière d'un achat définitif.`
   } else {
-    intro = `La maison ${brandName} figure parmi les sélections les plus demandées sur BrazaScent. Avec ${count} fragrances disponibles en décant, vous pouvez explorer en profondeur l'univers olfactif de cette maison — à votre rythme, sur votre peau, dans des formats allant de 2ml à 10ml.`
+    intro = `La maison ${brandName} figure parmi les sélections les plus demandées sur BrazaScent. Avec ${count} fragrances disponibles en décant, vous pouvez explorer en profondeur l'univers olfactif de cette maison — à votre rythme, sur votre peau, dans des formats allant de 2ml à 30ml.`
   }
 
   // ── Style olfactif ───────────────────────────────────────────────────────
@@ -443,7 +443,7 @@ export function generateBrandSeoText(input: BrandSeoInput): BrandSeoContent {
     },
     {
       q: `Quels formats de décant sont disponibles pour ${brandName} ?`,
-      a: `Les décants ${brandName} sur BrazaScent sont disponibles en 2ml, 5ml et 10ml selon les fragrances. Un format 5ml représente environ 100 projections — idéal pour tester sur plusieurs semaines. Le format 10ml correspond à plusieurs mois d'utilisation régulière.`,
+      a: `Les décants ${brandName} sur BrazaScent sont disponibles en 2ml, 5ml, 10ml et 30ml selon les fragrances. Un format 5ml représente environ 110 projections — idéal pour tester sur plusieurs semaines. Le format 10ml correspond à un mois d'utilisation régulière, et le 30ml à plusieurs mois.`,
     },
     {
       q: `Comment choisir entre plusieurs fragrances ${brandName} ?`,
@@ -536,7 +536,7 @@ export function generateNoteSeoText(input: NoteSeoInput): NoteSeoContent {
 
   const surLeSite = products.length === 0
     ? `BrazaScent ne propose pas encore de décant utilisant cette note. Consultez notre catalogue complet ou inscrivez-vous à la newsletter pour être alerté des nouvelles références.`
-    : `BrazaScent propose ${products.length} décant${products.length > 1 ? 's' : ''} utilisant la note de ${noteName.toLowerCase()}${spotlightLabel ? ` — dont ${spotlightLabel}` : ''}. Chaque décant est disponible en format 2ml, 5ml ou 10ml, prélevé directement depuis le flacon d'origine. C'est la façon la plus juste de tester cette note sur votre peau avant d'investir dans un flacon complet.`
+    : `BrazaScent propose ${products.length} décant${products.length > 1 ? 's' : ''} utilisant la note de ${noteName.toLowerCase()}${spotlightLabel ? ` — dont ${spotlightLabel}` : ''}. Chaque décant est disponible en format 2ml, 5ml, 10ml ou 30ml, prélevé directement depuis le flacon d'origine. C'est la façon la plus juste de tester cette note sur votre peau avant d'investir dans un flacon complet.`
 
   return {
     heading: `Parfums à la note de ${noteName}`,

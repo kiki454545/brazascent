@@ -34,6 +34,8 @@ export interface Product {
   accords?: Accord[]
   size: string[]
   stock?: number
+  stockBySize?: Record<string, number>
+  unlimitedStock?: boolean
   inStock: boolean
   featured?: boolean
   new?: boolean

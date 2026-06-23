@@ -9,7 +9,7 @@ import {
   Package,
   ExternalLink,
 } from 'lucide-react'
-import posthog from 'posthog-js'
+import { captureEvent, captureException } from '@/lib/analytics'
 
 interface LinkItem {
   label: string
@@ -82,7 +82,7 @@ const links: LinkItem[] = [
 
 function track(label: string, url: string) {
   try {
-    posthog.capture('link_click', { label, url, source: 'qr_links_page' })
+    captureEvent('link_click', { label, url, source: 'qr_links_page' })
   } catch {}
 }
 

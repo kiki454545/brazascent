@@ -45,43 +45,48 @@ export function TrackingProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Initialisation - enregistrer la visite
+  // Initialisation - enregistrer la visite (différé au browser idle pour ne pas bloquer le LCP)
   useEffect(() => {
     if (isInitializedRef.current) return
     isInitializedRef.current = true
 
-    const sessionId = getSessionId()
-    track('visit', { sessionId })
+    const run = () => {
+      const sessionId = getSessionId()
+      track('visit', { sessionId })
+    }
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(run, { timeout: 3000 })
+    } else {
+      setTimeout(run, 0)
+    }
   }, [track])
 
-  // Tracker les changements de page
+  // Tracker les changements de page (refs mises à jour immédiatement, fetch au browser idle)
   useEffect(() => {
     if (!pathname || pathname === lastPathRef.current) return
 
-    const sessionId = getSessionId()
-
-    // Envoyer le temps passé sur la page précédente
-    if (lastPathRef.current) {
-      const timeOnPage = Math.round((Date.now() - pageStartTimeRef.current) / 1000)
-      // On n'envoie pas ici car le pageview a déjà été envoyé
-    }
-
-    // Enregistrer la nouvelle page vue
-    track('pageview', {
-      pageUrl: pathname,
-      pageTitle: document.title,
-      referrer: document.referrer,
-      sessionId,
-    })
-
+    const currentPath = pathname
     lastPathRef.current = pathname
     pageStartTimeRef.current = Date.now()
+
+    const run = () => {
+      const sessionId = getSessionId()
+      track('pageview', {
+        pageUrl: currentPath,
+        pageTitle: document.title,
+        referrer: document.referrer,
+        sessionId,
+      })
+    }
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(run, { timeout: 3000 })
+    } else {
+      setTimeout(run, 0)
+    }
   }, [pathname, track])
 
-  // Tracker les changements de panier
+  // Tracker les changements de panier (y compris vidage → item_count=0 dans active_carts)
   useEffect(() => {
-    if (items.length === 0) return
-
     const sessionId = getSessionId()
     const cartItems = items.map(item => ({
       product_id: item.product.id,
@@ -96,7 +101,7 @@ export function TrackingProvider({ children }: { children: React.ReactNode }) {
     const timeout = setTimeout(() => {
       track('cart', {
         items: cartItems,
-        subtotal: getTotal(),
+        subtotal: items.length === 0 ? 0 : getTotal(),
         sessionId,
         userEmail: user?.email || null,
       })

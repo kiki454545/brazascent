@@ -14,13 +14,13 @@ export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Parfums Unisexe - Décants & échantillons',
-  description: 'Découvrez notre sélection de parfums unisexe en décants 2ml, 5ml et 10ml. Des fragrances qui transcendent les genres : testez les grandes maisons avant d\'investir. Livraison rapide en France.',
+  description: 'Découvrez notre sélection de parfums unisexe en décants 2ml, 5ml, 10ml et 30ml. Des fragrances qui transcendent les genres : testez les grandes maisons avant d\'investir. Livraison rapide en France.',
   alternates: {
     canonical: `${SITE_URL}/unisexe`,
   },
   openGraph: {
     title: 'Parfums Unisexe - Décants & échantillons | Braza Scent',
-    description: 'Découvrez notre sélection de parfums unisexe en décants 2ml, 5ml et 10ml. Des fragrances qui transcendent les genres : testez les grandes maisons avant d\'investir.',
+    description: 'Découvrez notre sélection de parfums unisexe en décants 2ml, 5ml, 10ml et 30ml. Des fragrances qui transcendent les genres : testez les grandes maisons avant d\'investir.',
     url: `${SITE_URL}/unisexe`,
     type: 'website',
     locale: 'fr_FR',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Parfums Unisexe - Décants & échantillons | Braza Scent',
-    description: 'Découvrez notre sélection de parfums unisexe en décants 2ml, 5ml et 10ml.',
+    description: 'Découvrez notre sélection de parfums unisexe en décants 2ml, 5ml, 10ml et 30ml.',
     images: [`${SITE_URL}/images/parfums-hero.jpg`],
   },
 }
@@ -95,7 +95,7 @@ export default async function UnisexePage() {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Parfums Unisexe — Décants & Échantillons | Braza Scent',
-    description: "Découvrez notre sélection de parfums unisexe en décants 2ml, 5ml et 10ml. Des fragrances qui transcendent les genres.",
+    description: "Découvrez notre sélection de parfums unisexe en décants 2ml, 5ml, 10ml et 30ml. Des fragrances qui transcendent les genres.",
     url: `${SITE_URL}/unisexe`,
   }
 
@@ -108,7 +108,7 @@ export default async function UnisexePage() {
           <h2 className="text-2xl font-light tracking-[0.15em] uppercase mb-6">Découvrir les parfums unisexe en décants</h2>
           <div className="text-muted-foreground leading-relaxed space-y-4">
             <p>La parfumerie unisexe représente l'avant-garde de la création contemporaine. Libérée des codes de genre, elle explore des territoires olfactifs inédits : bois précieux, muscs modernes, résines orientales ou agrumes éclatants. Ces fragrances s'adaptent à toutes les personnalités, à tous les moments de la journée.</p>
-            <p>Nos décants de parfums unisexe vous permettent de tester ces créations sur votre peau avant tout investissement. Un 5ml représente environ 100 projections — suffisant pour découvrir toutes les phases d'évolution d'une fragrance. Le Labo, Byredo, Maison Margiela, Diptyque… en formats 2ml, 5ml et 10ml.</p>
+            <p>Nos décants de parfums unisexe vous permettent de tester ces créations sur votre peau avant tout investissement. Un 5ml représente environ 100 projections — suffisant pour découvrir toutes les phases d'évolution d'une fragrance. Le Labo, Byredo, Maison Margiela, Diptyque… en formats 2ml, 5ml, 10ml et 30ml.</p>
             <p>Livraison rapide en France. BrazaScent propose des décants préparés à partir de flacons authentiques et n'est pas affilié aux marques citées.</p>
           </div>
           <div className="mt-12">

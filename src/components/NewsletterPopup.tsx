@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { m, AnimatePresence } from 'framer-motion'
 import { X, Mail, Check, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import posthog from 'posthog-js'
+import { captureEvent } from '@/lib/analytics'
 
 const STORAGE_KEY = 'brazascent-newsletter-popup'
 const DELAY_MS = 20000 // 20 secondes
@@ -48,7 +48,7 @@ export function NewsletterPopup() {
         body: JSON.stringify({ email }),
       }).catch(console.error)
 
-      posthog.capture('newsletter_subscribed', { source: 'popup' })
+      captureEvent('newsletter_subscribed', { source: 'popup' })
       setStatus('success')
       setMessage('Merci ! Retrouvez votre code BIENVENUE10 dans votre email.')
       localStorage.setItem(STORAGE_KEY, 'subscribed')
@@ -83,7 +83,8 @@ export function NewsletterPopup() {
 
               <button
                 onClick={dismiss}
-                className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Fermer la popup"
+                className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>

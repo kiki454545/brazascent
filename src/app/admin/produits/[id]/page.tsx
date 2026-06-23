@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { generateProductImageFilename } from '@/lib/image-seo'
 
 // ─── Composant upload Fragrantica par catégorie ───────────────────────────────
 // Ligne combinée Tenue + Sillage en un seul upload
@@ -573,9 +574,11 @@ export default function EditProductPage() {
           throw new Error('La taille maximale est de 5MB par image')
         }
 
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-        const filePath = `products/${fileName}`
+        const idx = form.images.length + uploadedUrls.length
+        const seoFilename = (form.name && form.brand)
+          ? generateProductImageFilename(form.name, form.brand, file.name, idx)
+          : `decant-parfum-brazascent-${Date.now()}.${file.name.split('.').pop()}`
+        const filePath = `products/${seoFilename}`
 
         const { error: uploadError } = await supabase.storage
           .from('products')
@@ -825,7 +828,12 @@ const saveAccords = async () => {
   const addSize = () => {
     const size = newSize.trim()
     if (size && !form.sizes.includes(size)) {
-      const newStockBySize = { ...form.stock_by_size, [size]: 50 }
+      const mlMatch = size.replace(',', '.').match(/([\d.]+)\s*ml/i)
+      const mlPerUnit = mlMatch ? parseFloat(mlMatch[1]) : 0
+      const defaultStock = form.ml_stock > 0 && mlPerUnit > 0
+        ? Math.floor(form.ml_stock / mlPerUnit)
+        : 50
+      const newStockBySize = { ...form.stock_by_size, [size]: defaultStock }
       const newPriceBySize = { ...form.price_by_size, [size]: 0 }
       const totalStock = Object.values(newStockBySize).reduce((a, b) => a + b, 0)
       setForm({

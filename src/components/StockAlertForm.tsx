@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Bell, Check, Loader2 } from 'lucide-react'
-import posthog from 'posthog-js'
+import { captureEvent } from '@/lib/analytics'
 
 export function StockAlertForm({ productId }: { productId: string }) {
   const [email, setEmail] = useState('')
@@ -22,7 +22,7 @@ export function StockAlertForm({ productId }: { productId: string }) {
       })
 
       if (res.ok) {
-        posthog.capture('stock_alert_subscribed', { product_id: productId })
+        captureEvent('stock_alert_subscribed', { product_id: productId })
         setStatus('success')
         setMessage('Vous serez alerté dès le retour en stock !')
         setEmail('')
