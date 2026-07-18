@@ -118,6 +118,12 @@ export const RATE_LIMITS = {
   // Newsletter send (admin): 2 par minute
   NEWSLETTER: { limit: 2, windowSeconds: 60 },
 
+  // Soumission d'avis vérifié: 5 par heure par IP
+  REVIEW_SUBMIT: { limit: 5, windowSeconds: 3600 },
+
+  // Demande d'URL d'upload photo avis: 10 par heure par IP
+  REVIEW_UPLOAD: { limit: 10, windowSeconds: 3600 },
+
   // API générale: 100 requêtes par minute
   GENERAL: { limit: 100, windowSeconds: 60 },
 }
