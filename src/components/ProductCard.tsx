@@ -170,12 +170,12 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
           {/* Quick add - Masqué si rupture de stock */}
           {!isOutOfStock && (
             <div
-              className={`absolute bottom-0 left-0 right-0 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 border-t border-white/10 p-4 transition-all duration-300 ${
+              className={`absolute bottom-0 left-0 right-0 bg-background/20 backdrop-blur-2xl backdrop-saturate-150 border-t border-white/10 p-2.5 sm:p-4 transition-all duration-300 ${
                 isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
               }`}
             >
-              {/* Size selector */}
-              <div className="flex items-center justify-center gap-2 mb-3">
+              {/* Size selector — scroll horizontal en secours si les 4 tailles ne tiennent pas (mobile étroit) */}
+              <div className="flex items-center justify-center gap-1 sm:gap-2 mb-3 overflow-x-auto flex-nowrap">
                 {(product.size || []).map((size) => (
                   <button
                     key={size}
@@ -184,7 +184,7 @@ export function ProductCard({ product, index = 0, preferredSize }: ProductCardPr
                       e.stopPropagation()
                       setSelectedSize(size)
                     }}
-                    className={`px-3 py-1 text-xs border transition-colors ${
+                    className={`flex-shrink-0 px-1.5 py-1 sm:px-3 sm:py-1 text-[10px] sm:text-xs border transition-colors ${
                       selectedSize === size
                         ? 'border-foreground bg-foreground text-background'
                         : 'border-border hover:border-foreground'
