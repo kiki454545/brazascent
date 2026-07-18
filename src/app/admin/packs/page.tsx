@@ -16,6 +16,27 @@ import {
 } from 'lucide-react'
 import { supabase, supabaseFetch } from '@/lib/supabase'
 
+async function authHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.access_token
+    ? { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' }
+}
+
+// Invalide le cache ISR de /packs et /packs/[slug] — sans ça les changements
+// (ex. désactivation d'un pack) mettent jusqu'à 24h à apparaître sur le site.
+async function revalidatePacks(slug?: string) {
+  try {
+    await fetch('/api/admin/revalidate-packs', {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ slug: slug ?? null }),
+    })
+  } catch (error) {
+    console.error('Error revalidating packs pages:', error)
+  }
+}
+
 interface Pack {
   id: string
   name: string
@@ -267,6 +288,7 @@ export default function AdminPacksPage() {
         if (error) throw error
       }
 
+      await revalidatePacks(packData.slug)
       setShowModal(false)
       fetchPacks()
     } catch (error: any) {
@@ -290,6 +312,7 @@ export default function AdminPacksPage() {
         console.error('Error deleting pack:', error)
         return
       }
+      await revalidatePacks(pack.slug)
       fetchPacks()
     } catch (error) {
       console.error('Error deleting pack:', error)

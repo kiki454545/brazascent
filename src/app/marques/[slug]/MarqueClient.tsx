@@ -4,7 +4,7 @@ import { ArrowLeft, Building2, Package } from 'lucide-react'
 import { Product } from '@/types'
 import { ProductCard } from '@/components/ProductCard'
 import { Benefits } from '@/components/Benefits'
-import { generateBrandSeoText } from '@/lib/seo-content'
+import { generateBrandSeoText, BRAND_EXTRA_FAQ } from '@/lib/seo-content'
 
 interface Brand {
   id: string
@@ -165,13 +165,7 @@ export default function MarqueClient({ brand, products }: Props) {
           <div className="mt-12">
             <h3 className="text-lg font-light tracking-[0.15em] uppercase mb-6">Questions fréquentes</h3>
             <div className="divide-y divide-border">
-              {[
-                ...seo.faq,
-                {
-                  q: "C'est quoi un décant de parfum ?",
-                  a: "Un décant est un prélèvement du parfum original effectué directement depuis le flacon de la marque. Vous recevez la même fragrance que le flacon plein — sans dilution — dans un format de 2ml, 5ml ou 10ml. Idéal pour tester avant d'acheter.",
-                },
-              ].map(({ q, a }, i) => (
+              {[...seo.faq, BRAND_EXTRA_FAQ].map(({ q, a }, i) => (
                 <details key={i} className="group py-5">
                   <summary className="flex items-center justify-between cursor-pointer font-medium text-foreground [&::-webkit-details-marker]:hidden">
                     <span>{q}</span>

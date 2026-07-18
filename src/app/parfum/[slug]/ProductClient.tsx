@@ -22,6 +22,8 @@ import { ExpressCheckoutBlock } from '@/components/ExpressCheckoutBlock'
 import { ProductCard } from '@/components/ProductCard'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
 import { formatPrice } from '@/lib/format'
+import { generateProductImageAlt } from '@/lib/image-seo'
+import { PRODUCT_FAQ } from '@/lib/product-faq'
 
 interface SupabaseProductRow {
   id: string
@@ -477,7 +479,7 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
             >
               <Image
                 src={product.images[selectedImage]}
-                alt={product.name}
+                alt={generateProductImageAlt(product.name, product.brand ?? '', 'product-hero')}
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                 priority
@@ -526,7 +528,7 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
                   >
                     <Image
                       src={image}
-                      alt={`${product.name} ${index + 1}`}
+                      alt={`${generateProductImageAlt(product.name, product.brand ?? '', 'product-hero')} ${index + 1}`}
                       fill
                       className="object-cover"
                     />
@@ -559,9 +561,9 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
               </Link>
             )}
 
-            {/* Name */}
+            {/* Name — H1 unique de la page */}
             <h1 className="text-4xl lg:text-5xl font-light tracking-[0.1em] mb-4">
-              {product.name}
+              {product.name}{product.brand ? ` ${product.brand}` : ''}
             </h1>
 
             {/* Reviews */}
@@ -1030,12 +1032,7 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
             <div className="mt-10">
               <h2 className="text-lg tracking-[0.15em] uppercase mb-5">Questions fréquentes</h2>
               <div className="divide-y divide-border">
-                {[
-                  { q: "C'est quoi un décant de parfum ?", a: "Un décant est un prélèvement effectué directement depuis le flacon d'origine de la marque. Vous recevez le parfum authentique, sans dilution ni reformulation, dans un vaporisateur soigneusement conditionné. La même fragrance qu'en boutique, en format découverte." },
-                  { q: "Le parfum est-il dilué ou modifié ?", a: "Non. Nos décants sont du parfum pur, dans la concentration exacte du flacon d'origine. Aucun ajout de solvant, d'alcool supplémentaire ou de modificateur. Ce que vous recevez est identique à ce que vous trouveriez dans une boutique officielle." },
-                  { q: "Quelle est la durée d'un décant 5ml ?", a: "Un 5ml représente environ 100 à 110 projections, soit 2 à 3 semaines d'utilisation quotidienne (2 à 3 sprays par jour). Suffisant pour découvrir toutes les phases d'évolution d'une fragrance : note de tête, cœur, fond." },
-                  { q: "Puis-je retourner un décant ?", a: "Pour des raisons d'hygiène, les décants ne sont pas retournables une fois expédiés. C'est précisément pourquoi nous proposons des formats aussi petits que 2ml, pour minimiser votre investissement lors de la découverte." },
-                ].map(({ q, a }, i) => (
+                {PRODUCT_FAQ.map(({ q, a }, i) => (
                   <details key={i} className="group py-4">
                     <summary className="flex items-center justify-between cursor-pointer font-medium text-foreground text-sm [&::-webkit-details-marker]:hidden">
                       <span>{q}</span>
@@ -1141,7 +1138,7 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
             >
               <Image
                 src={product.images[selectedImage]}
-                alt={product.name}
+                alt={generateProductImageAlt(product.name, product.brand ?? '', 'product-hero')}
                 fill
                 className="object-contain"
                 sizes="(max-width: 768px) 100vw, 800px"

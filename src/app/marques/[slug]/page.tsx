@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import MarqueClient from './MarqueClient'
 import type { Product } from '@/types'
+import { generateBrandSeoText, BRAND_EXTRA_FAQ } from '@/lib/seo-content'
 
 const SITE_URL = 'https://brazascent.com'
 
@@ -122,11 +123,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 // ─── JSON-LD ──────────────────────────────────────────────────────────────────
 
-async function getSchemas(slug: string) {
-  const brand = await getBrandData(slug)
-  if (!brand) return null
+type BrandData = NonNullable<Awaited<ReturnType<typeof getBrandData>>>
 
+// FAQ identique à celle affichée dans MarqueClient (même fonction, mêmes données produit)
+function getSchemas(brand: BrandData, products: Product[]) {
   const canonicalUrl = `${SITE_URL}/marques/${brand.slug}`
+
+  const seo = generateBrandSeoText({
+    brandName: brand.name,
+    description: brand.description,
+    products: products.map(p => ({
+      name: p.name,
+      slug: p.slug,
+      brand: p.brand,
+      category: p.category,
+      notes: p.notes,
+    })),
+  })
 
   return [
     {
@@ -153,6 +166,15 @@ async function getSchemas(slug: string) {
         { '@type': 'ListItem', position: 3, name: brand.name, item: canonicalUrl },
       ],
     },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [...seo.faq, BRAND_EXTRA_FAQ].map(({ q, a }) => ({
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a },
+      })),
+    },
   ]
 }
 
@@ -161,18 +183,15 @@ async function getSchemas(slug: string) {
 export default async function MarquePage({ params }: PageProps) {
   const { slug } = await params
 
-  const [brand, schemas] = await Promise.all([
-    getBrandData(slug),
-    getSchemas(slug),
-  ])
-
+  const brand = await getBrandData(slug)
   if (!brand) notFound()
 
   const products = await getBrandProducts(brand.name)
+  const schemas = getSchemas(brand, products)
 
   return (
     <>
-      {schemas && schemas.map((schema, i) => (
+      {schemas.map((schema, i) => (
         <script
           key={i}
           type="application/ld+json"

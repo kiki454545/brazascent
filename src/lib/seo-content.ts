@@ -35,6 +35,13 @@ export interface BrandSeoContent {
   faq: Array<{ q: string; a: string }>
 }
 
+// FAQ statique ajoutée après la FAQ générée sur les pages marques
+// (source commune : MarqueClient.tsx pour l'affichage, marques/[slug]/page.tsx pour le schema FAQPage)
+export const BRAND_EXTRA_FAQ = {
+  q: "C'est quoi un décant de parfum ?",
+  a: "Un décant est un prélèvement du parfum original effectué directement depuis le flacon de la marque. Vous recevez la même fragrance que le flacon plein — sans dilution — dans un format de 2ml, 5ml ou 10ml. Idéal pour tester avant d'acheter.",
+}
+
 export interface NoteSeoContent {
   heading: string
   explication: string

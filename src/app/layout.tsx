@@ -127,7 +127,7 @@ export default function RootLayout({
                 '@type': 'Organization',
                 name: 'Braza Scent',
                 url: 'https://brazascent.com',
-                logo: 'https://brazascent.com/logo.png',
+                logo: 'https://brazascent.com/favicon.png',
                 description: "Boutique de décants et échantillons de parfum — 2ml, 5ml, 10ml. Testez les plus grandes maisons de parfumerie sans vous ruiner.",
                 sameAs: [
                   'https://www.tiktok.com/@braza.scent',

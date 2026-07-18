@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import ProductClient from './ProductClient'
 import { generateBrazaScentAnalysis } from '@/lib/brazascent-analysis'
+import { PRODUCT_FAQ } from '@/lib/product-faq'
 
 const SITE_URL = 'https://brazascent.com'
 
@@ -269,7 +270,18 @@ async function getProductJsonLd(product: Record<string, any>, reviews: Array<{ r
     ],
   }
 
-  return [jsonLd, breadcrumbJsonLd]
+  // FAQ identique à celle affichée dans ProductClient (source commune : @/lib/product-faq)
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: PRODUCT_FAQ.map(({ q, a }) => ({
+      '@type': 'Question',
+      name: q,
+      acceptedAnswer: { '@type': 'Answer', text: a },
+    })),
+  }
+
+  return [jsonLd, breadcrumbJsonLd, faqJsonLd]
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -330,9 +342,10 @@ export default async function ProductPage({ params }: PageProps) {
         />
       ))}
 
-      {/* Contenu SEO en HTML pur — toujours indexable par Google */}
+      {/* Contenu SEO en HTML pur — toujours indexable par Google.
+          Le H1 de la page est rendu une seule fois, dans ProductClient (visible). */}
       <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
-        <h1>{product.name}{product.brand ? ` — ${product.brand}` : ''}</h1>
+        <p>{product.name}{product.brand ? ` — ${product.brand}` : ''}</p>
         {product.short_description && <p>{product.short_description}</p>}
         {product.description && <p>{product.description}</p>}
         {minPrice > 0 && <p>À partir de {minPrice}€ — disponible en décant 2ml, 5ml, 10ml</p>}

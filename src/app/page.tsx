@@ -128,32 +128,11 @@ export default async function HomePage() {
     ],
   }
 
-  const organizationJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Braza Scent',
-    url: SITE_URL,
-    logo: `${SITE_URL}/images/logo.png`,
-    description: "Boutique en ligne de décants et échantillons de parfum. Testez les plus grands parfums en 2ml, 5ml et 10ml.",
-    sameAs: ['https://www.instagram.com/brazascent/'],
-  }
-
-  const websiteJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Braza Scent',
-    url: SITE_URL,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${SITE_URL}/parfums?q={search_term_string}`,
-      'query-input': 'required name=search_term_string',
-    },
-  }
+  // Organization + WebSite : émis une seule fois, dans le layout racine (src/app/layout.tsx),
+  // pour éviter les schémas dupliqués/contradictoires sur la page d'accueil.
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqJsonLd) }}
