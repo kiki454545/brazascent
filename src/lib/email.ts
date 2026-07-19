@@ -784,3 +784,137 @@ export async function sendManualReviewReminderEmail({
     throw error
   }
 }
+
+// ── Lot 4 : demandes d'avis automatiques (token vérifié) ────────────────────
+// Remplacent sendReviewRequestEmail / sendShippingReviewRequestEmail, qui ne
+// pointaient pas vers le parcours vérifié par token. Ces deux fonctions sont
+// les seules utilisées par le cron unifié (planificateur + expéditeur).
+
+function reviewProductsListHtml(products: Array<{ name: string; reviewUrl: string }>): string {
+  return products
+    .map(
+      (p) => `
+    <tr>
+      <td style="padding: 12px 0; border-bottom: 1px solid #f0ece6;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="vertical-align: middle;">
+              <p style="margin: 0 0 8px; color: #19110B; font-size: 14px; font-weight: 500;">${escapeHtml(p.name)}</p>
+              <a href="${escapeHtml(p.reviewUrl)}" style="display: inline-block; padding: 8px 20px; background-color: #C9A962; color: #19110B; text-decoration: none; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">
+                Laisser mon avis
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>`
+    )
+    .join('')
+}
+
+export async function sendVerifiedReviewRequestEmail({
+  customerEmail,
+  firstName,
+  orderNumber,
+  products,
+}: {
+  customerEmail: string
+  firstName: string
+  orderNumber: string
+  products: Array<{ name: string; reviewUrl: string }>
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const greeting = firstName ? `Bonjour ${escapeHtml(firstName)},` : 'Bonjour,'
+  const single = products.length === 1
+
+  const html = wrapEmail(`
+    <tr>
+      <td style="padding: 40px 40px 0;">
+        <p style="color: #444; font-size: 15px; line-height: 1.7; margin: 0 0 16px;">${greeting}</p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7; margin: 0 0 16px;">
+          J'espère que votre commande <strong>${escapeHtml(orderNumber)}</strong> vous plaît. Votre avis sur ${single ? 'ce parfum' : 'ces parfums'} nous aiderait énormément à guider d'autres passionnés de parfum.
+        </p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+          Cela prend moins d'une minute.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 40px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          ${reviewProductsListHtml(products)}
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 40px;">
+        <p style="color: #444; font-size: 15px; line-height: 1.7; margin: 0;">
+          Merci encore pour votre confiance.
+        </p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7; margin: 12px 0 0;">
+          Théo<br>BrazaScent
+        </p>
+      </td>
+    </tr>
+  `)
+
+  await resend.emails.send({
+    from: 'Braza Scent <commandes@brazascent.com>',
+    to: customerEmail,
+    subject: 'Votre avis sur votre commande BrazaScent ✨',
+    html,
+  })
+}
+
+export async function sendVerifiedReviewReminderEmail({
+  customerEmail,
+  firstName,
+  products,
+}: {
+  customerEmail: string
+  firstName: string
+  orderNumber: string
+  products: Array<{ name: string; reviewUrl: string }>
+}) {
+  const resend = getResend()
+  if (!resend) return
+
+  const greeting = firstName ? `Bonjour ${escapeHtml(firstName)},` : 'Bonjour,'
+
+  const html = wrapEmail(`
+    <tr>
+      <td style="padding: 40px 40px 0;">
+        <p style="color: #444; font-size: 15px; line-height: 1.7; margin: 0 0 16px;">${greeting}</p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7; margin: 0 0 24px;">
+          Un petit mot pour vous proposer, si vous en avez encore l'envie, de partager votre avis. Sinon, ce n'est pas grave du tout.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 40px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          ${reviewProductsListHtml(products)}
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 40px 40px;">
+        <p style="color: #444; font-size: 15px; line-height: 1.7; margin: 0;">
+          Merci pour votre confiance, quoi qu'il en soit.
+        </p>
+        <p style="color: #444; font-size: 15px; line-height: 1.7; margin: 12px 0 0;">
+          Théo<br>BrazaScent
+        </p>
+      </td>
+    </tr>
+  `)
+
+  await resend.emails.send({
+    from: 'Braza Scent <commandes@brazascent.com>',
+    to: customerEmail,
+    subject: 'Un dernier mot sur votre commande BrazaScent',
+    html,
+  })
+}

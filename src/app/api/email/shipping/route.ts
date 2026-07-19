@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     const { data: order, error } = await supabaseAdmin
       .from('orders')
-      .select('order_number, shipping_address, tracking_number, tracking_url, carrier')
+      .select('order_number, shipping_address, tracking_number, tracking_url, carrier, customer_email, customer_name')
       .eq('id', orderId)
       .single()
 
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
     }
 
     const address = order.shipping_address
-    const customerEmail = address?.email
-    const customerName = `${address?.firstName || ''} ${address?.lastName || ''}`.trim() || 'Client'
+    const customerEmail = order.customer_email || address?.email
+    const customerName = order.customer_name || `${address?.firstName || ''} ${address?.lastName || ''}`.trim() || 'Client'
 
     if (!customerEmail) {
       return NextResponse.json({ error: 'No customer email' }, { status: 400 })
@@ -41,6 +41,11 @@ export async function POST(request: NextRequest) {
       trackingUrl: order.tracking_url || undefined,
       carrier: order.carrier || undefined,
     })
+
+    // La demande d'avis n'est plus programmée ici : le cron planificateur
+    // (/api/cron/review-requests, Lot 4) découvre lui-même les commandes
+    // éligibles sur la base de delivered_at, ce qui évite toute double
+    // planification avec ce point d'entrée.
 
     return NextResponse.json({ success: true })
   } catch (error) {

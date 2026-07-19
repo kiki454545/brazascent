@@ -2,6 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Mail, Clock, CheckCircle, XCircle, SkipForward, RefreshCw, Send, AlertTriangle } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+
+async function authHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.access_token
+    ? { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' }
+}
 
 interface PostPurchaseEmail {
   id: string
@@ -13,10 +21,13 @@ interface PostPurchaseEmail {
   status: string
   error_message: string | null
   created_at: string
+  reminder_number: number | null
+  remaining_products?: { name: string; slug: string }[]
 }
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'En attente',
+  sending: 'Envoi en cours',
   sent: 'Envoyé',
   failed: 'Échec',
   skipped: 'Ignoré',
@@ -24,6 +35,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 const STATUS_COLOR: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
+  sending: 'bg-blue-100 text-blue-700',
   sent: 'bg-emerald-100 text-emerald-700',
   failed: 'bg-red-100 text-red-700',
   skipped: 'bg-gray-100 text-gray-500',
@@ -31,7 +43,24 @@ const STATUS_COLOR: Record<string, string> = {
 
 const TYPE_LABEL: Record<string, string> = {
   reorder_suggestion: 'Réachat J+30',
-  review_request: 'Demande avis J+7',
+  review_request: 'Demande d’avis',
+}
+
+const SKIP_REASON_LABEL: Record<string, string> = {
+  invalid_or_missing_email: 'Email absent ou invalide',
+  no_products_remaining: 'Aucun produit restant à noter',
+  order_cancelled: 'Commande annulée',
+  order_refunded: 'Commande remboursée',
+  order_not_found: 'Commande introuvable',
+  duplicate_already_sent: 'Doublon — déjà envoyé',
+  no_recommendations: 'Aucune recommandation disponible',
+  unknown_email_type: 'Type d’email inconnu',
+  skipped_manually_by_admin: 'Ignoré manuellement par un administrateur',
+}
+
+function reminderLabel(email: PostPurchaseEmail): string | null {
+  if (email.email_type !== 'review_request' || !email.reminder_number) return null
+  return email.reminder_number === 1 ? '1re demande' : `Relance ${email.reminder_number - 1}`
 }
 
 export default function AdminAutomationsPage() {
@@ -42,7 +71,7 @@ export default function AdminAutomationsPage() {
 
   const fetchEmails = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/post-purchase-emails')
+      const res = await fetch('/api/admin/post-purchase-emails', { headers: await authHeaders() })
       const data = await res.json()
       setEmails(data.emails || [])
     } catch (err) {
@@ -59,7 +88,7 @@ export default function AdminAutomationsPage() {
     try {
       await fetch('/api/admin/post-purchase-emails', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ id, action: 'retry' }),
       })
       await fetchEmails()
@@ -71,7 +100,7 @@ export default function AdminAutomationsPage() {
   const handleCancel = async (id: string) => {
     await fetch('/api/admin/post-purchase-emails', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await authHeaders(),
       body: JSON.stringify({ id, action: 'skip' }),
     })
     await fetchEmails()
@@ -99,7 +128,7 @@ export default function AdminAutomationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Automations post-achat</h1>
-          <p className="text-admin-muted text-sm">Emails J+30 réachat programmés automatiquement</p>
+          <p className="text-admin-muted text-sm">Demandes d’avis (J+5, relance J+12) et suggestions de réachat (J+30)</p>
         </div>
         <button
           onClick={() => { setLoading(true); fetchEmails() }}
@@ -167,14 +196,27 @@ export default function AdminAutomationsPage() {
                 <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
                   {TYPE_LABEL[email.email_type] || email.email_type}
                 </span>
+                {reminderLabel(email) && (
+                  <span className="text-xs bg-[#C9A962]/20 text-[#8a6d2f] px-2 py-0.5 rounded">
+                    {reminderLabel(email)}
+                  </span>
+                )}
               </div>
               <div className="flex flex-wrap gap-4 text-xs text-admin-muted">
                 <span>Prévu: {new Date(email.scheduled_for).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                 {email.sent_at && <span>Envoyé: {new Date(email.sent_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}</span>}
               </div>
+              {email.email_type === 'review_request' && email.remaining_products && email.remaining_products.length > 0 && (
+                <div className="mt-1 text-xs text-admin-muted">
+                  Produits encore concernés : {email.remaining_products.map(p => p.name).join(', ')}
+                </div>
+              )}
               {email.error_message && (
                 <div className="mt-1 flex items-center gap-1 text-xs text-red-600">
-                  <AlertTriangle className="w-3 h-3" /> {email.error_message}
+                  <AlertTriangle className="w-3 h-3" />
+                  {email.status === 'skipped'
+                    ? (SKIP_REASON_LABEL[email.error_message] || email.error_message)
+                    : email.error_message}
                 </div>
               )}
             </div>
