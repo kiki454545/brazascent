@@ -131,6 +131,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.85,
     })),
+    // Page pilier SEO décantage
+    {
+      url: `${SITE_URL}/decantage-parfum`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.85,
+    },
     // Notes olfactives (index)
     {
       url: `${SITE_URL}/notes`,
