@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import ParfumsClient from './ParfumsClient'
 import { Product } from '@/types'
+import { getProductReviewStatsMap } from '@/lib/reviews/public'
 
 const SITE_URL = 'https://brazascent.com'
 
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
 }
 
 export default async function ParfumsPage() {
-  const [productsRes, brandsRes, ratingsRes] = await Promise.all([
+  const [productsRes, brandsRes] = await Promise.all([
     supabase
       .from('products')
       .select('id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, display_order, gender, notes_top, notes_heart, notes_base, main_accords')
@@ -54,19 +55,10 @@ export default async function ParfumsPage() {
       .from('brands')
       .select('id, name, slug')
       .order('name', { ascending: true }),
-    supabase
-      .from('product_reviews')
-      .select('product_id, rating')
-      .eq('is_approved', true),
   ])
 
-  // Calcul de la note moyenne par produit
-  const ratingsByProduct: Record<string, { sum: number; count: number }> = {}
-  for (const r of (ratingsRes.data || [])) {
-    if (!ratingsByProduct[r.product_id]) ratingsByProduct[r.product_id] = { sum: 0, count: 0 }
-    ratingsByProduct[r.product_id].sum += r.rating
-    ratingsByProduct[r.product_id].count += 1
-  }
+  // Une seule requête groupée pour les stats d'avis de tous les produits de la page.
+  const statsMap = await getProductReviewStatsMap(supabase, (productsRes.data || []).map((p: { id: string }) => p.id))
 
   const initialProducts: Product[] = (productsRes.data || []).map((p: any) => {
     const priceBySize = typeof p.price_by_size === 'string'
@@ -74,7 +66,7 @@ export default async function ParfumsPage() {
       : (p.price_by_size || {})
     const prices = Object.values(priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
     const displayPrice = prices.length > 0 ? Math.min(...prices) : p.price
-    const rd = ratingsByProduct[p.id]
+    const rd = statsMap.get(p.id)
     return {
       id: p.id,
       name: p.name,
@@ -98,8 +90,8 @@ export default async function ParfumsPage() {
       promo: p.is_promo ?? false,
       gender: p.gender || 'Unisexe',
       mainAccords: Array.isArray(p.main_accords) ? p.main_accords : [],
-      avgRating: rd ? Math.round((rd.sum / rd.count) * 10) / 10 : undefined,
-      reviewCount: rd?.count,
+      avgRating: rd?.avgRating,
+      reviewCount: rd?.reviewCount,
     }
   })
 

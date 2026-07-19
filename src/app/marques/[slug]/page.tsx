@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import MarqueClient from './MarqueClient'
 import type { Product } from '@/types'
 import { generateBrandSeoText, BRAND_EXTRA_FAQ } from '@/lib/seo-content'
+import { getProductReviewStatsMap } from '@/lib/reviews/public'
 
 const SITE_URL = 'https://brazascent.com'
 
@@ -42,12 +43,16 @@ async function getBrandProducts(brandName: string): Promise<Product[]> {
     .eq('is_active', true)
     .order('display_order', { ascending: true })
 
+  // Une seule requête groupée pour les stats d'avis de tous les produits de la marque.
+  const statsMap = await getProductReviewStatsMap(supabase, (data || []).map((p: { id: string }) => p.id))
+
   return (data ?? []).map((p: any) => {
     const priceBySize = typeof p.price_by_size === 'string'
       ? JSON.parse(p.price_by_size)
       : (p.price_by_size || {})
     const prices = Object.values(priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
     const displayPrice = prices.length > 0 ? Math.min(...prices) : p.price
+    const rd = statsMap.get(p.id)
 
     return {
       id: p.id,
@@ -74,6 +79,8 @@ async function getBrandProducts(brandName: string): Promise<Product[]> {
       bestseller: p.is_bestseller ?? false,
       featured: p.is_bestseller ?? false,
       promo: p.is_promo ?? false,
+      avgRating: rd?.avgRating,
+      reviewCount: rd?.reviewCount,
     }
   })
 }

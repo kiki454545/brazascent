@@ -6,6 +6,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { noteToSlug } from '@/lib/notes'
 import { generateNoteSeoText } from '@/lib/seo-content'
 import type { Product } from '@/types'
+import { getProductReviewStatsMap } from '@/lib/reviews/public'
 
 const SITE_URL = 'https://brazascent.com'
 
@@ -125,7 +126,11 @@ export default async function NotePage({ params }: PageProps) {
     )
   )
 
+  // Une seule requête groupée pour les stats d'avis des produits de cette note.
+  const statsMap = await getProductReviewStatsMap(supabase, filteredRows.map((p) => p.id))
+
   const products: Product[] = filteredRows.map((p) => {
+    const rd = statsMap.get(p.id)
     const priceBySize =
       typeof p.price_by_size === 'string'
         ? JSON.parse(p.price_by_size)
@@ -159,6 +164,8 @@ export default async function NotePage({ params }: PageProps) {
       bestseller: p.is_bestseller ?? false,
       featured: p.is_bestseller ?? false,
       promo: p.is_promo ?? false,
+      avgRating: rd?.avgRating,
+      reviewCount: rd?.reviewCount,
     }
   })
 

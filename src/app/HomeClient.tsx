@@ -10,6 +10,8 @@ import { Product } from '@/types'
 import { HomePack } from './page'
 import { formatPrice } from '@/lib/format'
 import { useSettingsStore } from '@/store/settings'
+import { PublicReview } from '@/lib/reviews/public'
+import { VerifiedBadge } from '@/components/reviews/VerifiedBadge'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -256,58 +258,6 @@ function HeroBestsellersSlider({ products }: { products: Product[] }) {
   )
 }
 
-const reviews = [
-  { text: 'Décants impeccables et packaging ultra soigné. On sent le sérieux.', name: 'Ale***' },
-  { text: 'Parfums rares introuvables ailleurs, expédition rapide. Je recommande.', name: 'Max***' },
-  { text: 'Top pour tester sur plusieurs jours avant d\'acheter un flacon complet.', name: 'Jul***' },
-  { text: 'Qualité au rendez-vous, je suis conquis par le service.', name: 'Tho***' },
-  { text: 'Enfin un vendeur sérieux pour les décants de niche !', name: 'Luc***' },
-  { text: 'Livraison rapide, parfums authentiques. Parfait.', name: 'Nic***' },
-  { text: 'J\'ai pu tester 5 parfums avant de me décider. Génial !', name: 'Ant***' },
-  { text: 'Le packaging est vraiment premium, on se sent privilégié.', name: 'Mar***' },
-  { text: 'Service client au top, réponse en moins d\'une heure.', name: 'Pie***' },
-  { text: 'Les décants sont parfaitement dosés, rien à redire.', name: 'Flo***' },
-  { text: 'Ma collection s\'agrandit grâce à Braza Scent !', name: 'Vin***' },
-  { text: 'Première commande et déjà fidèle. Bravo !', name: 'Pau***' },
-  { text: 'Des fragrances introuvables en France, merci !', name: 'Adri***' },
-  { text: 'Rapport qualité/prix imbattable pour du niche.', name: 'Seb***' },
-  { text: 'J\'ai offert un coffret, succès garanti.', name: 'Cha***' },
-  { text: 'Emballage soigné, livraison express. Top !', name: 'Lou***' },
-  { text: 'Parfait pour découvrir avant d\'investir.', name: 'Rap***' },
-  { text: 'Sélection pointue, on voit la passion.', name: 'Bap***' },
-  { text: 'Commande reçue en 48h, nickel chrome.', name: 'Yac***' },
-  { text: 'Je recommande les yeux fermés.', name: 'Kar***' },
-  { text: 'Décants généreux et bien présentés.', name: 'Emi***' },
-  { text: 'Enfin trouvé mon parfum signature grâce aux tests.', name: 'Cla***' },
-  { text: 'Communication parfaite du début à la fin.', name: 'Gab***' },
-  { text: 'Qualité identique aux flacons originaux.', name: 'Léo***' },
-  { text: 'Parfums frais et puissants, excellente tenue.', name: 'Dyl***' },
-  { text: 'Livraison offerte dès 50€, c\'est cadeau !', name: 'Jes***' },
-  { text: 'Mes amis me demandent tous où je trouve mes parfums.', name: 'Kev***' },
-  { text: 'Service impeccable, je suis client régulier.', name: 'Rom***' },
-  { text: 'Les notes olfactives sont bien décrites.', name: 'Axe***' },
-  { text: 'Parfait pour les collectionneurs comme moi.', name: 'Dam***' },
-  { text: 'Braza Scent = confiance et qualité.', name: 'Sam***' },
-  { text: 'J\'ai testé 10 parfums, tous authentiques.', name: 'Eli***' },
-  { text: 'Le meilleur site de décants que j\'ai trouvé.', name: 'Mat***' },
-  { text: 'Expédition le jour même, impressionnant.', name: 'Lau***' },
-  { text: 'Prix justes pour de la vraie niche.', name: 'Arn***' },
-  { text: 'Atomiseurs de qualité, pratiques à transporter.', name: 'Ced***' },
-  { text: 'Ma femme adore les parfums que j\'ai commandés.', name: 'Phi***' },
-  { text: 'Découvert grâce à TikTok, pas déçu du voyage.', name: 'Enz***' },
-  { text: 'Parfums rares enfin accessibles.', name: 'Yas***' },
-  { text: 'Je commande chaque mois maintenant.', name: 'Noe***' },
-  { text: 'Excellent pour offrir en cadeau.', name: 'Raf***' },
-  { text: 'Sérieux et professionnel, rien à dire.', name: 'Osm***' },
-  { text: 'Ma go est fan, merci Braza !', name: 'Wal***' },
-  { text: 'Décants parfaits pour voyager léger.', name: 'Iss***' },
-  { text: 'Service après-vente réactif et arrangeant.', name: 'Bil***' },
-  { text: 'Je teste avant d\'acheter le flacon, c\'est malin.', name: 'Sof***' },
-  { text: 'Packaging digne d\'une grande maison.', name: 'Lil***' },
-  { text: 'Fragrances fidèles aux originaux.', name: 'Eva***' },
-  { text: 'Braza Scent a changé ma façon de découvrir les parfums.', name: 'Meh***' },
-  { text: 'Tout est parfait, du site à la livraison.', name: 'Aya***' },
-]
 
 function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false)
@@ -341,9 +291,10 @@ interface HomeClientProps {
   promoProducts: Product[]
   packs: HomePack[]
   orderCount: number
+  testimonialReviews: PublicReview[]
 }
 
-export default function HomeClient({ featuredProducts, newProducts, promoProducts, packs, orderCount }: HomeClientProps) {
+export default function HomeClient({ featuredProducts, newProducts, promoProducts, packs, orderCount, testimonialReviews }: HomeClientProps) {
   const { settings } = useSettingsStore()
   const freeShippingThreshold = settings.freeShippingThreshold || 120
   const bestsellersCarouselRef = useRef<DraggableCarouselHandle>(null)
@@ -744,27 +695,42 @@ export default function HomeClient({ featuredProducts, newProducts, promoProduct
         </div>
       </section>
 
-      {/* Avis */}
-      <section className="py-20 lg:py-28 bg-background overflow-hidden">
-        <div className="px-6 sm:px-10 lg:px-20">
-          <div className="text-center mb-12">
-            <span className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">Témoignages</span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase mb-6">Avis clients</h2>
-            <div className="w-24 h-px bg-primary mx-auto" />
+      {/* Avis — uniquement de vrais avis approuvés (aucun contenu inventé) */}
+      {testimonialReviews.length > 0 && (
+        <section className="py-20 lg:py-28 bg-background overflow-hidden">
+          <div className="px-6 sm:px-10 lg:px-20">
+            <div className="text-center mb-12">
+              <span className="text-sm tracking-[0.3em] uppercase text-primary mb-4 block">Témoignages</span>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.15em] uppercase mb-6">Ils ont testé BrazaScent</h2>
+              <div className="w-24 h-px bg-primary mx-auto" />
+            </div>
           </div>
-        </div>
-        <div className="relative">
-          <m.div className="flex gap-6" animate={{ x: ['0%', '-50%'] }} transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}>
-            {[...reviews, ...reviews].map((review, index) => (
-              <div key={index} className="flex-shrink-0 w-80 p-6 bg-cream border border-border">
-                <div className="text-primary text-lg mb-3">★★★★★</div>
-                <p className="text-muted-foreground mb-4 italic leading-relaxed text-sm">&ldquo;{review.text}&rdquo;</p>
-                <p className="text-sm text-muted-foreground">{review.name}</p>
-              </div>
-            ))}
-          </m.div>
-        </div>
-      </section>
+          <div className="relative">
+            <m.div className="flex gap-6" animate={{ x: ['0%', '-50%'] }} transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}>
+              {[...testimonialReviews, ...testimonialReviews].map((review, index) => (
+                <div key={`${review.id}-${index}`} className="flex-shrink-0 w-80 p-6 bg-cream border border-border">
+                  <div className="text-primary text-lg mb-3">
+                    {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                  </div>
+                  <p className="text-muted-foreground mb-4 italic leading-relaxed text-sm line-clamp-4">&ldquo;{review.comment}&rdquo;</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm text-muted-foreground">{review.userName}</p>
+                    {review.verifiedPurchase && <VerifiedBadge />}
+                  </div>
+                </div>
+              ))}
+            </m.div>
+          </div>
+          <div className="text-center mt-12">
+            <Link
+              href="/avis"
+              className="inline-block px-8 py-3 border border-foreground text-sm tracking-[0.15em] uppercase hover:bg-foreground hover:text-background transition-colors"
+            >
+              Voir tous les avis
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* FAQ */}
       <section className="py-20 lg:py-32 bg-cream">

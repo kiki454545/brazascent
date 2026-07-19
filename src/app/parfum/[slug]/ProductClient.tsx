@@ -12,7 +12,6 @@ import dynamic from 'next/dynamic'
 const OlfactivePyramid = dynamic(() => import('@/components/OlfactivePyramid'), { ssr: false })
 const ScentAccords = dynamic(() => import('@/components/ScentAccords'), { ssr: false })
 import TrustBadges from '@/components/TrustBadges'
-const ReviewSection = dynamic(() => import('@/components/ReviewSection'), { ssr: false })
 import { StockAlertForm } from '@/components/StockAlertForm'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
@@ -55,6 +54,8 @@ interface ProductClientProps {
   analysisText?: string | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialProductData?: Record<string, any> | null
+  initialReviewStats?: { avgRating: number; reviewCount: number } | null
+  reviewSection?: React.ReactNode
 }
 
 function mapSupabaseToProduct(data: Record<string, any>): { product: Product; stockBySize: Record<string, number>; priceBySize: Record<string, number>; unlimitedStock: boolean; performance: { longevity: string|null; longevityHours: string|null; sillage: string|null; seasons: Record<string,number>; timeOfDay: Record<string,number>; genre: string|null; updatedAt: string|null } } {
@@ -111,7 +112,7 @@ function mapSupabaseToProduct(data: Record<string, any>): { product: Product; st
   }
 }
 
-export default function ProductPage({ analysisText, initialProductData }: ProductClientProps) {
+export default function ProductPage({ analysisText, initialProductData, initialReviewStats, reviewSection }: ProductClientProps) {
   const params = useParams()
   const slug = params.slug as string
 
@@ -124,7 +125,7 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
   const [priceBySize, setPriceBySize] = useState<Record<string, number>>(serverMapped?.priceBySize ?? {})
   const [unlimitedStock, setUnlimitedStock] = useState(serverMapped?.unlimitedStock ?? false)
   const [globalStock, setGlobalStock] = useState<number>(1)
-  const [reviewStats, setReviewStats] = useState<{ avg: number; count: number } | null>(null)
+  const reviewStats = initialReviewStats ? { avg: initialReviewStats.avgRating, count: initialReviewStats.reviewCount } : null
   const [performance, setPerformance] = useState<{
     longevity: string | null
     longevityHours: string | null
@@ -248,18 +249,8 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
           image: data.images?.[0] || '',
         })
 
-        // Fetch review stats for header display
-        supabase
-          .from('product_reviews')
-          .select('rating')
-          .eq('product_id', data.id)
-          .eq('is_approved', true)
-          .then(({ data: reviewsData }) => {
-            if (reviewsData && reviewsData.length > 0) {
-              const avg = reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length
-              setReviewStats({ avg, count: reviewsData.length })
-            }
-          })
+        // Les statistiques d'avis (reviewStats) sont désormais calculées côté
+        // serveur et passées en prop (initialReviewStats) — plus de fetch client.
         // Si stock est explicitement 0, c'est une rupture. Si null/undefined, utiliser 1 par défaut
         setGlobalStock(data.stock !== null && data.stock !== undefined ? data.stock : 1)
         setPriceBySize(parsedPriceBySize)
@@ -1075,8 +1066,8 @@ export default function ProductPage({ analysisText, initialProductData }: Produc
         </div>
       </div>
 
-      {/* Reviews */}
-      <ReviewSection productId={product.id} productName={product.name} productSlug={product.slug} />
+      {/* Reviews — rendu côté serveur, transmis en slot depuis page.tsx */}
+      {reviewSection}
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (

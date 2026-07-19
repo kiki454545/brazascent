@@ -94,6 +94,21 @@ export default function PromosClient() {
 
         setProducts(promoProducts)
         setLoading(false)
+
+        // Stats d'avis récupérées en une seule requête groupée (page entièrement
+        // client-rendue : product_review_stats n'est pas accessible en SSR ici).
+        if (promoProducts.length > 0) {
+          const ids = promoProducts.map((p) => p.id).join(',')
+          fetch(`/api/products/review-stats?productIds=${encodeURIComponent(ids)}`)
+            .then((r) => r.json())
+            .then((body) => {
+              if (!isMounted || !body?.stats) return
+              setProducts((prev) =>
+                prev.map((p) => (body.stats[p.id] ? { ...p, avgRating: body.stats[p.id].avgRating, reviewCount: body.stats[p.id].reviewCount } : p))
+              )
+            })
+            .catch(() => {})
+        }
       } catch (err) {
         if (!isMounted) return
         console.error('Erreur:', err)

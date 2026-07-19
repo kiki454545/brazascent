@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import ProductClient from './ProductClient'
+import ReviewSection from '@/components/ReviewSection'
+import { getProductReviewStatsMap } from '@/lib/reviews/public'
 import { generateBrazaScentAnalysis } from '@/lib/brazascent-analysis'
 import { PRODUCT_FAQ } from '@/lib/product-faq'
 
@@ -319,6 +321,9 @@ export default async function ProductPage({ params }: PageProps) {
 
   const schemas = await getProductJsonLd(product, reviews)
 
+  const statsMap = await getProductReviewStatsMap(supabase, [product.id])
+  const initialReviewStats = statsMap.get(product.id) ?? null
+
   // Prix minimum pour affichage SEO
   const priceBySize = typeof product.price_by_size === 'string'
     ? JSON.parse(product.price_by_size)
@@ -359,6 +364,8 @@ export default async function ProductPage({ params }: PageProps) {
       <ProductClient
         analysisText={analysisText}
         initialProductData={product}
+        initialReviewStats={initialReviewStats}
+        reviewSection={<ReviewSection productId={product.id} />}
       />
     </>
   )

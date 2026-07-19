@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import HommeClient from './HommeClient'
 import { Product } from '@/types'
+import { getProductReviewStatsMap } from '@/lib/reviews/public'
 
 const SITE_URL = 'https://brazascent.com'
 
@@ -50,12 +51,16 @@ export default async function HommePage() {
     .in('performance_genre', ['Homme', 'Masculin', 'Très masculin'])
     .order('display_order', { ascending: true })
 
+  // Une seule requête groupée pour les stats d'avis de tous les produits de la page.
+  const statsMap = await getProductReviewStatsMap(supabase, (data || []).map((p: { id: string }) => p.id))
+
   const initialProducts: Product[] = (data || []).map((p: any) => {
     const priceBySize = typeof p.price_by_size === 'string'
       ? JSON.parse(p.price_by_size)
       : (p.price_by_size || {})
     const prices = Object.values(priceBySize).filter((v): v is number => typeof v === 'number' && v > 0)
     const displayPrice = prices.length > 0 ? Math.min(...prices) : p.price
+    const rd = statsMap.get(p.id)
     return {
       id: p.id,
       name: p.name,
@@ -77,6 +82,8 @@ export default async function HommePage() {
       bestseller: p.is_bestseller,
       featured: p.is_bestseller,
       promo: p.is_promo ?? false,
+      avgRating: rd?.avgRating,
+      reviewCount: rd?.reviewCount,
     }
   })
 

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import HomeClient from './HomeClient'
 import { Product } from '@/types'
+import { getProductReviewStatsMap, getFeaturedReviews } from '@/lib/reviews/public'
 
 const SITE_URL = 'https://brazascent.com'
 
@@ -107,9 +108,24 @@ export default async function HomePage() {
       .eq('payment_status', 'paid'),
   ])
 
-  const featuredProducts = (bestsellersRes.data || []).map(mapProduct)
-  const newProducts = (newProductsRes.data || []).map(mapProduct)
-  const promoProducts = (promosRes.data || []).map(mapProduct)
+  let featuredProducts = (bestsellersRes.data || []).map(mapProduct)
+  let newProducts = (newProductsRes.data || []).map(mapProduct)
+  let promoProducts = (promosRes.data || []).map(mapProduct)
+
+  // Une seule requête groupée pour les stats d'avis de tous les produits affichés sur la page.
+  const allProductIds = [...featuredProducts, ...newProducts, ...promoProducts].map((p) => p.id)
+  const [statsMap, testimonialReviews] = await Promise.all([
+    getProductReviewStatsMap(supabase, [...new Set(allProductIds)]),
+    getFeaturedReviews(supabase, 12),
+  ])
+  const withStats = (products: Product[]) =>
+    products.map((p) => {
+      const s = statsMap.get(p.id)
+      return s ? { ...p, avgRating: s.avgRating, reviewCount: s.reviewCount } : p
+    })
+  featuredProducts = withStats(featuredProducts)
+  newProducts = withStats(newProducts)
+  promoProducts = withStats(promoProducts)
   const packs = (packsRes.data || []) as HomePack[]
   const orderCount = 100 + (ordersRes.count || 0)
 
@@ -137,7 +153,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqJsonLd) }}
       />
-      <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} promoProducts={promoProducts} packs={packs} orderCount={orderCount} />
+      <HomeClient featuredProducts={featuredProducts} newProducts={newProducts} promoProducts={promoProducts} packs={packs} orderCount={orderCount} testimonialReviews={testimonialReviews} />
     </>
   )
 }
