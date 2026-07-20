@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 }
 
-export const revalidate = 43200
+export const revalidate = 86400
 
 export default async function AvisPage() {
   const [{ reviews, total }, distribution] = await Promise.all([

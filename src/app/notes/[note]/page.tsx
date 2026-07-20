@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { cache } from 'react'
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
@@ -10,12 +11,18 @@ import { getProductReviewStatsMap } from '@/lib/reviews/public'
 
 const SITE_URL = 'https://brazascent.com'
 
+// Nombre minimum de produits actifs pour qu'une note soit préconstruite au
+// build. Les notes en dessous restent accessibles (dynamicParams reste true
+// par défaut) mais se génèrent à la première visite plutôt qu'à chaque
+// déploiement — voir audit ISR Write Units, juillet 2026.
+const MIN_PRODUCTS_FOR_STATIC_NOTE = 2
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-export const revalidate = 3600
+export const revalidate = 604800
 
 export async function generateStaticParams() {
   const { data } = await supabase
@@ -23,18 +30,33 @@ export async function generateStaticParams() {
     .select('notes_top, notes_heart, notes_base')
     .eq('is_active', true)
 
-  const noteSet = new Set<string>()
+  // Compte les produits DISTINCTS par note (pas les occurrences) : une note
+  // présente à la fois en tête et en cœur d'un même produit ne doit compter
+  // que pour 1 produit.
+  const noteProductCounts = new Map<string, number>()
   for (const p of data ?? []) {
+    const slugsForThisProduct = new Set<string>()
     for (const note of [
       ...((p.notes_top as string[]) ?? []),
       ...((p.notes_heart as string[]) ?? []),
       ...((p.notes_base as string[]) ?? []),
     ]) {
-      if (note) noteSet.add(noteToSlug(note))
+      if (note) slugsForThisProduct.add(noteToSlug(note))
+    }
+    for (const slug of slugsForThisProduct) {
+      noteProductCounts.set(slug, (noteProductCounts.get(slug) ?? 0) + 1)
     }
   }
-  return [...noteSet].map((note) => ({ note }))
+
+  return [...noteProductCounts.entries()]
+    .filter(([, count]) => count >= MIN_PRODUCTS_FOR_STATIC_NOTE)
+    .map(([note]) => ({ note }))
 }
+
+// Explicite : les notes non préconstruites (< MIN_PRODUCTS_FOR_STATIC_NOTE
+// produits) restent accessibles et se génèrent à la demande au premier accès,
+// puis sont mises en cache normalement (comportement par défaut de Next.js).
+export const dynamicParams = true
 
 interface PageProps {
   params: Promise<{ note: string }>
@@ -75,14 +97,27 @@ function findNoteName(data: ProductRow[], noteSlug: string): string | null {
   return null
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { note: noteSlug } = await params
+// Mémoïsé par React pour la durée d'un même rendu (cache() se réinitialise à
+// chaque requête) : generateMetadata et la page appellent cette fonction avec
+// les mêmes arguments (aucun), la requête Supabase ne part donc qu'une seule
+// fois au lieu de deux. Pas de persistance entre requêtes — volontairement
+// pas d'unstable_cache ici.
+const getActiveProductsWithNotes = cache(async (): Promise<ProductRow[]> => {
   const { data } = await supabase
     .from('products')
-    .select('notes_top, notes_heart, notes_base')
+    .select(
+      'id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, notes_top, notes_heart, notes_base'
+    )
     .eq('is_active', true)
+    .order('display_order', { ascending: true })
+  return (data || []) as ProductRow[]
+})
 
-  const noteName = findNoteName((data || []) as ProductRow[], noteSlug)
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { note: noteSlug } = await params
+  const rows = await getActiveProductsWithNotes()
+
+  const noteName = findNoteName(rows, noteSlug)
   if (!noteName) return { title: 'Note introuvable | Braza Scent' }
 
   return {
@@ -108,15 +143,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function NotePage({ params }: PageProps) {
   const { note: noteSlug } = await params
 
-  const { data } = await supabase
-    .from('products')
-    .select(
-      'id, name, slug, short_description, price, original_price, price_by_size, images, sizes, category, collection, brand, stock, is_new, is_bestseller, is_promo, notes_top, notes_heart, notes_base'
-    )
-    .eq('is_active', true)
-    .order('display_order', { ascending: true })
-
-  const rows = (data || []) as ProductRow[]
+  const rows = await getActiveProductsWithNotes()
   const noteName = findNoteName(rows, noteSlug)
   if (!noteName) notFound()
 

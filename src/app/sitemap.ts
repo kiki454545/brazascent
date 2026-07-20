@@ -10,138 +10,121 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-// Le sitemap est régénéré toutes les heures
-export const revalidate = 3600
+// Le sitemap est régénéré toutes les 24h
+export const revalidate = 86400
 
+// Pages statiques sans date de modification fiable en base : `lastModified`
+// est volontairement omis plutôt que rempli avec `new Date()`, qui rendrait
+// le sitemap différent à chaque régénération même sans changement réel
+// (voir audit ISR Write Units — juillet 2026).
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Pages statiques
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: SITE_URL,
-      lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1.0,
     },
     {
       url: `${SITE_URL}/parfums`,
-      lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${SITE_URL}/homme`,
-      lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/femme`,
-      lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/unisexe`,
-      lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/marques`,
-      lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/packs`,
-      lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/promos`,
-      lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${SITE_URL}/contact`,
-      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${SITE_URL}/faq`,
-      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${SITE_URL}/livraison`,
-      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.4,
     },
     {
       url: `${SITE_URL}/retours`,
-      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.4,
     },
     {
       url: `${SITE_URL}/cgv`,
-      lastModified: new Date(),
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${SITE_URL}/confidentialite`,
-      lastModified: new Date(),
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${SITE_URL}/mentions-legales`,
-      lastModified: new Date(),
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${SITE_URL}/a-propos`,
-      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
     },
     {
       url: `${SITE_URL}/blog`,
-      lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
     },
     {
       url: `${SITE_URL}/quiz`,
-      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     // Pages familles olfactives
     ...(['florale', 'boisee', 'orientale', 'fraiche'] as const).map((famille) => ({
       url: `${SITE_URL}/parfums/${famille}`,
-      lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.85,
     })),
     // Page pilier SEO décantage
     {
       url: `${SITE_URL}/decantage-parfum`,
-      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.85,
     },
     // Notes olfactives (index)
     {
       url: `${SITE_URL}/notes`,
-      lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
     },
@@ -158,7 +141,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (products) {
       productPages = products.map((product) => ({
         url: `${SITE_URL}/parfum/${product.slug}`,
-        lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
+        ...(product.updated_at ? { lastModified: new Date(product.updated_at) } : {}),
         changeFrequency: 'weekly' as const,
         priority: 0.9,
       }))
@@ -175,9 +158,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select('slug')
 
     if (brands) {
+      // Pas de colonne updated_at sur `brands` — aucune date fiable disponible,
+      // on omet lastModified plutôt que d'en inventer une.
       brandPages = brands.map((brand) => ({
         url: `${SITE_URL}/marques/${brand.slug}`,
-        lastModified: new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.7,
       }))
@@ -195,9 +179,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .eq('is_active', true)
 
     if (packs) {
+      // Pas de colonne updated_at sur `packs` — même règle que pour les marques.
       packPages = packs.map((pack) => ({
         url: `${SITE_URL}/packs/${pack.slug}`,
-        lastModified: new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.7,
       }))
@@ -217,7 +201,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (posts) {
       blogPages = posts.map((post) => ({
         url: `${SITE_URL}/blog/${post.slug}`,
-        lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
+        ...(post.updated_at ? { lastModified: new Date(post.updated_at) } : {}),
         changeFrequency: 'weekly' as const,
         priority: 0.7,
       }))
@@ -245,9 +229,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           if (note) slugSet.add(noteToSlug(note))
         }
       }
+      // Slug agrégé depuis plusieurs produits : aucune date de modification
+      // unique n'a de sens ici, on omet lastModified.
       notePages = Array.from(slugSet).map((slug) => ({
         url: `${SITE_URL}/notes/${slug}`,
-        lastModified: new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.6,
       }))
@@ -256,5 +241,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Erreur récupération notes pour sitemap:', error)
   }
 
-  return [...staticPages, ...productPages, ...brandPages, ...packPages, ...blogPages, ...notePages]
+  // Tri final par URL : garantit une sortie strictement identique d'une
+  // génération à l'autre tant que les données sous-jacentes n'ont pas changé,
+  // indépendamment de l'ordre retourné par Postgres (non garanti sans ORDER BY).
+  const sortByUrl = (a: MetadataRoute.Sitemap[number], b: MetadataRoute.Sitemap[number]) =>
+    a.url.localeCompare(b.url)
+
+  return [
+    ...staticPages,
+    ...[...productPages].sort(sortByUrl),
+    ...[...brandPages].sort(sortByUrl),
+    ...[...packPages].sort(sortByUrl),
+    ...[...blogPages].sort(sortByUrl),
+    ...[...notePages].sort(sortByUrl),
+  ]
 }

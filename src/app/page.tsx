@@ -32,7 +32,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-export const revalidate = 3600
+export const revalidate = 86400
 
 function mapProduct(p: any): Product {
   const priceBySize = typeof p.price_by_size === 'string'
