@@ -355,6 +355,12 @@ export default function CheckoutPage() {
       return
     }
 
+    const finalAddress = getFinalAddress()
+    if (!finalAddress.firstName.trim() || !finalAddress.lastName.trim()) {
+      setError('Nom et prénom requis pour la livraison. Merci de compléter votre profil ou de saisir une nouvelle adresse.')
+      return
+    }
+
     setError(null)
     setCurrentStep('payment')
   }

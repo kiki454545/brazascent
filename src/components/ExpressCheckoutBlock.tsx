@@ -180,6 +180,7 @@ function ExpressCheckoutInner({ cartItems, promoCode, userId, shippingCost, disp
               paymentMethods: { applePay: 'auto', googlePay: 'auto', link: 'auto' },
               shippingAddressRequired: true,
               emailRequired: true,
+              phoneNumberRequired: true,
               allowedShippingCountries: [
                 'FR', 'BE', 'DE', 'ES', 'IT', 'LU', 'NL', 'PT', 'CH',
                 'AT', 'PL', 'HU', 'CZ', 'HR', 'SK', 'SI', 'BG', 'RO',

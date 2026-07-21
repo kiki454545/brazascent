@@ -190,11 +190,20 @@ export async function POST(request: NextRequest) {
   const totalAmount = Math.max(50, Math.round((subtotal + shippingCost - promoDiscount) * 100))
 
   // Formater l'adresse de livraison pour les métadonnées
-  const shippingName = shippingAddress?.name || billingDetails.name || ''
+  const shippingName = (shippingAddress?.name || billingDetails.name || '').trim()
+  const shippingPhone = (billingDetails.phone || '').trim()
   const addr = shippingAddress?.address || billingDetails.address
   const formattedAddress = addr
     ? [addr.line1, addr.line2, addr.postal_code, addr.city, addr.country].filter(Boolean).join(', ')
     : ''
+
+  // SÉCURITÉ: nom et téléphone obligatoires pour la livraison, comme pour le checkout classique
+  if (!shippingName) {
+    return NextResponse.json({ error: 'Nom et prénom requis pour la livraison' }, { status: 400 })
+  }
+  if (shippingPhone.length < 10) {
+    return NextResponse.json({ error: 'Numéro de téléphone requis pour la livraison' }, { status: 400 })
+  }
 
   try {
     const paymentIntent = await stripe.paymentIntents.create({
@@ -210,7 +219,7 @@ export async function POST(request: NextRequest) {
         shipping: JSON.stringify({
           name: shippingName,
           email: billingDetails.email || '',
-          phone: billingDetails.phone || '',
+          phone: shippingPhone,
           address: formattedAddress,
         }),
         items: JSON.stringify(verifiedItems.map(i => ({
