@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import { hashToken } from '@/lib/reviews/token'
+import { resolveReviewToken } from '@/lib/reviews/token-resolution'
 import { ReviewSubmitForm } from '@/components/reviews/ReviewSubmitForm'
 
 // Page privée, personnalisée par token — jamais indexée.
@@ -22,6 +23,7 @@ type Resolved =
   | { state: 'invalid' }
   | { state: 'expired' }
   | { state: 'used' }
+  | { state: 'disabled' }
   | {
       state: 'valid'
       product: { name: string; brand: string | null; image: string | null }
@@ -37,15 +39,50 @@ function extractFirstName(fullName: string | null | undefined): string {
 async function resolveToken(rawToken: string): Promise<Resolved> {
   const tokenHash = hashToken(rawToken)
 
+  // Le token peut provenir de review_tokens (avis lié à une commande, Lot 1)
+  // ou de manual_review_requests (avis social manuel, Lot 6.5) — détection
+  // uniquement côté serveur, jamais via une indication du client.
+  const resolved = await resolveReviewToken(supabaseAdmin, tokenHash)
+  if (!resolved) return { state: 'invalid' }
+  if (resolved.state === 'expired') return { state: 'expired' }
+  if (resolved.state === 'used') return { state: 'used' }
+  if (resolved.state === 'disabled') return { state: 'disabled' }
+
+  if (resolved.kind === 'social') {
+    const [{ data: product }, { data: request }] = await Promise.all([
+      supabaseAdmin
+        .from('products')
+        .select('name, brand, images')
+        .eq('id', resolved.productId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('manual_review_requests')
+        .select('first_name')
+        .eq('id', resolved.id)
+        .maybeSingle(),
+    ])
+
+    if (!product) return { state: 'invalid' }
+
+    return {
+      state: 'valid',
+      product: {
+        name: product.name,
+        brand: product.brand,
+        image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null,
+      },
+      firstName: request?.first_name || '',
+      purchasedSize: null,
+    }
+  }
+
   const { data: reviewToken } = await supabaseAdmin
     .from('review_tokens')
-    .select('id, order_id, product_id, expires_at, used_at')
-    .eq('token_hash', tokenHash)
+    .select('order_id, product_id')
+    .eq('id', resolved.id)
     .maybeSingle()
 
   if (!reviewToken) return { state: 'invalid' }
-  if (new Date(reviewToken.expires_at) < new Date()) return { state: 'expired' }
-  if (reviewToken.used_at) return { state: 'used' }
 
   const [{ data: product }, { data: order }, { data: orderItem }] = await Promise.all([
     supabaseAdmin
@@ -142,6 +179,15 @@ export default async function LaisserAvisPage({ searchParams }: PageProps) {
         title="Avis déjà déposé"
         message="Un avis a déjà été envoyé avec ce lien. Merci pour votre confiance !"
         tone="primary"
+      />
+    )
+  }
+
+  if (resolved.state === 'disabled') {
+    return (
+      <TerminalState
+        title="Lien désactivé"
+        message="Ce lien n'est plus valide. Contactez-nous si vous souhaitez laisser un avis."
       />
     )
   }

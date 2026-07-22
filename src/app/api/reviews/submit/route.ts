@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 import { hashToken } from '@/lib/reviews/token'
+import { resolveReviewToken } from '@/lib/reviews/token-resolution'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,6 +33,20 @@ const ERROR_MAP: Record<string, { status: number; message: string }> = {
   REVIEW_INVALID_RATING:    { status: 400, message: 'Veuillez choisir une note entre 1 et 5.' },
   REVIEW_INVALID_COMMENT:   { status: 400, message: 'Le commentaire doit faire au moins 10 caractères.' },
   REVIEW_TOO_MANY_PHOTOS:   { status: 400, message: 'Maximum 4 photos.' },
+}
+
+// Mêmes messages génériques que ERROR_MAP côté client — aucun ne doit
+// permettre de deviner qu'il s'agit d'un avis social manuel (Lot 6.5)
+// plutôt que d'un avis lié à une commande.
+const SOCIAL_ERROR_MAP: Record<string, { status: number; message: string }> = {
+  MANUAL_REVIEW_TOKEN_INVALID:     { status: 404, message: "Ce lien d'avis n'est pas valide." },
+  MANUAL_REVIEW_TOKEN_EXPIRED:     { status: 410, message: 'Ce lien a expiré.' },
+  MANUAL_REVIEW_TOKEN_USED:        { status: 409, message: 'Un avis a déjà été déposé avec ce lien.' },
+  MANUAL_REVIEW_TOKEN_DISABLED:    { status: 409, message: "Ce lien n'est plus valide." },
+  MANUAL_REVIEW_PRODUCT_NOT_FOUND: { status: 404, message: "Ce produit n'est plus disponible." },
+  MANUAL_REVIEW_INVALID_RATING:    { status: 400, message: 'Veuillez choisir une note entre 1 et 5.' },
+  MANUAL_REVIEW_INVALID_COMMENT:   { status: 400, message: 'Le commentaire doit faire au moins 10 caractères.' },
+  MANUAL_REVIEW_TOO_MANY_PHOTOS:   { status: 400, message: 'Maximum 4 photos.' },
 }
 
 export async function POST(request: NextRequest) {
@@ -87,6 +102,40 @@ export async function POST(request: NextRequest) {
       if (missing) {
         return NextResponse.json({ error: 'Une photo est introuvable, réessayez.' }, { status: 400 })
       }
+    }
+
+    // Détermine si ce token appartient à review_tokens (avis lié à une
+    // commande) ou à manual_review_requests (avis social manuel, Lot 6.5) —
+    // uniquement en base, côté serveur. Le client ne fournit et ne peut
+    // jamais fournir cette information (aucun champ tokenType accepté).
+    const resolved = await resolveReviewToken(supabaseAdmin, tokenHash)
+    if (!resolved) {
+      return NextResponse.json({ error: "Ce lien d'avis n'est pas valide." }, { status: 404 })
+    }
+
+    if (resolved.kind === 'social') {
+      const { data: reviewId, error: rpcError } = await supabaseAdmin.rpc('submit_social_review', {
+        p_token_hash: tokenHash,
+        p_rating: rating,
+        p_comment: comment,
+        p_user_name: userName,
+        p_photo_paths: photoPaths,
+      })
+
+      if (rpcError) {
+        const code = rpcError.message?.trim()
+        const mapped = code ? SOCIAL_ERROR_MAP[code] : undefined
+        if (mapped) {
+          return NextResponse.json({ error: mapped.message }, { status: mapped.status })
+        }
+        console.error('Erreur submit_social_review non mappée:', rpcError)
+        return NextResponse.json(
+          { error: 'Une erreur est survenue. Veuillez réessayer.' },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({ success: true, reviewId })
     }
 
     const { data: reviewId, error: rpcError } = await supabaseAdmin.rpc('submit_verified_review', {

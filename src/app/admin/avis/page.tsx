@@ -6,6 +6,7 @@ import Image from 'next/image'
 import {
   Star, Check, X, ExternalLink, Loader2, Search, MessageSquare,
   ShieldCheck, ImageIcon, RotateCcw, Trash2, Send, Mail, Phone,
+  UserPlus, Copy, Ban, RefreshCw,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
@@ -29,6 +30,7 @@ interface Review {
   comment: string
   status: 'pending' | 'approved' | 'rejected'
   verified_purchase: boolean
+  source: string | null
   purchased_size: string | null
   shop_response: string | null
   shop_response_at: string | null
@@ -37,6 +39,59 @@ interface Review {
   products: { name: string; slug: string } | null
   orders: { order_number: string } | null
   review_photos: ReviewPhoto[]
+}
+
+// ─── Demandes manuelles (Lot 6.5) ───────────────────────────────────────────
+
+type SourceChannel = 'snapchat' | 'instagram' | 'tiktok' | 'whatsapp' | 'autre'
+
+const CHANNEL_LABELS: Record<SourceChannel, string> = {
+  snapchat: 'Snapchat',
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  whatsapp: 'WhatsApp',
+  autre: 'Autre',
+}
+
+interface ManualRequest {
+  id: string
+  product_id: string
+  first_name: string
+  customer_email: string | null
+  internal_note: string | null
+  source_channel: SourceChannel | null
+  expires_at: string
+  used_at: string | null
+  disabled_at: string | null
+  review_id: string | null
+  created_at: string
+  products: { name: string; slug: string } | null
+  product_reviews: { status: string } | null
+}
+
+type ManualRequestState = 'active' | 'used' | 'expired' | 'disabled'
+
+function manualRequestState(r: ManualRequest): ManualRequestState {
+  if (r.disabled_at) return 'disabled'
+  if (r.used_at) return 'used'
+  if (new Date(r.expires_at) < new Date()) return 'expired'
+  return 'active'
+}
+
+function ManualRequestStateBadge({ state }: { state: ManualRequestState }) {
+  const styles: Record<ManualRequestState, string> = {
+    active: 'bg-green-100 text-green-700',
+    used: 'bg-blue-100 text-blue-700',
+    expired: 'bg-admin-border text-admin-muted',
+    disabled: 'bg-red-100 text-red-700',
+  }
+  const labels: Record<ManualRequestState, string> = {
+    active: 'Active',
+    used: 'Utilisée',
+    expired: 'Expirée',
+    disabled: 'Désactivée',
+  }
+  return <span className={`text-xs px-2 py-0.5 ${styles[state]}`}>{labels[state]}</span>
 }
 
 interface ReminderToken {
@@ -173,6 +228,25 @@ export default function AdminAvisPage() {
   const [remindersLoading, setRemindersLoading] = useState(false)
   const [remindingId, setRemindingId] = useState<string | null>(null)
 
+  // ── Demandes manuelles (Lot 6.5) ──
+  const [showManualRequests, setShowManualRequests] = useState(false)
+  const [manualRequests, setManualRequests] = useState<ManualRequest[]>([])
+  const [manualRequestsLoading, setManualRequestsLoading] = useState(false)
+  const [manualActionLoading, setManualActionLoading] = useState<string | null>(null)
+  const [manualError, setManualError] = useState('')
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [productOptions, setProductOptions] = useState<{ id: string; name: string }[]>([])
+  const [createProductId, setCreateProductId] = useState('')
+  const [createProductSearch, setCreateProductSearch] = useState('')
+  const [createFirstName, setCreateFirstName] = useState('')
+  const [createEmail, setCreateEmail] = useState('')
+  const [createPhone, setCreatePhone] = useState('')
+  const [createNote, setCreateNote] = useState('')
+  const [createChannel, setCreateChannel] = useState<SourceChannel | ''>('')
+  const [creating, setCreating] = useState(false)
+  const [revealedLink, setRevealedLink] = useState<{ url: string; firstName: string; productName: string; whatsappPhone: string | null } | null>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
+
   // Récupère les avis puis, dans la foulée, les URL signées des photos encore
   // privées à afficher — regroupé dans un seul chargement pour éviter un
   // enchaînement d'effets (fetch avis → effet dérivé → fetch signatures).
@@ -228,6 +302,119 @@ export default function AdminAvisPage() {
     if (showReminders) fetchReminders()
   }, [showReminders, fetchReminders])
 
+  // ── Demandes manuelles : chargement ──────────────────────────────────────
+  const fetchManualRequests = useCallback(async () => {
+    try {
+      const headers = await authHeaders()
+      const res = await fetch('/api/admin/reviews/manual-requests', { headers })
+      const body = await res.json().catch(() => null)
+      setManualRequests((body?.requests as ManualRequest[]) || [])
+    } catch (err) {
+      console.error('Error fetching manual requests:', err)
+    } finally {
+      setManualRequestsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (showManualRequests) fetchManualRequests()
+  }, [showManualRequests, fetchManualRequests])
+
+  useEffect(() => {
+    if (!showCreateForm || productOptions.length > 0) return
+    supabase
+      .from('products')
+      .select('id, name')
+      .eq('is_active', true)
+      .order('name')
+      .then(({ data }) => setProductOptions(data || []))
+  }, [showCreateForm, productOptions.length])
+
+  const filteredProductOptions = useMemo(() => {
+    const q = createProductSearch.trim().toLowerCase()
+    if (!q) return productOptions.slice(0, 20)
+    return productOptions.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 20)
+  }, [productOptions, createProductSearch])
+
+  const createManualRequest = async () => {
+    setManualError('')
+    if (!createProductId) { setManualError('Choisissez un produit.'); return }
+    if (!createFirstName.trim()) { setManualError('Le prénom est requis.'); return }
+    if (!createEmail.trim() && !createPhone.trim()) { setManualError('Indiquez au moins un email ou un téléphone.'); return }
+
+    setCreating(true)
+    const headers = await authHeaders()
+    const res = await fetch('/api/admin/reviews/manual-requests', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        productId: createProductId,
+        firstName: createFirstName.trim(),
+        customerEmail: createEmail.trim() || null,
+        customerPhone: createPhone.trim() || null,
+        internalNote: createNote.trim() || null,
+        sourceChannel: createChannel || null,
+      }),
+    })
+    const body = await res.json().catch(() => null)
+    setCreating(false)
+
+    if (!res.ok) {
+      setManualError(body?.error || 'Erreur lors de la création.')
+      return
+    }
+
+    const productName = productOptions.find((p) => p.id === createProductId)?.name || ''
+    setRevealedLink({ url: body.reviewUrl, firstName: createFirstName.trim(), productName, whatsappPhone: body.whatsappPhone || null })
+    setLinkCopied(false)
+    setCreateProductId('')
+    setCreateProductSearch('')
+    setCreateFirstName('')
+    setCreateEmail('')
+    setCreatePhone('')
+    setCreateNote('')
+    setCreateChannel('')
+    setShowCreateForm(false)
+    await fetchManualRequests()
+  }
+
+  const regenerateManualRequest = async (r: ManualRequest) => {
+    setManualError('')
+    setManualActionLoading(r.id)
+    const headers = await authHeaders()
+    const res = await fetch(`/api/admin/reviews/manual-requests/${r.id}/regenerate`, { method: 'POST', headers })
+    const body = await res.json().catch(() => null)
+    setManualActionLoading(null)
+
+    if (!res.ok) {
+      setManualError(body?.error || 'Erreur lors de la régénération.')
+      return
+    }
+
+    setRevealedLink({ url: body.reviewUrl, firstName: r.first_name, productName: r.products?.name || '', whatsappPhone: null })
+    setLinkCopied(false)
+    await fetchManualRequests()
+  }
+
+  const disableManualRequest = async (r: ManualRequest) => {
+    setManualActionLoading(r.id)
+    const headers = await authHeaders()
+    await fetch(`/api/admin/reviews/manual-requests/${r.id}/disable`, { method: 'POST', headers })
+    await fetchManualRequests()
+    setManualActionLoading(null)
+  }
+
+  const copyRevealedLink = async () => {
+    if (!revealedLink) return
+    try {
+      await navigator.clipboard.writeText(revealedLink.url)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch {
+      // Copie manuelle possible depuis le champ affiché si l'API clipboard échoue.
+    }
+  }
+
   // ── Comptages par onglet ──────────────────────────────────────────────────
   const counts = useMemo(() => {
     const c: Record<TabKey, number> = { pending: 0, approved: 0, rejected: 0, verified: 0, with_photos: 0, no_response: 0, all: reviews.length }
@@ -240,6 +427,19 @@ export default function AdminAvisPage() {
       if (r.status === 'approved' && !r.shop_response) c.no_response++
     }
     return c
+  }, [reviews])
+
+  // ── Statistiques par source (Lot 6.5) ──────────────────────────────────────
+  const sourceStats = useMemo(() => {
+    let verifiedPurchase = 0
+    let socialManual = 0
+    let unverified = 0
+    for (const r of reviews) {
+      if (r.verified_purchase) verifiedPurchase++
+      else if (r.source === 'social_manual') socialManual++
+      else unverified++
+    }
+    return { verifiedPurchase, socialManual, unverified }
   }, [reviews])
 
   // ── Filtrage (onglet + recherche + note) ──────────────────────────────────
@@ -373,18 +573,273 @@ export default function AdminAvisPage() {
         <div>
           <h1 className="text-2xl font-semibold text-admin-text mb-1">Avis clients</h1>
           <p className="text-admin-muted text-sm">Modérez les avis avant leur publication sur le site.</p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1">
+              Achat vérifié : {sourceStats.verifiedPurchase}
+            </span>
+            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1">
+              Social manuel : {sourceStats.socialManual}
+            </span>
+            <span className="text-xs bg-admin-border text-admin-muted px-2 py-1">
+              Non vérifiés : {sourceStats.unverified}
+            </span>
+          </div>
         </div>
-        <button
-          onClick={() => {
-            if (!showReminders) setRemindersLoading(true)
-            setShowReminders((v) => !v)
-          }}
-          className="flex items-center gap-2 px-4 py-2 text-sm border border-admin-border text-admin-muted hover:border-admin-text hover:text-admin-text transition-colors"
-        >
-          <Send className="w-4 h-4" />
-          {showReminders ? 'Masquer les relances' : 'Clients en attente de dépôt'}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => {
+              if (!showManualRequests) setManualRequestsLoading(true)
+              setShowManualRequests((v) => !v)
+            }}
+            className="flex items-center gap-2 px-4 py-2 text-sm border border-admin-border text-admin-muted hover:border-admin-text hover:text-admin-text transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            {showManualRequests ? 'Masquer les demandes manuelles' : 'Demandes manuelles'}
+          </button>
+          <button
+            onClick={() => {
+              if (!showReminders) setRemindersLoading(true)
+              setShowReminders((v) => !v)
+            }}
+            className="flex items-center gap-2 px-4 py-2 text-sm border border-admin-border text-admin-muted hover:border-admin-text hover:text-admin-text transition-colors"
+          >
+            <Send className="w-4 h-4" />
+            {showReminders ? 'Masquer les relances' : 'Clients en attente de dépôt'}
+          </button>
+        </div>
       </div>
+
+      {/* ── Lien révélé une seule fois (création ou régénération) ── */}
+      {revealedLink && (
+        <div className="mb-8 border border-[#C9A962] bg-[#C9A962]/10 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-admin-text">
+                Lien pour {revealedLink.firstName} — {revealedLink.productName}
+              </p>
+              <p className="text-xs text-red-600 mt-1">
+                Ce lien ne pourra plus être affiché après fermeture de cette fenêtre. Copiez-le et envoyez-le maintenant.
+              </p>
+              <input
+                readOnly
+                value={revealedLink.url}
+                onFocus={(e) => e.currentTarget.select()}
+                className="w-full mt-2 px-3 py-2 text-xs bg-admin-bg border border-admin-border font-mono"
+              />
+            </div>
+            <button onClick={() => setRevealedLink(null)} className="text-admin-muted hover:text-admin-text flex-shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <button
+              onClick={copyRevealedLink}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-admin-text text-white text-xs"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              {linkCopied ? 'Copié !' : 'Copier le lien'}
+            </button>
+            {revealedLink.whatsappPhone && (
+              <button
+                onClick={() => {
+                  const greeting = revealedLink.firstName ? `Bonjour ${revealedLink.firstName} 👋` : 'Bonjour 👋'
+                  const message = [
+                    greeting,
+                    '',
+                    `Merci encore pour votre confiance sur ${revealedLink.productName} !`,
+                    'Votre avis nous aiderait énormément, vous pouvez le laisser ici :',
+                    revealedLink.url,
+                  ].join('\n')
+                  window.open(`https://wa.me/${normalizePhone(revealedLink.whatsappPhone!)}?text=${encodeURIComponent(message)}`, '_blank')
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 border border-green-600 text-green-700 text-xs hover:bg-green-50 transition-colors"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                Ouvrir WhatsApp
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Panneau demandes manuelles (Lot 6.5) ── */}
+      {showManualRequests && (
+        <div className="mb-8 border border-admin-border bg-admin-surface">
+          <div className="p-4 border-b border-admin-border flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-medium text-admin-text">Demandes d&apos;avis manuelles (clients hors site)</h2>
+            <button
+              onClick={() => setShowCreateForm((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-admin-text text-white text-xs"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              {showCreateForm ? 'Annuler' : 'Créer une demande d’avis manuelle'}
+            </button>
+          </div>
+
+          {manualError && (
+            <p className="text-xs text-red-600 px-4 pt-3">{manualError}</p>
+          )}
+
+          {showCreateForm && (
+            <div className="p-4 border-b border-admin-border space-y-3">
+              <div className="relative">
+                <label className="block text-xs font-medium text-admin-text mb-1">Produit *</label>
+                <input
+                  type="text"
+                  value={createProductId ? (productOptions.find((p) => p.id === createProductId)?.name ?? createProductSearch) : createProductSearch}
+                  onChange={(e) => { setCreateProductSearch(e.target.value); setCreateProductId('') }}
+                  placeholder="Rechercher un produit…"
+                  className="w-full px-3 py-2 text-sm border border-admin-border bg-admin-bg focus:outline-none focus:border-admin-text"
+                />
+                {createProductSearch && !createProductId && filteredProductOptions.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 max-h-48 overflow-y-auto bg-admin-surface border border-admin-border shadow-lg">
+                    {filteredProductOptions.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => { setCreateProductId(p.id); setCreateProductSearch(p.name) }}
+                        className="block w-full text-left px-3 py-2 text-sm hover:bg-admin-bg"
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-admin-text mb-1">Prénom client *</label>
+                  <input
+                    type="text"
+                    value={createFirstName}
+                    onChange={(e) => setCreateFirstName(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-admin-border bg-admin-bg focus:outline-none focus:border-admin-text"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-admin-text mb-1">Canal d&apos;origine</label>
+                  <select
+                    value={createChannel}
+                    onChange={(e) => setCreateChannel(e.target.value as SourceChannel | '')}
+                    className="w-full px-3 py-2 text-sm border border-admin-border bg-admin-bg focus:outline-none focus:border-admin-text"
+                  >
+                    <option value="">—</option>
+                    {(Object.keys(CHANNEL_LABELS) as SourceChannel[]).map((c) => (
+                      <option key={c} value={c}>{CHANNEL_LABELS[c]}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-admin-text mb-1">Email (optionnel)</label>
+                  <input
+                    type="email"
+                    value={createEmail}
+                    onChange={(e) => setCreateEmail(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-admin-border bg-admin-bg focus:outline-none focus:border-admin-text"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-admin-text mb-1">Téléphone (optionnel)</label>
+                  <input
+                    type="tel"
+                    value={createPhone}
+                    onChange={(e) => setCreatePhone(e.target.value)}
+                    placeholder="06…"
+                    className="w-full px-3 py-2 text-sm border border-admin-border bg-admin-bg focus:outline-none focus:border-admin-text"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-admin-muted">Au moins un email ou un téléphone est requis. Le téléphone n&apos;est jamais stocké en clair — seul son empreinte est conservée.</p>
+
+              <div>
+                <label className="block text-xs font-medium text-admin-text mb-1">Note interne (optionnelle)</label>
+                <input
+                  type="text"
+                  value={createNote}
+                  onChange={(e) => setCreateNote(e.target.value)}
+                  placeholder="Contexte pour l'équipe (jamais visible publiquement)"
+                  className="w-full px-3 py-2 text-sm border border-admin-border bg-admin-bg focus:outline-none focus:border-admin-text"
+                />
+              </div>
+
+              <button
+                onClick={createManualRequest}
+                disabled={creating}
+                className="flex items-center gap-2 px-4 py-2 bg-admin-text text-white text-sm disabled:opacity-50"
+              >
+                {creating && <Loader2 className="w-4 h-4 animate-spin" />}
+                Générer le lien
+              </button>
+            </div>
+          )}
+
+          {manualRequestsLoading ? (
+            <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-admin-muted" /></div>
+          ) : manualRequests.length === 0 ? (
+            <p className="text-admin-muted text-sm p-6">Aucune demande manuelle créée pour l&apos;instant.</p>
+          ) : (
+            <div className="divide-y divide-admin-border">
+              {manualRequests.map((r) => {
+                const state = manualRequestState(r)
+                return (
+                  <div key={r.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-admin-text flex items-center gap-2 flex-wrap">
+                        {r.first_name} — {r.products?.name || 'Produit'}
+                        <ManualRequestStateBadge state={state} />
+                        {r.source_channel && (
+                          <span className="text-xs text-admin-muted">{CHANNEL_LABELS[r.source_channel]}</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-admin-muted mt-0.5">
+                        Créée le {new Date(r.created_at).toLocaleDateString('fr-FR')} · Expire le {new Date(r.expires_at).toLocaleDateString('fr-FR')}
+                        {r.review_id && (
+                          <> · Avis {r.product_reviews?.status === 'pending' ? 'en attente' : r.product_reviews?.status === 'approved' ? 'approuvé' : r.product_reviews?.status === 'rejected' ? 'refusé' : ''}</>
+                        )}
+                      </p>
+                      {r.internal_note && (
+                        <p className="text-xs text-admin-muted mt-0.5 italic">Note : {r.internal_note}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {r.review_id && r.products?.slug && (
+                        <Link
+                          href={`/parfum/${r.products.slug}`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 text-xs text-[#C9A962] hover:underline"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Voir l&apos;avis
+                        </Link>
+                      )}
+                      {state !== 'used' && (
+                        <button
+                          onClick={() => regenerateManualRequest(r)}
+                          disabled={manualActionLoading === r.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 border border-admin-border text-xs text-admin-muted hover:border-admin-text hover:text-admin-text transition-colors disabled:opacity-50"
+                        >
+                          {manualActionLoading === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                          Générer un nouveau lien
+                        </button>
+                      )}
+                      {state !== 'disabled' && state !== 'used' && (
+                        <button
+                          onClick={() => disableManualRequest(r)}
+                          disabled={manualActionLoading === r.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 border border-admin-border text-admin-muted hover:border-red-600 hover:text-red-600 text-xs transition-colors disabled:opacity-50"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                          Désactiver
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Panneau relances (tokens non utilisés — clients n'ayant pas encore déposé d'avis) ── */}
       {showReminders && (

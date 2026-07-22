@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto'
 import { z } from 'zod'
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/rate-limit'
 import { hashToken } from '@/lib/reviews/token'
+import { resolveReviewToken, publicMessageForState } from '@/lib/reviews/token-resolution'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,20 +60,16 @@ export async function POST(request: NextRequest) {
     const { token, files } = parsed.data
     const tokenHash = hashToken(token)
 
-    const { data: reviewToken, error: tokenError } = await supabaseAdmin
-      .from('review_tokens')
-      .select('id, expires_at, used_at')
-      .eq('token_hash', tokenHash)
-      .maybeSingle()
-
-    if (tokenError || !reviewToken) {
+    // Le token peut provenir de review_tokens (avis lié à une commande) ou de
+    // manual_review_requests (Lot 6.5, avis social manuel) — la détection se
+    // fait uniquement en base, jamais via une valeur envoyée par le client.
+    const resolved = await resolveReviewToken(supabaseAdmin, tokenHash)
+    if (!resolved) {
       return NextResponse.json({ error: "Ce lien d'avis n'est pas valide." }, { status: 404 })
     }
-    if (new Date(reviewToken.expires_at) < new Date()) {
-      return NextResponse.json({ error: 'Ce lien a expiré.' }, { status: 410 })
-    }
-    if (reviewToken.used_at) {
-      return NextResponse.json({ error: 'Un avis a déjà été déposé avec ce lien.' }, { status: 409 })
+    if (resolved.state !== 'valid') {
+      const { status, message } = publicMessageForState(resolved.state)
+      return NextResponse.json({ error: message }, { status })
     }
 
     const uploads = await Promise.all(
